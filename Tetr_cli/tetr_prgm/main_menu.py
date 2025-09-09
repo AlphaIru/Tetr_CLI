@@ -1,6 +1,6 @@
 """This will define the main menu."""
 
-from checker import checker
+from tetr_prgm.checker import checker
 
 
 class MainMenu():
