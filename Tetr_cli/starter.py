@@ -1,30 +1,15 @@
 """This is a starter file for Tetr_CLI. This will be sent to main to reduce confusions."""
 
-from asyncio import run, Lock
-from curses import wrapper, window
+from asyncio import run, CancelledError
+from threading import Lock
+from sys import argv
+
 from keyboard import hook, unhook_all  # type: ignore
 
-TARGET_FPS: int = 30
-FRAME_DURATION: float = 1 / TARGET_FPS
+from main import main
 
 
-async def async_main(stdscr: window, pressed_keys: set) -> None:
-    """The true main code or base of everything."""
-    stdscr.addstr(0, 0, "Curses is working!")
-    stdscr.refresh()
-    stdscr.getch()
-
-
-def sync_to_async(stdscr: window, pressed_keys: set) -> None:
-    """
-    This will convert sync to async program.
-        Also this wrapper is used to not screwing with the terminal
-        after use.
-    """
-    run(async_main(stdscr, pressed_keys))
-
-
-def starter() -> None:
+def starter(argv_console: list[str]) -> None:
     """The true starter of the code."""
     pressed_keys: set = set()
     lock: Lock = Lock()
@@ -38,9 +23,14 @@ def starter() -> None:
                 pressed_keys.discard(event.name)
 
     hook(on_key_event)
-    wrapper(sync_to_async, pressed_keys)
+    try:
+        run(main(pressed_keys, True if len(argv_console) > 1 else False))
+    except (CancelledError, KeyboardInterrupt):
+        print("Force quit detected!")
+        unhook_all()
+        exit(-1)
     unhook_all()
 
 
 if __name__ == "__main__":
-    starter()
+    starter(argv)
