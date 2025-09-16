@@ -1,6 +1,7 @@
 """This will hold the debug information like FPS."""
 
 from time import perf_counter
+from typing import Set
 
 from curses import window
 
@@ -14,12 +15,17 @@ class DebugClass:
         self.total_frame_count: int = 0
         self.frame_rate: float = 0.0
         self.start_time: float = perf_counter()
-        self.keypress: set = set()
+        self.keypress: Set[str] = set()
+        self.mode: str = "main_menu"
         return
 
-    def update_keypress(self, keypress: set) -> None:
+    def update_keypress(self, keypress: Set[str]) -> None:
         """Updates the keypress in the debug class."""
         self.keypress = keypress
+
+    def update_current_mode(self, new_mode: str) -> None:
+        """Updates the new mode onto this class."""
+        self.mode = new_mode
 
     def __keypress_set_to_string(self) -> str:
         """Converts keypress set to string."""
@@ -42,7 +48,8 @@ class DebugClass:
             stdscr.addstr(
                 max_y - 2,
                 0,
-                f"Total frames: {self.total_frame_count}, Frame rate: {self.frame_rate:.2f}",
+                (f"Current mode: {self.mode} Total frames: {self.total_frame_count}")
+                + (f", Frame rate: {self.frame_rate:.2f}"),
             )
 
         if max_y > 1:

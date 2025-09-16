@@ -1,6 +1,7 @@
 """The true main program."""
 
 from asyncio import sleep
+from typing import Set
 
 from curses import (
     cbreak,
@@ -15,7 +16,7 @@ from curses import (
 
 from tetr_modules.checker import screen_dimmension_check, screen_dimmension_warning
 from tetr_modules.debug import DebugClass
-from tetr_modules.modes import GameMode
+from tetr_modules.mode import GameMode
 
 # from keyboard import
 
@@ -24,7 +25,7 @@ TARGET_FPS: int = 30
 FRAME_DURATION: float = 1 / TARGET_FPS
 
 
-async def main(pressed_keys: set, debug_mode: bool) -> None:
+async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
@@ -38,6 +39,7 @@ async def main(pressed_keys: set, debug_mode: bool) -> None:
     stdscr.nodelay(True)
     key: int = 0
     current_mode: GameMode = GameMode()
+    current_mode.change_mode("main_menu")
 
     while True:
         await sleep(FRAME_DURATION)
@@ -49,20 +51,21 @@ async def main(pressed_keys: set, debug_mode: bool) -> None:
             stdscr.clear()
             stdscr.refresh()
 
-        current_mode.increment_frame(stdscr=stdscr)
+        current_mode.increment_frame(stdscr=stdscr, pressed_keys=pressed_keys)
 
         if debug_mode:
             debug_stats.update_keypress(keypress=pressed_keys)
+            debug_stats.update_current_mode(
+                new_mode=current_mode.get_current_mode_name()
+            )
             stdscr = debug_stats.update_debug(stdscr=stdscr)
 
         if await screen_dimmension_check(stdscr=stdscr) is False:
+            stdscr.clear()
             stdscr = await screen_dimmension_warning(stdscr=stdscr)
+            stdscr = debug_stats.update_debug(stdscr=stdscr)
             stdscr.refresh()
             continue
-
-        stdscr.addstr(0, 0, "Curses is working!")
-
-        # await sleep(FRAME_DURATION)
 
         stdscr.refresh()
 

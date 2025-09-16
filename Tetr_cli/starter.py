@@ -1,6 +1,7 @@
 """This is a starter file for Tetr_CLI. This will be sent to main to reduce confusions."""
 
 from asyncio import run, CancelledError
+from typing import Set
 from threading import Lock
 from sys import argv
 
@@ -11,7 +12,7 @@ from main import main
 
 def starter(argv_console: list[str]) -> None:
     """The true starter of the code."""
-    pressed_keys: set = set()
+    pressed_keys: Set[str] = set()
     lock: Lock = Lock()
 
     def on_key_event(event):
