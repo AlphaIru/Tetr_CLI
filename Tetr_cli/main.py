@@ -15,6 +15,7 @@ from curses import (
 
 from tetr_modules.checker import screen_dimmension_check, screen_dimmension_warning
 from tetr_modules.debug import DebugClass
+from tetr_modules.modes import GameMode
 
 # from keyboard import
 
@@ -36,6 +37,7 @@ async def main(pressed_keys: set, debug_mode: bool) -> None:
 
     stdscr.nodelay(True)
     key: int = 0
+    current_mode: GameMode = GameMode()
 
     while True:
         await sleep(FRAME_DURATION)
@@ -47,6 +49,8 @@ async def main(pressed_keys: set, debug_mode: bool) -> None:
             stdscr.clear()
             stdscr.refresh()
 
+        current_mode.increment_frame(stdscr=stdscr)
+
         if debug_mode:
             debug_stats.update_keypress(keypress=pressed_keys)
             stdscr = debug_stats.update_debug(stdscr=stdscr)
@@ -54,7 +58,6 @@ async def main(pressed_keys: set, debug_mode: bool) -> None:
         if await screen_dimmension_check(stdscr=stdscr) is False:
             stdscr = await screen_dimmension_warning(stdscr=stdscr)
             stdscr.refresh()
-
             continue
 
         stdscr.addstr(0, 0, "Curses is working!")
