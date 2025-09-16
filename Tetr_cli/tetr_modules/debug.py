@@ -17,9 +17,15 @@ class DebugClass:
         self.keypress: set = set()
         return
 
-    def update_debug(
-        self, stdscr
-    ) -> window:
+    def update_keypress(self, keypress: set) -> None:
+        """Updates the keypress in the debug class."""
+        self.keypress = keypress
+
+    def __keypress_set_to_string(self) -> str:
+        """Converts keypress set to string."""
+        return ", ".join(str(key) for key in self.keypress)
+
+    def update_debug(self, stdscr) -> window:
         """Update debug info on screen and manage frame rate calculation."""
         self.frame_count += 1
         self.total_frame_count += 1
@@ -32,11 +38,19 @@ class DebugClass:
             self.start_time = current_time
 
         max_y, _ = stdscr.getmaxyx()
-        stdscr.addstr(
-            max_y - 4,
-            0,
-            f"Total frames: {self.total_frame_count}, Frame rate: {self.frame_rate:.2f}",
-        )
+        if max_y > 2:
+            stdscr.addstr(
+                max_y - 2,
+                0,
+                f"Total frames: {self.total_frame_count}, Frame rate: {self.frame_rate:.2f}",
+            )
+
+        if max_y > 1:
+            stdscr.addstr(
+                max_y - 1,
+                0,
+                f"Current keys: {self.__keypress_set_to_string()}",
+            )
 
         return stdscr
 

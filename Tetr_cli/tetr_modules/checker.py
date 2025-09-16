@@ -1,6 +1,5 @@
 """This will check if there is problems."""
 
-from os import get_terminal_size
 
 from curses import window
 
@@ -8,22 +7,13 @@ MIN_X: int = 80
 MIN_Y: int = 24
 
 
-async def enhanced_get_t_size() -> tuple[int, int]:
-    """Returns the terminal size. YxX"""
-    try:
-        size = get_terminal_size()
-        return size.lines, size.columns
-    except OSError:
-        return 24, 80
-
-
-async def screen_dimmension_check() -> bool:
+async def screen_dimmension_check(stdscr: window) -> bool:
     """This will check the window size."""
 
     max_y: int = 0
     max_x: int = 0
 
-    max_y, max_x = await enhanced_get_t_size()
+    max_y, max_x = stdscr.getmaxyx()
     return False if (max_y < MIN_Y or max_x < MIN_X) else True
 
 
@@ -33,7 +23,7 @@ async def screen_dimmension_warning(stdscr: window) -> window:
     max_y: int = 0
     max_x: int = 0
 
-    max_y, max_x = await enhanced_get_t_size()
+    max_y, max_x = stdscr.getmaxyx()
 
     stdscr.addstr(
         0,
@@ -48,7 +38,6 @@ async def screen_dimmension_warning(stdscr: window) -> window:
         )
 
     return stdscr
-
 
 
 if __name__ == "__main__":
