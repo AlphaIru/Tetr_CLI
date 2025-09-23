@@ -1,4 +1,5 @@
 """This will hold the debug information like FPS."""
+# coding: utf-8
 
 from time import perf_counter
 from typing import Set

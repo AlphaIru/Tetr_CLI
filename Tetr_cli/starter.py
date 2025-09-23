@@ -1,4 +1,5 @@
 """This is a starter file for Tetr_CLI. This will be sent to main to reduce confusions."""
+# coding: utf-8
 
 from asyncio import run, CancelledError
 from typing import Set

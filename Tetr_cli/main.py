@@ -1,5 +1,7 @@
 """The true main program."""
 
+# coding: utf-8
+
 from asyncio import sleep
 from typing import Set
 
@@ -17,8 +19,6 @@ from curses import (
 from tetr_modules.checker import screen_dimmension_check, screen_dimmension_warning
 from tetr_modules.debug import DebugClass
 from tetr_modules.mode import GameMode
-
-# from keyboard import
 
 
 TARGET_FPS: int = 30
@@ -69,7 +69,8 @@ async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
 
         stdscr.refresh()
 
-        if "esc" in pressed_keys:
+        action: str = current_mode.get_mode_action()
+        if action == "Quit":
             break
 
     endwin()

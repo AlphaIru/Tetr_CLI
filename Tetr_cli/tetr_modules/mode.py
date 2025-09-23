@@ -1,5 +1,7 @@
 """This is where it stores the current state."""
 
+# coding: utf-8
+
 from importlib import import_module
 from typing import Set
 
@@ -18,6 +20,12 @@ class GameMode:
         """This will get the current mode name."""
         return self.__mode_name
 
+    def get_mode_action(self) -> str:
+        """This will return the current mode action."""
+        if self.__mode_instance is None:
+            raise RuntimeError("Mode not loaded.")
+        return self.__mode_instance.pop_action()
+
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will increment frame based on the current mode."""
         if self.__mode_instance is None:
@@ -30,7 +38,7 @@ class GameMode:
             raise ValueError(f'"{new_mode_name}" mode is not accessible!')
         self.__mode_name = new_mode_name
         module = import_module(f"tetr_modules.modes.{self.__mode_name}_mode")
-        self.__mode_instance = module.ModeClass()
+        self.__mode_instance = module.MainMenuModeClass()
 
 
 if __name__ == "__main__":
