@@ -1,7 +1,6 @@
 """This will handle the menu screen."""
 # coding: utf-8
 
-from typing import Set
 from curses import A_BOLD, A_REVERSE, window
 
 
@@ -21,7 +20,7 @@ class ModeClass:
         self.__action = ""
         return action
 
-    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will progress the menu based on the inputs."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1

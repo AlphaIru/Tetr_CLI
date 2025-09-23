@@ -2,7 +2,6 @@
 # coding: utf-8
 
 from asyncio import run, CancelledError
-from typing import Set
 from threading import Lock
 from sys import argv
 
@@ -13,7 +12,7 @@ from main import main
 
 def starter(argv_console: list[str]) -> None:
     """The true starter of the code."""
-    pressed_keys: Set[str] = set()
+    pressed_keys: set[str] = set()
     lock: Lock = Lock()
 
     def on_key_event(event):

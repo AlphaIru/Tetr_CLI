@@ -3,7 +3,6 @@
 # coding: utf-8
 
 from asyncio import sleep
-from typing import Set
 
 from curses import (
     cbreak,
@@ -25,7 +24,7 @@ TARGET_FPS: int = 30
 FRAME_DURATION: float = 1 / TARGET_FPS
 
 
-async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
+async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
@@ -70,15 +69,17 @@ async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
         stdscr.refresh()
 
         action: str = current_mode.get_mode_action()
-        if action:
-            if action == "Quit":
-                break
-            if action == "Solo":
-                current_mode.change_mode("solo_menu")
-            elif action == "Go_Back":
-                current_mode.change_mode("main_menu")
-            while pressed_keys:
-                pressed_keys.pop()
+        if action == "Quit":
+            break
+        if action == "Solo":
+            current_mode.change_mode("solo_menu")
+        elif action == "Go_Back":
+            current_mode.change_mode("main_menu")
+        elif action == "Marathon":
+            current_mode.change_mode("marathon")
+
+        if action and pressed_keys is not None:
+            pressed_keys.clear()
 
     endwin()
 

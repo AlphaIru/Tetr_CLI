@@ -3,7 +3,6 @@
 # coding: utf-8
 
 from importlib import import_module
-from typing import Set
 
 from curses import window
 
@@ -13,7 +12,7 @@ class GameMode:
 
     def __init__(self) -> None:
         self.__mode_instance = None
-        self.__mode_list: list[str] = ["main_menu", "solo_menu"]
+        self.__mode_list: list[str] = ["main_menu", "solo_menu", "marathon"]
         self.__mode_name: str = "main_menu"
 
     def get_current_mode_name(self) -> str:
@@ -26,7 +25,7 @@ class GameMode:
             raise RuntimeError("Mode not loaded.")
         return self.__mode_instance.pop_action()
 
-    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will increment frame based on the current mode."""
         if self.__mode_instance is None:
             raise RuntimeError("Mode not loaded.")

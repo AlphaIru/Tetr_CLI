@@ -1,7 +1,6 @@
 """"This will handle the solo mode menu."""
 # coding: utf-8
 
-# from typing import Set
 from curses import A_BOLD, A_REVERSE, window
 
 
