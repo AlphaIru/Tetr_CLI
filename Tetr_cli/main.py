@@ -70,8 +70,15 @@ async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
         stdscr.refresh()
 
         action: str = current_mode.get_mode_action()
-        if action == "Quit":
-            break
+        if action:
+            if action == "Quit":
+                break
+            if action == "Solo":
+                current_mode.change_mode("solo_menu")
+            elif action == "Go_Back":
+                current_mode.change_mode("main_menu")
+            while pressed_keys:
+                pressed_keys.pop()
 
     endwin()
 

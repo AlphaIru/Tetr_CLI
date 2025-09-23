@@ -13,7 +13,7 @@ class GameMode:
 
     def __init__(self) -> None:
         self.__mode_instance = None
-        self.__mode_list: list[str] = ["main_menu"]
+        self.__mode_list: list[str] = ["main_menu", "solo_menu"]
         self.__mode_name: str = "main_menu"
 
     def get_current_mode_name(self) -> str:
@@ -38,7 +38,7 @@ class GameMode:
             raise ValueError(f'"{new_mode_name}" mode is not accessible!')
         self.__mode_name = new_mode_name
         module = import_module(f"tetr_modules.modes.{self.__mode_name}_mode")
-        self.__mode_instance = module.MainMenuModeClass()
+        self.__mode_instance = module.ModeClass()
 
 
 if __name__ == "__main__":

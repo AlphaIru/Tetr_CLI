@@ -1,18 +1,18 @@
-"""This will handle the menu screen."""
+""""This will handle the solo mode menu."""
 # coding: utf-8
 
-from typing import Set
+# from typing import Set
 from curses import A_BOLD, A_REVERSE, window
 
 
 class ModeClass:
-    """This will handle main_menu."""
+    """This will handle the solo mode menu."""
 
     def __init__(self) -> None:
-        """This will initizalize this class."""
+        """This will initialize this class."""
         self.__selected_option: int = 0
         self.__key_cooldown: int = 0
-        self.__options: list[str] = ["Solo", "Multiplayer", "Quit"]
+        self.__options: list[str] = ["Marathon", "Sprint", "Ultra", "Go_Back"]
         self.__action: str = ""
 
     def pop_action(self) -> str:
@@ -21,7 +21,7 @@ class ModeClass:
         self.__action = ""
         return action
 
-    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will progress the menu based on the inputs."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1
@@ -48,7 +48,7 @@ class ModeClass:
         block_width: int = max(len(option) for option in self.__options) + 2
         start_x: int = (width - block_width) // 2
 
-        title = "Main Menu"
+        title = "Solo Mode Menu"
         stdscr.addstr(start_y - 2, (width - len(title)) // 2, title, A_BOLD)
 
         for list_index, option in enumerate(self.__options):
@@ -59,9 +59,8 @@ class ModeClass:
                 attr = A_REVERSE
             line = f"{prefix}{option}"
             stdscr.addstr(start_y + list_index, start_x, line, attr)
-
         return stdscr
 
 
 if __name__ == "__main__":
-    print("This is a main_menu module, please run starter.py.")
+    print("This is a module, not a program.")
