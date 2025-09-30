@@ -42,6 +42,7 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     key: int = 0
     current_mode: GameMode = GameMode()
     current_mode.change_mode("main_menu")
+    current_bgm: str = ""
 
     while True:
         await sleep(FRAME_DURATION)
@@ -81,14 +82,17 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
         elif action == "Marathon":
             current_mode.change_mode("marathon")
 
-        sound_action: dict[str, str | list[str]] = current_mode.get_sound_action()
+        sound_action: dict[str, list[str]] = current_mode.get_sound_action()
+        # print(sound_action)
         if sound_action and "BGM" in sound_action:
             if sound_action["BGM"] == "stop":
                 mixer.music.stop()
-            else:
+                current_bgm = ""
+            elif sound_action["BGM"][0] != current_bgm:
+                current_bgm = sound_action["BGM"][0]
                 try:
                     mixer.music.load(
-                        f"Tetr_cli/tetr_modules/sounds/bgm/{sound_action['BGM']}.wav"
+                        f"Tetr_cli/tetr_modules/sounds/bgm/{current_bgm}.wav"
                     )
                     mixer.music.play(-1)
                 except Exception as err:

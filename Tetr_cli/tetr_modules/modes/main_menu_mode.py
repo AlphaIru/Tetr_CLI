@@ -13,7 +13,7 @@ class ModeClass:
         self.__key_cooldown: int = 0
         self.__options: list[str] = ["Solo", "Multiplayer", "Quit"]
         self.__action: str = ""
-        self.__sound_action: dict[str, str | list[str]] = {"BGM": "stop", "SFX": []}
+        self.__sound_action: dict[str, list[str]] = {"BGM": ["stop"], "SFX": []}
 
     def pop_action(self) -> str:
         """This will return the action and reset it."""
@@ -21,9 +21,10 @@ class ModeClass:
         self.__action = ""
         return action
 
-    def pop_sound_action(self) -> dict[str, str | list[str]]:
+    def pop_sound_action(self) -> dict[str, list[str]]:
         """This will return the sound action and reset it."""
-        sound_action = self.__sound_action
+        sound_action: dict[str, list[str]] = self.__sound_action
+        self.__sound_action["SFX"] = []
         return sound_action
 
     def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
@@ -33,13 +34,16 @@ class ModeClass:
         elif "up" in pressed_keys:
             self.__selected_option = max(0, self.__selected_option - 1)
             self.__key_cooldown = 3
+            self.__sound_action["SFX"].append("select_move")
         elif "down" in pressed_keys:
             self.__selected_option = min(
                 len(self.__options) - 1, self.__selected_option + 1
             )
             self.__key_cooldown = 3
+            self.__sound_action["SFX"].append("select_move")
         elif "enter" in pressed_keys:
             self.__action = self.__options[self.__selected_option]
+            self.__sound_action["SFX"].append("quad")  # sound for confirming selection
             return stdscr
 
         height: int = 0

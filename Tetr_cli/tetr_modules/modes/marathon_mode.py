@@ -52,10 +52,22 @@ class ModeClass:
 
     def __init__(self) -> None:
         """This will initialize this class."""
-        self.__action: str = ""
         self.__countdown: int = 60
         self.__board = self.generate_board()
-        self.__sound_action: dict[str, str | list[str]] = {"BGM": "Korobeiniki", "SFX": []}
+        self.__action: str = ""
+        self.__sound_action: dict[str, list[str]] = {"BGM": ["Korobeiniki"], "SFX": []}
+
+    def pop_action(self) -> str:
+        """This will return the action and reset it."""
+        action = self.__action
+        self.__action = ""
+        return action
+
+    def pop_sound_action(self) -> dict[str, list[str]]:
+        """This will return the sound action and reset it."""
+        sound_action: dict[str, list[str]] = self.__sound_action
+        self.__sound_action["SFX"] = []
+        return sound_action
 
     def generate_board(self) -> list[list[int]]:
         """Generate an empty Tetris board."""
@@ -104,15 +116,14 @@ class ModeClass:
         )
         return stdscr
 
-    def pop_action(self) -> str:
-        """This will return the action and reset it."""
-        action = self.__action
-        self.__action = ""
-        return action
-
     def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will progress the game based on the inputs."""
         stdscr = self.draw_board(stdscr)
+
+        if "esc" in pressed_keys:
+            self.__action = "Go_Back"
+            return stdscr
+
         return stdscr
 
 

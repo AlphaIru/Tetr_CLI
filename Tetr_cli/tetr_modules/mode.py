@@ -25,7 +25,7 @@ class GameMode:
             raise RuntimeError("Mode not loaded.")
         return self.__mode_instance.pop_action()
 
-    def get_sound_action(self) -> dict[str, str | list[str]]:
+    def get_sound_action(self) -> dict[str, list[str]]:
         """This will return the current mode sound action."""
         if self.__mode_instance is None:
             raise RuntimeError("Mode not loaded.")
