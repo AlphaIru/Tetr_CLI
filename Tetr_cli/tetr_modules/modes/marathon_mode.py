@@ -2,6 +2,7 @@
 
 # coding: utf-8
 
+from copy import deepcopy
 from curses import window
 
 
@@ -65,7 +66,7 @@ class ModeClass:
 
     def pop_sound_action(self) -> dict[str, list[str]]:
         """This will return the sound action and reset it."""
-        sound_action: dict[str, list[str]] = self.__sound_action
+        sound_action: dict[str, list[str]] = deepcopy(self.__sound_action)
         self.__sound_action["SFX"] = []
         return sound_action
 

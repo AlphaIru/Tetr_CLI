@@ -1,6 +1,7 @@
 """This will handle the menu screen."""
 # coding: utf-8
 
+from copy import deepcopy
 from curses import A_BOLD, A_REVERSE, window
 
 
@@ -23,7 +24,7 @@ class ModeClass:
 
     def pop_sound_action(self) -> dict[str, list[str]]:
         """This will return the sound action and reset it."""
-        sound_action: dict[str, list[str]] = self.__sound_action
+        sound_action: dict[str, list[str]] = deepcopy(self.__sound_action)
         self.__sound_action["SFX"] = []
         return sound_action
 
@@ -43,7 +44,7 @@ class ModeClass:
             self.__sound_action["SFX"].append("select_move")
         elif "enter" in pressed_keys:
             self.__action = self.__options[self.__selected_option]
-            self.__sound_action["SFX"].append("quad")  # sound for confirming selection
+            self.__sound_action["SFX"].append("select_confirm")  # sound for confirming selection
             return stdscr
 
         height: int = 0

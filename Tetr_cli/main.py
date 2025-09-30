@@ -15,6 +15,7 @@ from curses import (
     KEY_RESIZE,
 )
 from pygame import mixer
+from pygame.mixer import Sound
 
 from tetr_modules.checker import screen_dimmension_check, screen_dimmension_warning
 from tetr_modules.debug import DebugClass
@@ -30,6 +31,11 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     debug_stats: DebugClass = DebugClass()
 
     mixer.init()
+    mixer.music.set_volume(0.25)
+    select_move_sound: Sound = mixer.Sound(
+        "Tetr_cli/tetr_modules/sounds/sfx/select_move.wav"
+    )
+    quad_sound: Sound = mixer.Sound("Tetr_cli/tetr_modules/sounds/sfx/quad.wav")
 
     stdscr = initscr()
     start_color()
@@ -72,20 +78,9 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
 
         stdscr.refresh()
 
-        action: str = current_mode.get_mode_action()
-        if action == "Quit":
-            break
-        if action == "Solo":
-            current_mode.change_mode("solo_menu")
-        elif action == "Go_Back":
-            current_mode.change_mode("main_menu")
-        elif action == "Marathon":
-            current_mode.change_mode("marathon")
-
         sound_action: dict[str, list[str]] = current_mode.get_sound_action()
-        # print(sound_action)
         if sound_action and "BGM" in sound_action:
-            if sound_action["BGM"] == "stop":
+            if sound_action["BGM"][0] == "stop":
                 mixer.music.stop()
                 current_bgm = ""
             elif sound_action["BGM"][0] != current_bgm:
@@ -98,13 +93,26 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
                 except Exception as err:
                     print(f"Failed to load or play BGM: {err}")
         if sound_action and "SFX" in sound_action:
-            sfx_list: list[str] = sound_action["SFX"]  # type: ignore
-            for sfx in sfx_list:
+            for sfx in sound_action["SFX"]:
                 try:
-                    sound = mixer.Sound(f"Tetr_cli/tetr_modules/sounds/sfx/{sfx}.wav")
-                    sound.play()
+                    if sfx == "select_move":
+                        select_move_sound.play()
+                    elif sfx == "select_confirm" or sfx == "quad":
+                        quad_sound.play()
                 except Exception as err:
-                    print(f"Failed to load or play SFX: {err}")
+                    print(f"Failed to play SFX: {err}")
+
+        action: str = current_mode.get_mode_action()
+        if action == "Quit":  # wait for sound to play
+            mixer.music.stop()
+            mixer.quit()
+            break
+        if action == "Solo":
+            current_mode.change_mode("solo_menu")
+        elif action == "Go_Back":
+            current_mode.change_mode("main_menu")
+        elif action == "Marathon":
+            current_mode.change_mode("marathon")
 
         if action and pressed_keys is not None:
             pressed_keys.clear()
