@@ -55,6 +55,7 @@ class ModeClass:
         self.__action: str = ""
         self.__countdown: int = 60
         self.__board = self.generate_board()
+        self.__sound_action: dict[str, str | list[str]] = {"BGM": "Korobeiniki", "SFX": []}
 
     def generate_board(self) -> list[list[int]]:
         """Generate an empty Tetris board."""
@@ -91,7 +92,9 @@ class ModeClass:
             for x, cell in enumerate(row):
                 char = "█" if cell else " "
                 stdscr.addstr(offset_y + column, offset_x + x * 2, char * 2)
-            stdscr.addstr(offset_y + column, offset_x + board_width, "|")  # Right border
+            stdscr.addstr(
+                offset_y + column, offset_x + board_width, "|"
+            )  # Right border
 
         # Draw bottom border
         stdscr.addstr(

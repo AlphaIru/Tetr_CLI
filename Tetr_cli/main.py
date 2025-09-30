@@ -14,7 +14,7 @@ from curses import (
     resize_term,
     KEY_RESIZE,
 )
-from playsound import playsound
+from pygame import mixer
 
 from tetr_modules.checker import screen_dimmension_check, screen_dimmension_warning
 from tetr_modules.debug import DebugClass
@@ -28,6 +28,8 @@ FRAME_DURATION: float = 1 / TARGET_FPS
 async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
+
+    mixer.init()
 
     stdscr = initscr()
     start_color()
@@ -78,10 +80,27 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
             current_mode.change_mode("main_menu")
         elif action == "Marathon":
             current_mode.change_mode("marathon")
-            try:
-                playsound(r"Tetr_cli/tetr_modules/sounds/Tetris_theme.wav", block=False)
-            except Exception as e:
-                print("Error playing sound:", e)
+
+        sound_action: dict[str, str | list[str]] = current_mode.get_sound_action()
+        if sound_action and "BGM" in sound_action:
+            if sound_action["BGM"] == "stop":
+                mixer.music.stop()
+            else:
+                try:
+                    mixer.music.load(
+                        f"Tetr_cli/tetr_modules/sounds/bgm/{sound_action['BGM']}.wav"
+                    )
+                    mixer.music.play(-1)
+                except Exception as err:
+                    print(f"Failed to load or play BGM: {err}")
+        if sound_action and "SFX" in sound_action:
+            sfx_list: list[str] = sound_action["SFX"]  # type: ignore
+            for sfx in sfx_list:
+                try:
+                    sound = mixer.Sound(f"Tetr_cli/tetr_modules/sounds/sfx/{sfx}.wav")
+                    sound.play()
+                except Exception as err:
+                    print(f"Failed to load or play SFX: {err}")
 
         if action and pressed_keys is not None:
             pressed_keys.clear()

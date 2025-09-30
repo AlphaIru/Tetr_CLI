@@ -1,4 +1,5 @@
-""""This will handle the solo mode menu."""
+""" "This will handle the solo mode menu."""
+
 # coding: utf-8
 
 from curses import A_BOLD, A_REVERSE, window
@@ -13,12 +14,18 @@ class ModeClass:
         self.__key_cooldown: int = 0
         self.__options: list[str] = ["Marathon", "Sprint", "Ultra", "Go_Back"]
         self.__action: str = ""
+        self.__sound_action: dict[str, str | list[str]] = {"BGM": "stop", "SFX": []}
 
     def pop_action(self) -> str:
         """This will return the action and reset it."""
         action = self.__action
         self.__action = ""
         return action
+
+    def pop_sound_action(self) -> dict[str, str | list[str]]:
+        """This will return the sound action and reset it."""
+        sound_action = self.__sound_action
+        return sound_action
 
     def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will progress the menu based on the inputs."""
