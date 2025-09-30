@@ -14,6 +14,7 @@ from curses import (
     resize_term,
     KEY_RESIZE,
 )
+from playsound import playsound
 
 from tetr_modules.checker import screen_dimmension_check, screen_dimmension_warning
 from tetr_modules.debug import DebugClass
@@ -77,6 +78,10 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
             current_mode.change_mode("main_menu")
         elif action == "Marathon":
             current_mode.change_mode("marathon")
+            try:
+                playsound(r"Tetr_cli/tetr_modules/sounds/Tetris_theme.wav", block=False)
+            except Exception as e:
+                print("Error playing sound:", e)
 
         if action and pressed_keys is not None:
             pressed_keys.clear()

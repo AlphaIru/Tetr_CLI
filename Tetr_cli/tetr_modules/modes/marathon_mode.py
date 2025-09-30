@@ -4,8 +4,9 @@
 
 from curses import window
 
+
 # Flowchart:
-# Generation phase
+# Generation 0phase
 # Falling phase
 # if Hard drop:
 #   go to pattern phase.
