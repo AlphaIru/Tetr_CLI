@@ -7,7 +7,7 @@ MIN_X: int = 80
 MIN_Y: int = 24
 
 
-async def screen_dimmension_check(stdscr: window) -> bool:
+async def screen_dimension_check(stdscr: window) -> bool:
     """This will check the window size."""
 
     max_y: int = 0
@@ -17,7 +17,7 @@ async def screen_dimmension_check(stdscr: window) -> bool:
     return False if (max_y < MIN_Y or max_x < MIN_X) else True
 
 
-async def screen_dimmension_warning(stdscr: window) -> window:
+async def screen_dimension_warning(stdscr: window) -> window:
     """This will display the warning to the user."""
 
     max_y: int = 0

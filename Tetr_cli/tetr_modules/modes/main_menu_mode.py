@@ -18,7 +18,7 @@ class ModeClass:
 
     def pop_action(self) -> str:
         """This will return the action and reset it."""
-        action = self.__action
+        action: str = deepcopy(self.__action)
         self.__action = ""
         return action
 

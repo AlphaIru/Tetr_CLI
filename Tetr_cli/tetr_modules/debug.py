@@ -1,4 +1,5 @@
 """This will hold the debug information like FPS."""
+
 # coding: utf-8
 
 from time import perf_counter
@@ -43,7 +44,7 @@ class DebugClass:
             self.frame_count = 0
             self.start_time = current_time
 
-        max_y, _ = stdscr.getmaxyx()
+        max_y, max_x = stdscr.getmaxyx()
         if max_y > 2:
             stdscr.addstr(
                 max_y - 2,
@@ -52,11 +53,15 @@ class DebugClass:
                 + (f", Frame rate: {self.frame_rate:.2f}"),
             )
 
+        number_of_blanks: int = max_x - (
+            len(f"Current keys: {self.__keypress_set_to_string()} ") + 1
+        )
         if max_y > 1:
             stdscr.addstr(
                 max_y - 1,
                 0,
-                f"Current keys: {self.__keypress_set_to_string()}",
+                f"Current keys: {self.__keypress_set_to_string()} "
+                + " " * number_of_blanks,
             )
 
         return stdscr

@@ -26,6 +26,9 @@ def starter(argv_console: list[str]) -> None:
     hook(on_key_event)
     try:
         run(main(pressed_keys, True if len(argv_console) > 1 else False))
+        print("\n\n")
+        print("Thank you for playing!")
+        print("Game made by Airun_Iru")
     except (CancelledError, KeyboardInterrupt):
         print("Force quit detected!")
         unhook_all()
