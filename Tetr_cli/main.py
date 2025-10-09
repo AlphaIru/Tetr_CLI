@@ -7,13 +7,21 @@ from pathlib import Path
 
 from curses import (
     cbreak,
+    COLOR_CYAN,  # I
+    COLOR_GREEN,  # S
+    COLOR_MAGENTA,  # T
+    COLOR_RED,  # Z
+    COLOR_YELLOW,  # O
+    COLOR_BLUE,  # J
     curs_set,
     doupdate,
     initscr,
+    init_pair,
     endwin,
     noecho,
     start_color,
     resize_term,
+    use_default_colors,
     window,
     KEY_RESIZE,
 )
@@ -30,6 +38,8 @@ FRAME_DURATION: float = 1 / TARGET_FPS
 
 
 current_path: Path = Path(__file__).parent.parent.resolve()
+
+# O, I, T, L, J, S, Z
 
 
 async def load_sfx() -> dict[str, Sound]:
@@ -119,6 +129,15 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     current_mode: GameMode = GameMode()
     current_mode.change_mode("main_menu")
     current_bgm: str = ""
+
+    use_default_colors()
+    init_pair(1, COLOR_YELLOW, -1)  # O
+    init_pair(2, COLOR_CYAN, -1)    # I
+    init_pair(3, COLOR_MAGENTA, -1)  # T
+    init_pair(4, 208, -1)  # L
+    init_pair(5, COLOR_BLUE, -1)     # J
+    init_pair(6, COLOR_GREEN, -1)    # S
+    init_pair(7, COLOR_RED, -1)      # Z
 
     while True:
         await sleep(FRAME_DURATION)

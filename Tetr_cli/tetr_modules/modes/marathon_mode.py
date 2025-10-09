@@ -3,7 +3,7 @@
 # coding: utf-8
 
 from copy import deepcopy
-from curses import window, A_BOLD
+from curses import window, A_BOLD, color_pair
 from random import shuffle, seed, randint
 
 # from math import floor
@@ -94,8 +94,10 @@ class ModeClass:
 
     def draw_hold(self, stdscr: window) -> window:
         """Draw the Hold Box."""
-        hold_offset_x: int = self.__offset_x - 12
-        horizontal_line: str = "+" + "-" * 9
+        horizontal_length: int = 12
+        vertical_length: int = 4
+        hold_offset_x: int = self.__offset_x - horizontal_length - 3
+        horizontal_line: str = "+" + "-" * horizontal_length
         stdscr.addstr(
             self.__offset_y - 1,
             hold_offset_x,
@@ -114,7 +116,7 @@ class ModeClass:
             horizontal_line,
             A_BOLD,
         )
-        for counter in range(5):
+        for counter in range(4):
             stdscr.addstr(
                 self.__offset_y + counter,
                 hold_offset_x,
@@ -122,7 +124,7 @@ class ModeClass:
                 A_BOLD,
             )
         stdscr.addstr(
-            self.__offset_y + 5,
+            self.__offset_y + vertical_length,
             hold_offset_x,
             horizontal_line,
             A_BOLD,
@@ -133,8 +135,11 @@ class ModeClass:
         """Draw the Next Queue Box."""
 
         queue_offset_x: int = self.__offset_x + DRAW_BOARD_WIDTH + 1
-        horizontal_line: str = "-" * 9 + "+"
+        horizontal_length: int = 12
+        horizontal_line: str = "-" * horizontal_length + "+"
+        vertical_length: int = 17
 
+        # Draw the box and text
         stdscr.addstr(
             self.__offset_y - 1,
             queue_offset_x,
@@ -153,19 +158,110 @@ class ModeClass:
             horizontal_line,
             A_BOLD,
         )
-        for counter in range(15):
+        for counter in range(vertical_length):
             stdscr.addstr(
                 self.__offset_y + counter,
-                queue_offset_x + 10,
+                queue_offset_x + horizontal_length,
                 "|",
                 A_BOLD,
             )
         stdscr.addstr(
-            self.__offset_y + 15,
+            self.__offset_y + vertical_length,
             queue_offset_x,
             horizontal_line,
             A_BOLD,
         )
+
+        # Draw the next minos
+        # O, I, T, L, J, S, Z
+        for queue_counter in range(5):
+            if len(self.__mino_list) > queue_counter:
+                if self.__mino_list[queue_counter] == "O":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "  ████  ",
+                        color_pair(1),
+                    )
+                    stdscr.addstr(
+                        self.__offset_y + 3 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "  ████  ",
+                        color_pair(1),
+                    )
+                elif self.__mino_list[queue_counter] == "I":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "████████",
+                        color_pair(2),
+                    )
+                elif self.__mino_list[queue_counter] == "T":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        " ██████ ",
+                        color_pair(3),
+                    )
+                    stdscr.addstr(
+                        self.__offset_y + 3 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "   ██   ",
+                        color_pair(3),
+                    )
+                elif self.__mino_list[queue_counter] == "L":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "    ██",
+                        color_pair(4),
+                    )
+                    stdscr.addstr(
+                        self.__offset_y + 3 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "██████",
+                        color_pair(4),
+                    )
+                elif self.__mino_list[queue_counter] == "J":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "██",
+                        color_pair(5),
+                    )
+                    stdscr.addstr(
+                        self.__offset_y + 3 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "██████",
+                        color_pair(5),
+                    )
+                elif self.__mino_list[queue_counter] == "S":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "  ████",
+                        color_pair(6),
+                    )
+                    stdscr.addstr(
+                        self.__offset_y + 3 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "████",
+                        color_pair(6),
+                    )
+                elif self.__mino_list[queue_counter] == "Z":
+                    stdscr.addstr(
+                        self.__offset_y + 2 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "████",
+                        color_pair(7),
+                    )
+                    stdscr.addstr(
+                        self.__offset_y + 3 + queue_counter * 3,
+                        queue_offset_x + 2,
+                        "  ████",
+                        color_pair(7),
+                    )
+
         return stdscr
 
     def draw_board(self, stdscr: window) -> window:
