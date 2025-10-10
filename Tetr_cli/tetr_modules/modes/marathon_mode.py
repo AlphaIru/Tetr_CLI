@@ -51,8 +51,9 @@ MIN_X: int = 80
 MIN_Y: int = 24
 
 BOARD_WIDTH: int = 10
-BOARD_HEIGHT: int = 20
+BOARD_HEIGHT: int = 40
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
+DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
 TARGET_FPS: int = 30
 MINO_TYPES: set[str] = {"I", "O", "T", "S", "Z", "J", "L"}
 MINO_COLOR: dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
@@ -63,11 +64,57 @@ MINO_DRAW_DATA: dict[str, tuple[list[str], int]] = {
     "L": (["    ██  ", "██████  "], 4),
     "J": (["██      ", "██████  "], 5),
     "S": (["  ████  ", "████    "], 6),
-    "Z": (["████    ", "  ████  "], 7)
+    "Z": (["████    ", "  ████  "], 7),
 }
 
-# Mino Draw Location: 
-MINO_DRAW_LOCATION: dict[str, dict[str, tuple[tuple[int, int], tuple[int, int]]]] = {
+# Mino Draw Location: Mino_type -> Rotation (in NSEW) ->
+# (current_position, 1st_block_position, 2nd_block_position, 3rd_block_position)
+#
+# Note: (y, x) format
+MINO_DRAW_LOCATION: dict[str, dict[str, list[tuple[int, int]]]] = {
+    "O": {
+        "N": [(0, 0), (0, 1), (1, 0), (1, 1)],
+        "S": [(0, 0), (0, 1), (1, 0), (1, 1)],
+        "E": [(0, 0), (0, 1), (1, 0), (1, 1)],
+        "W": [(0, 0), (0, 1), (1, 0), (1, 1)],
+    },
+    "I": {
+        "N": [(0, 0), (0, -1), (0, 1), (0, 2)],
+        "S": [(0, 0), (0, -1), (0, 1), (0, 2)],
+        "E": [(0, 0), (-1, 0), (1, 0), (2, 0)],
+        "W": [(0, 0), (1, 0), (-1, 0), (-2, 0)],
+    },
+    "T": {
+        "N": [(0, 0), (0, -1), (1, 0), (0, 1)],
+        "S": [(0, 0), (0, -1), (-1, 0), (0, 1)],
+        "E": [(0, 0), (-1, 0), (0, 1), (1, 0)],
+        "W": [(0, 0), (-1, 0), (0, -1), (1, 0)],
+    },
+    "L": {
+        "N": [(0, 0), (0, -1), (0, 1), (1, 1)],
+        "S": [(0, 0), (0, -1), (0, 1), (-1, -1)],
+        "E": [(0, 0), (-1, 0), (1, 0), (-1, 1)],
+        "W": [(0, 0), (-1, 0), (1, 0), (1, -1)],
+    },
+    "J": {
+        "N": [(0, 0), (0, -1), (0, 1), (1, -1)],
+        "S": [(0, 0), (0, -1), (0, 1), (-1, 1)],
+        "E": [(0, 0), (-1, 0), (1, 0), (1, 1)],
+        "W": [(0, 0), (-1, 0), (1, 0), (-1, -1)],
+    },
+    "S": {
+        "N": [(0, 0), (0, -1), (1, 0), (1, 1)],
+        "S": [(0, 0), (0, 1), (-1, 0), (-1, -1)],
+        "E": [(0, 0), (1, 0), (0, 1), (-1, 1)],
+        "W": [(0, 0), (-1, 0), (0, -1), (1, -1)],
+    },
+    "Z": {
+        "N": [(0, 0), (0, 1), (1, 0), (1, -1)],
+        "S": [(0, 0), (0, -1), (-1, 0), (-1, 1)],
+        "E": [(0, 0), (-1, 0), (0, 1), (1, 1)],
+        "W": [(0, 0), (1, 0), (0, -1), (-1, -1)],
+    },
+}
 
 
 class ModeClass:
@@ -91,11 +138,12 @@ class ModeClass:
         self.__offset_y: int = 0
 
         self.__current_mino: str = ""
-        self.__current_rotation: str = "S"
+        self.__current_rotation: str = "N"
         self.__current_position: tuple[int, int] = (0, 0)  # (y, x)
         self.__current_hold: str = ""
-        self.__softdrop_cooldown: int = 0
+        self.__keyinput_cooldown: dict[str, int] = {}
         self.__lock_delay: int = 0
+        self.__fall_delay: int = 0
 
         self.__mino_list: list[str] = []
         self.mino_generation(initial=True)
@@ -222,27 +270,23 @@ class ModeClass:
 
         # Draw top border
         stdscr.addstr(
-            self.__offset_y - 1, self.__offset_x - 1, "+" + "-" * DRAW_BOARD_WIDTH + "+"
+            self.__offset_y - 1,
+            self.__offset_x - 1,
+            "+" + "- " * (DRAW_BOARD_WIDTH // 2) + "+",
         )
 
-        # Draw side borders
-        for row in range(BOARD_HEIGHT):
+        middle_line: str = "|" + " " * DRAW_BOARD_WIDTH + "|"
+        for row in range(DRAW_BOARD_HEIGHT):
             stdscr.addstr(
                 self.__offset_y + row,
                 self.__offset_x - 1,
-                "|",
-                A_BOLD,
-            )
-            stdscr.addstr(
-                self.__offset_y + row,
-                self.__offset_x + DRAW_BOARD_WIDTH,
-                "|",
+                middle_line,
                 A_BOLD,
             )
 
         # Draw bottom border
         stdscr.addstr(
-            self.__offset_y + BOARD_HEIGHT,
+            self.__offset_y + DRAW_BOARD_HEIGHT,
             self.__offset_x - 1,
             "+" + "-" * DRAW_BOARD_WIDTH + "+",
             A_BOLD,
@@ -261,17 +305,32 @@ class ModeClass:
 
         draw_board: list[list[int]] = deepcopy(self.__board)
 
-        draw_board[self.__current_position[0]][self.__current_position[1]] = MINO_COLOR[
-            self.__current_mino
-        ]
+        extra_height: int = 2
 
-        for y, row in enumerate(draw_board):
-            for x, cell in enumerate(row):
-                char = "█" if cell else " "
+        if (
+            self.__current_mino in MINO_DRAW_LOCATION
+            and self.__current_rotation in MINO_DRAW_LOCATION[self.__current_mino]
+        ):
+            for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
+                self.__current_rotation
+            ]:
+                y_pos: int = self.__current_position[0] - y_offset  # Inverted y-axis
+                x_pos: int = self.__current_position[1] + x_offset
+                if (
+                    DRAW_BOARD_HEIGHT - extra_height
+                ) <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                    draw_board[y_pos][x_pos] = MINO_COLOR[self.__current_mino]
+
+        for y_counter, row in enumerate(
+            draw_board[(BOARD_HEIGHT - (DRAW_BOARD_HEIGHT + extra_height)) :]
+        ):
+            for x_counter, cell in enumerate(row):
+
+                # Special case for the top row to show the border better
                 stdscr.addstr(
-                    self.__offset_y + y,
-                    self.__offset_x + x * 2,
-                    char * 2,
+                    self.__offset_y + y_counter - extra_height,
+                    self.__offset_x + x_counter * 2,
+                    "██" if cell else "- " if y_counter == 1 else "  ",
                     color_pair(cell) if cell else A_BOLD,  # A_BOLD for empty
                 )
         return stdscr
@@ -310,14 +369,17 @@ class ModeClass:
         shuffle(new_mino_list)
         self.__mino_list.extend(new_mino_list)
 
-    def play_mode(self, stdscr: window) -> None:
+    def play_mode(self, stdscr: window) -> window:
         """This will handle the play mode."""
         if len(self.__mino_list) <= 14:
             self.mino_generation()
         if not self.__current_mino:
             self.__current_mino = self.__mino_list.pop(0)
-            self.__current_rotation = "0"
-            self.__current_position = (0, BOARD_WIDTH // 2 - 1)
+            self.__current_rotation = "N"
+            self.__current_position = (19, BOARD_WIDTH // 2 - 1)  # 19 is 20 - 1
+
+        stdscr = self.draw_mino_on_board(stdscr)
+        return stdscr
 
     def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will progress the game based on the inputs."""
@@ -327,7 +389,7 @@ class ModeClass:
         if check_max_y != self.__max_y or check_max_x != self.__max_x:
             self.__max_y = check_max_y
             self.__max_x = check_max_x
-            self.__offset_y = (check_max_y - BOARD_HEIGHT) // 2
+            self.__offset_y = (check_max_y - DRAW_BOARD_HEIGHT) // 2
             self.__offset_x = (check_max_x - DRAW_BOARD_WIDTH) // 2
 
         if check_max_x < MIN_X or check_max_y < MIN_Y:
@@ -345,7 +407,7 @@ class ModeClass:
             self.countdown_mode(stdscr)
             return stdscr
 
-        self.play_mode(stdscr)
+        stdscr = self.play_mode(stdscr)
 
         if self.__mode == "play_music_wait":
             self.__countdown -= 1
