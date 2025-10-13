@@ -178,7 +178,16 @@ class ModeClass:
         self.__sound_action["SFX"] = []
         return sound_action
 
-    def draw_mino(self, stdscr: window, mino: str, y_loc: int, x_loc: int) -> None:
+    def calculate_ghost_mino(self) -> tuple[int, int]:
+        """This will calculate the ghost mino position."""
+        if not self.__current_mino:
+            return (0, 0)
+        ghost_position: tuple[int, int] = deepcopy(self.__current_position)
+        while not self.mino_touching_bottom(ghost_position):
+            ghost_position = (ghost_position[0] - 1, ghost_position[1])
+        return ghost_position
+
+    def draw_queue_mino(self, stdscr: window, mino: str, y_loc: int, x_loc: int) -> None:
         """Draw a mino at the given position."""
         if mino in MINO_DRAW_DATA:
             lines, color = MINO_DRAW_DATA[mino]
@@ -225,7 +234,7 @@ class ModeClass:
         )
 
         if self.__current_hold:
-            self.draw_mino(
+            self.draw_queue_mino(
                 stdscr, self.__current_hold, self.__offset_y + 2, hold_offset_x + 2
             )
         return stdscr
@@ -275,7 +284,7 @@ class ModeClass:
         # O, I, T, L, J, S, Z
         for queue_counter in range(5):
             if len(self.__mino_list) > queue_counter:
-                self.draw_mino(
+                self.draw_queue_mino(
                     stdscr,
                     self.__mino_list[queue_counter],
                     self.__offset_y + 2 + queue_counter * 3,
@@ -325,6 +334,7 @@ class ModeClass:
         soft_drop_seconds: float = seconds / 20  # Soft drop is 20 times faster
         return max(0, int(soft_drop_seconds * TARGET_FPS))
 
+    # TODO: Implement SRS wall kick
     def rotate_mino(self, direction: str) -> None:
         """This will rotate the current mino."""
         if direction not in ["left", "right"]:
@@ -354,8 +364,10 @@ class ModeClass:
             )
             self.__soft_drop_counter = 0
 
-    def mino_touching_bottom(self) -> bool:
+    def mino_touching_bottom(self, position: tuple[int, int] | None = None) -> bool:
         """Return True if the current mino is touching the ground or a placed block below."""
+        if position is None:
+            position = self.__current_position
         if (
             self.__current_mino in MINO_DRAW_LOCATION
             and self.__current_rotation in MINO_DRAW_LOCATION[self.__current_mino]
@@ -363,8 +375,8 @@ class ModeClass:
             for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
                 self.__current_rotation
             ]:
-                y_pos = self.__current_position[0] + y_offset
-                x_pos = self.__current_position[1] + x_offset
+                y_pos = position[0] + y_offset
+                x_pos = position[1] + x_offset
                 if y_pos == 0 or self.__board[y_pos - 1][x_pos] != 0:
                     return True
         return False
@@ -395,16 +407,30 @@ class ModeClass:
         # 5: DONE: draw the blocks
 
         draw_board: list[list[int]] = deepcopy(self.__board)
+        y_pos: int = 0
+        x_pos: int = 0
 
         if (
             self.__current_mino in MINO_DRAW_LOCATION
             and self.__current_rotation in MINO_DRAW_LOCATION[self.__current_mino]
         ):
+            # Calculate and Draw Ghost Mino Position
+            ghost_position: tuple[int, int] = self.calculate_ghost_mino()
+            draw_board[ghost_position[0]][ghost_position[1]] = -1
             for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
                 self.__current_rotation
             ]:
-                y_pos: int = self.__current_position[0] + y_offset
-                x_pos: int = self.__current_position[1] + x_offset
+                y_pos = ghost_position[0] + y_offset
+                x_pos = ghost_position[1] + x_offset
+                if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                    draw_board[y_pos][x_pos] = -MINO_COLOR[self.__current_mino]
+
+            # Draw Current Mino
+            for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
+                self.__current_rotation
+            ]:
+                y_pos = self.__current_position[0] + y_offset
+                x_pos = self.__current_position[1] + x_offset
                 if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
                     draw_board[y_pos][x_pos] = MINO_COLOR[self.__current_mino]
 
@@ -415,7 +441,13 @@ class ModeClass:
         for y_counter, row in enumerate(visible_rows):
             # y_counter=0 is bottom, y_counter=20 is top of box
             for x_counter, cell in enumerate(row):
-                char: str = "██" if cell else ("  " if y_counter != 20 else "- ")
+                char: str = "  "
+                if draw_board[y_counter][x_counter] > 0:
+                    char = "██"
+                elif draw_board[y_counter][x_counter] < 0:
+                    char = "▒▒"
+                elif y_counter == 20:
+                    char = "- "
                 y: int = self.__offset_y + (max_rows - 1 - y_counter) - adjusted_height
                 x: int = self.__offset_x + x_counter * 2
                 if 0 <= y < self.__max_y and 0 <= x < self.__max_x - 1:
@@ -423,7 +455,7 @@ class ModeClass:
                         y,
                         x,
                         char,
-                        color_pair(cell) if cell else A_BOLD,
+                        abs(color_pair(cell)) if cell else A_BOLD,
                     )
 
         return stdscr
