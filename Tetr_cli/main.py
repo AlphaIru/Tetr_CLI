@@ -5,6 +5,7 @@
 from asyncio import sleep
 from pathlib import Path
 
+import curses
 from curses import (
     cbreak,
     COLOR_CYAN,  # I
@@ -13,6 +14,9 @@ from curses import (
     COLOR_RED,  # Z
     COLOR_YELLOW,  # O
     COLOR_BLUE,  # J
+    COLOR_WHITE,  # Light gray
+    COLOR_BLACK,  # Dark gray
+    # COLORS,
     curs_set,
     doupdate,
     initscr,
@@ -113,7 +117,7 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     debug_stats: DebugClass = DebugClass()
 
     mixer.init()
-    mixer.music.set_volume(0.25)
+    mixer.music.set_volume(0.05)
 
     sound_effect_dict: dict[str, Sound] = await load_sfx()
 
@@ -131,13 +135,25 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     current_bgm: str = ""
 
     use_default_colors()
-    init_pair(1, COLOR_YELLOW, -1)  # O
-    init_pair(2, COLOR_CYAN, -1)    # I
-    init_pair(3, COLOR_MAGENTA, -1)  # T
-    init_pair(4, 208, -1)  # L
-    init_pair(5, COLOR_BLUE, -1)     # J
-    init_pair(6, COLOR_GREEN, -1)    # S
-    init_pair(7, COLOR_RED, -1)      # Z
+
+    if curses.COLORS >= 256:
+        init_pair(1, COLOR_YELLOW, -1)  # O
+        init_pair(2, COLOR_CYAN, -1)    # I
+        init_pair(3, COLOR_MAGENTA, -1)  # T
+        init_pair(4, 208, -1)  # L
+        init_pair(5, COLOR_BLUE, -1)     # J
+        init_pair(6, COLOR_GREEN, -1)    # S
+        init_pair(7, COLOR_RED, -1)      # Z
+        init_pair(8, 244, -1)  # Garbage
+    else:
+        init_pair(1, COLOR_YELLOW, -1)  # O
+        init_pair(2, COLOR_CYAN, -1)    # I
+        init_pair(3, COLOR_MAGENTA, -1)  # T
+        init_pair(4, COLOR_YELLOW, COLOR_BLACK)  # L
+        init_pair(5, COLOR_BLUE, -1)     # J
+        init_pair(6, COLOR_GREEN, -1)    # S
+        init_pair(7, COLOR_RED, -1)      # Z
+        init_pair(8, COLOR_WHITE, COLOR_BLACK)  # Light gray on black
 
     while True:
         await sleep(FRAME_DURATION)

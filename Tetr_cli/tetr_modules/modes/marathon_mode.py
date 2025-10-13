@@ -4,6 +4,7 @@
 
 from copy import deepcopy
 from curses import window, A_BOLD, color_pair
+from math import pow
 from random import shuffle, seed, randint
 
 # from math import floor
@@ -57,6 +58,7 @@ DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
 TARGET_FPS: int = 30
 MINO_TYPES: set[str] = {"I", "O", "T", "S", "Z", "J", "L"}
 MINO_COLOR: dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
+MINO_ROTATIONS: list[str] = ["N", "E", "S", "W"]
 MINO_DRAW_DATA: dict[str, tuple[list[str], int]] = {
     "O": (["████    ", "████    "], 1),
     "I": (["████████", "        "], 2),
@@ -129,6 +131,7 @@ class ModeClass:
         self.__sound_action: dict[str, list[str]] = {"BGM": ["stop"], "SFX": []}
         self.__mode: str = "countdown"
 
+        # self.__board: list[list[int]] = self.generate_test_board()
         self.__board: list[list[int]] = [
             ([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)
         ]
@@ -141,12 +144,22 @@ class ModeClass:
         self.__current_rotation: str = "N"
         self.__current_position: tuple[int, int] = (0, 0)  # (y, x)
         self.__current_hold: str = ""
-        self.__keyinput_cooldown: dict[str, int] = {}
+        self.__keyinput_cooldown: set[str] = set()
         self.__lock_delay: int = 0
-        self.__fall_delay: int = 0
+        self.__fall_delay: int = self.get_fall_delay(1)
+        self.__level: int = 1
 
         self.__mino_list: list[str] = []
         self.mino_generation(initial=True)
+
+    def generate_test_board(self) -> list[list[int]]:
+        """This will generate a test board."""
+        test_board: list[list[int]] = [([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)]
+        for row in range(BOARD_HEIGHT):
+            for col in range(BOARD_WIDTH):
+                if row < 5 and col % 2 == 0:
+                    test_board[row][col] = 8
+        return test_board
 
     def pop_action(self) -> str:
         """This will return the action and reset it."""
@@ -294,18 +307,52 @@ class ModeClass:
 
         return stdscr
 
+    def get_fall_delay(self, level: int) -> int:
+        """This will return the fall delay in frame per second based on the level."""
+        seconds: float = pow((0.8 - ((level - 1) * 0.007)), (level - 1))
+        return max(0, int(seconds * TARGET_FPS))
+
+    def rotate_mino(self, direction: str) -> None:
+        """This will rotate the current mino."""
+        if direction not in ["left", "right"]:
+            return
+        if not self.__current_mino:
+            return
+
+        current_index: int = MINO_ROTATIONS.index(self.__current_rotation)
+        new_index: int = 0
+        if direction == "right":
+            new_index = (current_index + 1) % len(MINO_ROTATIONS)
+        elif direction == "left":
+            new_index = (current_index - 1) % len(MINO_ROTATIONS)
+        self.__current_rotation = MINO_ROTATIONS[new_index]
+
+    def is_mino_touching_bottom(self) -> bool:
+        """Return True if the current mino is touching the ground or a placed block below."""
+        if (
+            self.__current_mino in MINO_DRAW_LOCATION
+            and self.__current_rotation in MINO_DRAW_LOCATION[self.__current_mino]
+        ):
+            for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][self.__current_rotation]:
+                y_pos = self.__current_position[0] + y_offset
+                x_pos = self.__current_position[1] + x_offset
+                if (
+                    y_pos == 0
+                    or self.__board[y_pos - 1][x_pos] != 0
+                ):
+                    return True
+        return False
+
     def draw_mino_on_board(self, stdscr: window) -> window:
         """This will draw the current mino on the board."""
 
-        # 1: calculate the current mino's blocks positions
-        # 2: calculate the offset and rotation
+        # 1: DONE: calculate the current mino's blocks positions
+        # 2: DONE: calculate the offset and rotation
         # 3: calculate its ghost position
-        # 4: add that to the list of blocks to draw
-        # 5: draw the blocks
+        # 4: DONE: add that to the list of blocks to draw
+        # 5: DONE: draw the blocks
 
         draw_board: list[list[int]] = deepcopy(self.__board)
-
-        extra_height: int = 2
 
         if (
             self.__current_mino in MINO_DRAW_LOCATION
@@ -314,25 +361,29 @@ class ModeClass:
             for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
                 self.__current_rotation
             ]:
-                y_pos: int = self.__current_position[0] - y_offset  # Inverted y-axis
+                y_pos: int = self.__current_position[0] + y_offset
                 x_pos: int = self.__current_position[1] + x_offset
-                if (
-                    DRAW_BOARD_HEIGHT - extra_height
-                ) <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
                     draw_board[y_pos][x_pos] = MINO_COLOR[self.__current_mino]
 
-        for y_counter, row in enumerate(
-            draw_board[(BOARD_HEIGHT - (DRAW_BOARD_HEIGHT + extra_height)) :]
-        ):
-            for x_counter, cell in enumerate(row):
+        max_rows: int = min(self.__max_y, BOARD_HEIGHT)
+        adjusted_height: int = max_rows - DRAW_BOARD_HEIGHT
+        visible_rows = draw_board[0:max_rows]
 
-                # Special case for the top row to show the border better
-                stdscr.addstr(
-                    self.__offset_y + y_counter - extra_height,
-                    self.__offset_x + x_counter * 2,
-                    "██" if cell else "- " if y_counter == 1 else "  ",
-                    color_pair(cell) if cell else A_BOLD,  # A_BOLD for empty
-                )
+        for y_counter, row in enumerate(visible_rows):
+            # y_counter=0 is bottom, y_counter=20 is top of box
+            for x_counter, cell in enumerate(row):
+                char: str = "██" if cell else ("  " if y_counter != 20 else "- ")
+                y: int = self.__offset_y + (max_rows - 1 - y_counter) - adjusted_height
+                x: int = self.__offset_x + x_counter * 2
+                if 0 <= y < self.__max_y and 0 <= x < self.__max_x - 1:
+                    stdscr.addstr(
+                        y,
+                        x,
+                        char,
+                        color_pair(cell) if cell else A_BOLD,
+                    )
+
         return stdscr
 
     def countdown_mode(self, stdscr: window) -> None:
@@ -369,14 +420,50 @@ class ModeClass:
         shuffle(new_mino_list)
         self.__mino_list.extend(new_mino_list)
 
-    def play_mode(self, stdscr: window) -> window:
+    def check_keyinput_pressed(self, pressed_keys: set[str]) -> None:
+        """This will reset the keyinput cooldown."""
+        if not pressed_keys & {"z", "Z", "ctrl"}:
+            self.__keyinput_cooldown.discard("left")
+        if not pressed_keys & {"x", "X", "up"}:
+            self.__keyinput_cooldown.discard("right")
+
+    def play_mode(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will handle the play mode."""
         if len(self.__mino_list) <= 14:
             self.mino_generation()
         if not self.__current_mino:
             self.__current_mino = self.__mino_list.pop(0)
             self.__current_rotation = "N"
-            self.__current_position = (19, BOARD_WIDTH // 2 - 1)  # 19 is 20 - 1
+            self.__current_position = (21, BOARD_WIDTH // 2 - 1)  # 21 is 20 + 1
+            self.__fall_delay = self.get_fall_delay(self.__level)
+
+        if self.__fall_delay > 0:
+            self.__fall_delay -= 1
+        else:
+            if self.__current_position[0] < (BOARD_HEIGHT - 1):
+                self.__current_position = (
+                    self.__current_position[0] - 1,
+                    self.__current_position[1],
+                )
+            self.__fall_delay = self.get_fall_delay(self.__level)
+
+        if (
+            pressed_keys & {"z", "Z", "ctrl"}
+            and "left" not in self.__keyinput_cooldown
+        ):
+            self.rotate_mino("left")
+            self.__keyinput_cooldown.add("left")
+        elif (
+            pressed_keys & {"x", "X", "up"}
+            and "right" not in self.__keyinput_cooldown
+        ):
+            self.rotate_mino("right")
+            self.__keyinput_cooldown.add("right")
+
+        self.check_keyinput_pressed(pressed_keys)
+
+        # Check if the mino is touching at the bottom or another block
+        if self.__current_position:
 
         stdscr = self.draw_mino_on_board(stdscr)
         return stdscr
@@ -407,7 +494,7 @@ class ModeClass:
             self.countdown_mode(stdscr)
             return stdscr
 
-        stdscr = self.play_mode(stdscr)
+        stdscr = self.play_mode(stdscr, pressed_keys)
 
         if self.__mode == "play_music_wait":
             self.__countdown -= 1
