@@ -117,7 +117,7 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
     debug_stats: DebugClass = DebugClass()
 
     mixer.init()
-    mixer.music.set_volume(0.05)
+    mixer.music.set_volume(0.25)
 
     sound_effect_dict: dict[str, Sound] = await load_sfx()
 

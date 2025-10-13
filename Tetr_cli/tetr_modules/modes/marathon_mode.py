@@ -4,7 +4,7 @@
 
 from copy import deepcopy
 from curses import window, A_BOLD, color_pair
-from math import pow
+from functools import lru_cache
 from random import shuffle, seed, randint
 
 # from math import floor
@@ -60,9 +60,9 @@ MINO_TYPES: set[str] = {"I", "O", "T", "S", "Z", "J", "L"}
 MINO_COLOR: dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
 MINO_ROTATIONS: list[str] = ["N", "E", "S", "W"]
 MINO_DRAW_DATA: dict[str, tuple[list[str], int]] = {
-    "O": (["████    ", "████    "], 1),
+    "O": (["  ████  ", "  ████  "], 1),
     "I": (["████████", "        "], 2),
-    "T": (["██████  ", "  ██    "], 3),
+    "T": (["  ██    ", "██████  "], 3),
     "L": (["    ██  ", "██████  "], 4),
     "J": (["██      ", "██████  "], 5),
     "S": (["  ████  ", "████    "], 6),
@@ -145,9 +145,14 @@ class ModeClass:
         self.__current_position: tuple[int, int] = (0, 0)  # (y, x)
         self.__current_hold: str = ""
         self.__keyinput_cooldown: set[str] = set()
-        self.__lock_delay: int = 0
-        self.__fall_delay: int = self.get_fall_delay(1)
+        self.__lock_info: dict[str, int] = {
+            "lock_delay": int(0.5 * TARGET_FPS),
+            "lock_count": 15,
+            "lock_height": 21,
+        }
         self.__level: int = 1
+        self.__fall_delay: int = self.get_fall_delay(self.__level)
+        self.__soft_drop_counter: int = self.get_soft_drop_delay(self.__level)
 
         self.__mino_list: list[str] = []
         self.mino_generation(initial=True)
@@ -307,10 +312,18 @@ class ModeClass:
 
         return stdscr
 
+    @lru_cache(maxsize=4)
     def get_fall_delay(self, level: int) -> int:
         """This will return the fall delay in frame per second based on the level."""
         seconds: float = pow((0.8 - ((level - 1) * 0.007)), (level - 1))
         return max(0, int(seconds * TARGET_FPS))
+
+    @lru_cache(maxsize=4)
+    def get_soft_drop_delay(self, level: int) -> int:
+        """This will return the soft drop delay in frame per second based on the level."""
+        seconds: float = pow((0.8 - ((level - 1) * 0.007)), (level - 1))
+        soft_drop_seconds: float = seconds / 20  # Soft drop is 20 times faster
+        return max(0, int(soft_drop_seconds * TARGET_FPS))
 
     def rotate_mino(self, direction: str) -> None:
         """This will rotate the current mino."""
@@ -327,21 +340,50 @@ class ModeClass:
             new_index = (current_index - 1) % len(MINO_ROTATIONS)
         self.__current_rotation = MINO_ROTATIONS[new_index]
 
-    def is_mino_touching_bottom(self) -> bool:
+    def soft_drop(self) -> None:
+        """This will soft drop the current mino."""
+        self.__soft_drop_counter += 1
+        delay = self.get_soft_drop_delay(self.__level)
+        if (
+            self.__soft_drop_counter >= delay
+            and not self.mino_touching_bottom()
+        ):
+            self.__current_position = (
+                self.__current_position[0] - 1,
+                self.__current_position[1],
+            )
+            self.__soft_drop_counter = 0
+
+    def mino_touching_bottom(self) -> bool:
         """Return True if the current mino is touching the ground or a placed block below."""
         if (
             self.__current_mino in MINO_DRAW_LOCATION
             and self.__current_rotation in MINO_DRAW_LOCATION[self.__current_mino]
         ):
-            for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][self.__current_rotation]:
+            for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
+                self.__current_rotation
+            ]:
                 y_pos = self.__current_position[0] + y_offset
                 x_pos = self.__current_position[1] + x_offset
-                if (
-                    y_pos == 0
-                    or self.__board[y_pos - 1][x_pos] != 0
-                ):
+                if y_pos == 0 or self.__board[y_pos - 1][x_pos] != 0:
                     return True
         return False
+
+    def place_current_mino(self) -> None:
+        """This will place the current mino on the board."""
+        if (
+            self.__current_mino in MINO_DRAW_LOCATION
+            and self.__current_rotation in MINO_DRAW_LOCATION[self.__current_mino]
+        ):
+            for y_offset, x_offset in MINO_DRAW_LOCATION[self.__current_mino][
+                self.__current_rotation
+            ]:
+                y_pos = self.__current_position[0] + y_offset
+                x_pos = self.__current_position[1] + x_offset
+                if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                    self.__board[y_pos][x_pos] = MINO_COLOR[self.__current_mino]
+
+        self.__current_mino = ""
 
     def draw_mino_on_board(self, stdscr: window) -> window:
         """This will draw the current mino on the board."""
@@ -436,34 +478,54 @@ class ModeClass:
             self.__current_rotation = "N"
             self.__current_position = (21, BOARD_WIDTH // 2 - 1)  # 21 is 20 + 1
             self.__fall_delay = self.get_fall_delay(self.__level)
+            self.__soft_drop_counter = 0
+            self.__lock_info = {
+                "lock_delay": int(0.5 * TARGET_FPS),
+                "lock_count": 15,
+                "lock_height": self.__current_position[0],
+            }
+
+        mino_touching_bottom: bool = self.mino_touching_bottom()
 
         if self.__fall_delay > 0:
             self.__fall_delay -= 1
         else:
-            if self.__current_position[0] < (BOARD_HEIGHT - 1):
+            if (
+                self.__current_position[0] < (BOARD_HEIGHT - 1)
+                and not mino_touching_bottom
+            ):
                 self.__current_position = (
                     self.__current_position[0] - 1,
                     self.__current_position[1],
                 )
             self.__fall_delay = self.get_fall_delay(self.__level)
 
-        if (
-            pressed_keys & {"z", "Z", "ctrl"}
-            and "left" not in self.__keyinput_cooldown
-        ):
+        if pressed_keys & {"z", "Z", "ctrl"} and "left" not in self.__keyinput_cooldown:
             self.rotate_mino("left")
             self.__keyinput_cooldown.add("left")
         elif (
-            pressed_keys & {"x", "X", "up"}
-            and "right" not in self.__keyinput_cooldown
+            pressed_keys & {"x", "X", "up"} and "right" not in self.__keyinput_cooldown
         ):
             self.rotate_mino("right")
             self.__keyinput_cooldown.add("right")
-
-        self.check_keyinput_pressed(pressed_keys)
+        if pressed_keys & {"down"}:
+            self.soft_drop()
 
         # Check if the mino is touching at the bottom or another block
-        if self.__current_position:
+        if mino_touching_bottom:
+            if self.__current_position[0] < self.__lock_info["lock_height"]:
+                self.__lock_info["lock_height"] = self.__current_position[0]
+                self.__lock_info["lock_count"] = 15
+            if pressed_keys and not pressed_keys & {"down", "space"}:
+                self.__lock_info["lock_count"] -= 1
+                self.__lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+            else:
+                if self.__lock_info["lock_delay"] > 0:
+                    self.__lock_info["lock_delay"] -= 1
+                else:
+                    self.place_current_mino()
+
+        self.check_keyinput_pressed(pressed_keys)
 
         stdscr = self.draw_mino_on_board(stdscr)
         return stdscr
