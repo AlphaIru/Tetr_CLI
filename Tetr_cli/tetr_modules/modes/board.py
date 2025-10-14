@@ -101,27 +101,27 @@ class Board:
 
         return stdscr
 
-    def ghost_mino_touching_bottom(
-        self,
-        positions: list[tuple[int, int]],
-    ) -> bool:
-        """Return True if the ghost mino is touching the ground or a placed block below."""
-        for y_pos, x_pos in positions:
-            if (
-                y_pos == 0
-                or self.is_cell_occupied((y_pos - 1, x_pos))
-            ):
-                return True
-        return False
+    # def ghost_mino_touching_bottom(
+    #     self,
+    #     positions: list[tuple[int, int]],
+    # ) -> bool:
+    #     """Return True if the ghost mino is touching the ground or a placed block below."""
+    #     for y_pos, x_pos in positions:
+    #         if (
+    #             y_pos == 0
+    #             or self.is_cell_occupied((y_pos - 1, x_pos))
+    #         ):
+    #             return True
+    #     return False
 
-    def get_ghost_position(self, current_mino: Mino) -> tuple[int, int]:
-        """This will return the ghost position."""
-        positions: list[tuple[int, int]] = current_mino.get_block_positions()
-        counter: int = 0
-        while not self.ghost_mino_touching_bottom(positions):
-            positions = [(pos[0] - 1, pos[1]) for pos in positions]
-            counter += 1
-        return (current_mino.position[0] - counter, current_mino.position[1])
+    # def get_ghost_position(self, current_mino: Mino) -> tuple[int, int]:
+    #     """This will return the ghost position."""
+    #     positions: list[tuple[int, int]] = current_mino.get_block_positions()
+    #     counter: int = 0
+    #     while not self.ghost_mino_touching_bottom(positions):
+    #         positions = [(pos[0] - 1, pos[1]) for pos in positions]
+    #         counter += 1
+    #     return (current_mino.position[0] - counter, current_mino.position[1])
 
     def draw_minos_on_board(
         self,
@@ -129,15 +129,13 @@ class Board:
         offset: tuple[int, int],  # (offset_y, offset_x)
         max_yx: tuple[int, int],  # (max_y, max_x)
         current_mino: Optional["Mino"] = None,  # type: ignore
+        ghost_position: tuple[int, int] = (-1, -1),
     ) -> window:
         """Draw the minos on the board."""
 
         draw_board: list[list[int]] = deepcopy(self.__board)
 
         if current_mino:
-            ghost_position: tuple[int, int] = self.get_ghost_position(
-                current_mino
-            )
             # Draw ghost Mino
             for y_offset, x_offset in MINO_DRAW_LOCATION[current_mino.type][
                 current_mino.orientation

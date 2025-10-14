@@ -74,9 +74,26 @@ class ModeClass:
         self.mino_list: list[str] = []
         self.mino_generation(initial=True)
 
+        # Optimization for drawing
+        self._last_drawn_queue: list[str] = []
+        self._last_drawn_hold: Optional[str] = "_init"  # Force initial draw
+
+        # Optimization for collision detection
+        self._last_bottom_check: tuple[list[tuple[int, int]], str, str] = ([], "", "")
+        self._last_bottom_result: bool = False
+        self._last_side_check: tuple[tuple[int, int], str, str, str] = (
+            (-1, -1),
+            "",
+            "",
+            "",
+        )
+        self._last_side_result: bool = False
+        self._last_ghost_check: tuple[tuple[int, int], str, str] = ((-1, -1), "", "")
+        self._last_ghost_result: tuple[int, int] = (-1, -1)
+
     def pop_action(self) -> str:
         """This will return the action and reset it."""
-        action: str = deepcopy(self.action)
+        action: str = copy(self.action)
         self.action = ""
         return action
 
@@ -99,21 +116,40 @@ class ModeClass:
         shuffle(new_mino_list)
         self.mino_list.extend(new_mino_list)
 
-    def reset_mino(self) -> None:
+    def reset_mino(
+        self, current_mino_check: bool = False, hold_used_check: bool = False
+    ) -> None:
         """This will reset for to spawn the next mino."""
-        self.current_mino = None
-        self.hold_used = False
+        self.current_mino = None if not current_mino_check else self.current_mino
+        self.hold_used = hold_used_check
+        self._last_bottom_check = ([], "", "")
+        self._last_bottom_result = False
+        self._last_side_check = ((-1, -1), "", "", "")
+        self._last_side_result = False
+        self._last_ghost_check = ((-1, -1), "", "")
+        self._last_ghost_result = (-1, -1)
 
     def mino_touching_bottom(
         self,
-        mino: Optional[Mino] = None,
+        mino: Optional[Mino],
     ) -> bool:
         """Return True if the current mino is touching the ground or a placed block below."""
         if mino is None:
-            mino = self.current_mino
-        for y_pos, x_pos in mino.get_block_positions():  # type: ignore
+            return False
+        key: tuple[list[tuple[int, int]], str, str] = (
+            mino.get_block_positions(),
+            mino.orientation,
+            mino.type,
+        )
+        if key == self._last_bottom_check:
+            return self._last_bottom_result
+        for y_pos, x_pos in mino.get_block_positions():
             if y_pos == 0 or self.board.is_cell_occupied((y_pos - 1, x_pos)):
+                self._last_bottom_check = key
+                self._last_bottom_result = True
                 return True
+        self._last_bottom_check = key
+        self._last_bottom_result = False
         return False
 
     def mino_touching_side(
@@ -123,18 +159,51 @@ class ModeClass:
     ) -> bool:
         """Return True if the current mino is touching the side wall or a placed block beside."""
         if mino is None:
-            mino = self.current_mino
+            return False
+        key: tuple[tuple[int, int], str, str, str] = (
+            mino.position,
+            mino.orientation,
+            mino.type,
+            direction,
+        )
+        if key == self._last_side_check:
+            return self._last_side_result
         if direction == "left":
-            for y_pos, x_pos in mino.get_block_positions():  # type: ignore
+            for y_pos, x_pos in mino.get_block_positions():
                 if x_pos == 0 or self.board.is_cell_occupied((y_pos, x_pos - 1)):
+                    self._last_side_check = key
+                    self._last_side_result = True
                     return True
         elif direction == "right":
-            for y_pos, x_pos in mino.get_block_positions():  # type: ignore
+            for y_pos, x_pos in mino.get_block_positions():
                 if x_pos == BOARD_WIDTH - 1 or self.board.is_cell_occupied(
                     (y_pos, x_pos + 1)
                 ):
+                    self._last_side_check = key
+                    self._last_side_result = True
                     return True
         return False
+
+    def ghost_mino_position(
+        self,
+        current_mino: Mino,
+    ) -> tuple[int, int]:
+        """This will return the ghost mino position."""
+        key: tuple[tuple[int, int], str, str] = (
+            current_mino.position,
+            current_mino.orientation,
+            current_mino.type,
+        )
+        if key == self._last_ghost_check and self._last_ghost_result is not None:
+            return self._last_ghost_result
+        # Otherwise, calculate as usual
+        ghost_mino: Mino = copy(current_mino)
+        while not self.mino_touching_bottom(ghost_mino):
+            ghost_mino.position = (ghost_mino.position[0] - 1, ghost_mino.position[1])
+        result: tuple[int, int] = ghost_mino.position
+        self._last_ghost_check = key
+        self._last_ghost_result = result
+        return result
 
     def check_keyinput_pressed(
         self,
@@ -189,11 +258,10 @@ class ModeClass:
                         "lock_count": 15,
                         "lock_height": 21,
                     }
-                    self.hold_used = True
+                    self.reset_mino(current_mino_check=True, hold_used_check=True)
                 else:
                     self.current_hold = copy(self.current_mino)
-                    self.current_mino = None
-                    self.hold_used = True
+                    self.reset_mino(hold_used_check=True)
                     self.keyinput_cooldown.add("hold")
         if not pressed_keys & {"z", "Z", "ctrl"}:
             self.keyinput_cooldown.discard("ccw")
@@ -210,7 +278,7 @@ class ModeClass:
             new_mino_type: str = self.mino_list.pop(0)
             self.current_mino = Mino(mino_type=new_mino_type, level=self.level)
 
-        mino_touching_bottom: bool = self.mino_touching_bottom()
+        mino_touching_bottom: bool = self.mino_touching_bottom(self.current_mino)
 
         self.check_keyinput_pressed(pressed_keys, mino_touching_bottom)
         if not self.current_mino:
@@ -219,6 +287,7 @@ class ModeClass:
                 offset=self.offset,
                 max_yx=self.max_yx,
                 current_mino=self.current_mino,
+                ghost_position=(-1, -1),  # Placeholder value
             )
             return stdscr
 
@@ -255,6 +324,7 @@ class ModeClass:
                 offset=self.offset,
                 max_yx=self.max_yx,
                 current_mino=self.current_mino,
+                ghost_position=(-1, -1),  # Placeholder value
             )
             return stdscr
 
@@ -276,6 +346,7 @@ class ModeClass:
             offset=self.offset,
             max_yx=self.max_yx,
             current_mino=self.current_mino,
+            ghost_position=self.ghost_mino_position(self.current_mino),
         )
 
         return stdscr
@@ -316,20 +387,30 @@ class ModeClass:
         if check_max_yx[0] < MIN_Y or check_max_yx[1] < MIN_X:
             return stdscr
 
+        queue_to_draw: list[str] = self.mino_list[0:5]
+        hold_to_draw: Optional[str] = (
+            self.current_hold.type if self.current_hold else None
+        )
+
         stdscr = self.board.draw_blank_board(stdscr, self.offset)
-        stdscr = self.board.draw_queue(
-            stdscr,
-            offset=self.offset,
-            max_yx=self.max_yx,
-            queue_list=self.mino_list[0:5],
-        )
-        stdscr = self.board.draw_hold(
-            stdscr,
-            offset=self.offset,
-            max_yx=self.max_yx,
-            hold_used=self.hold_used,
-            hold_mino=self.current_hold,
-        )
+        if queue_to_draw != self._last_drawn_queue:
+            stdscr = self.board.draw_queue(
+                stdscr,
+                offset=self.offset,
+                max_yx=self.max_yx,
+                queue_list=self.mino_list[0:5],
+            )
+            self._last_drawn_queue = queue_to_draw.copy()
+
+        if hold_to_draw != self._last_drawn_hold:
+            stdscr = self.board.draw_hold(
+                stdscr,
+                offset=self.offset,
+                max_yx=self.max_yx,
+                hold_used=self.hold_used,
+                hold_mino=self.current_hold,
+            )
+            self._last_drawn_hold = hold_to_draw
 
         if "esc" in pressed_keys:
             self.action = "Go_Back"
