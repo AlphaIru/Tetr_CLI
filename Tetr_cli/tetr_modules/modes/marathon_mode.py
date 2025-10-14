@@ -301,6 +301,104 @@ class Board:
                             )
         return stdscr
 
+    def draw_hold(
+        self,
+        stdscr: window,
+        offset: tuple[int, int],  # (offset_y, offset_x)
+        max_yx: tuple[int, int],  # (max_y, max_x)
+        hold_used: bool,
+        hold_mino: Optional["Mino"] = None
+    ) -> window:
+        """Draw the hold mino box."""
+
+        horizontal_length: int = 12
+        vertical_length: int = 6
+        hold_offset: tuple[int, int] = (offset[0], offset[1] - horizontal_length - 3)
+        horizontal_line: str = "+" + "-" * horizontal_length
+
+        # Draw top
+        stdscr.addstr(
+            hold_offset[0] - 1,
+            hold_offset[1],
+            horizontal_line,
+            A_BOLD,
+        )
+        stdscr.addstr(
+            hold_offset[0],
+            hold_offset[1] + 2,
+            "Hold",
+            A_BOLD,
+        )
+        stdscr.addstr(
+            hold_offset[0] + 1,
+            hold_offset[1],
+            horizontal_line,
+            A_BOLD,
+        )
+        # Draw side
+        for counter in range(vertical_length):
+            stdscr.addstr(
+                hold_offset[0] + counter,
+                hold_offset[1],
+                "|",
+                A_BOLD,
+            )
+        # Draw bottom
+        stdscr.addstr(
+            hold_offset[0] + vertical_length,
+            hold_offset[1],
+            horizontal_line,
+            A_BOLD,
+        )
+
+        if not hold_mino:
+            return stdscr
+
+        mino_type: str = hold_mino.type
+        if mino_type not in MINO_DRAW_LOCATION:
+            return stdscr
+        mino_char: str = "██"
+        if hold_used:
+            mino_char = "▒▒"
+
+        mino_height: int = 2
+        mino_width: int = 4
+        mino_offset: tuple[int, int] = (hold_offset[0] + 3, hold_offset[1] + 5)
+        orientation: str = "N"
+
+        # Clear the hold area before drawing (prevents leftover blocks)
+        # for y_offset in range(mino_height):  # max mino height
+        #     # max mino width (4 blocks * 2 chars + 2 for borders)
+        #     for x_offset in range(mino_width * 2 + 2):
+        #         pos = (mino_offset[0] + y_offset, mino_offset[1] + x_offset)
+        #         if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
+        #             stdscr.addstr(pos[0], pos[1], "  ", A_BOLD)
+
+        for y in range(mino_height):
+            for x in range(-2, mino_width * 2):
+                clear_y = mino_offset[0] + y
+                clear_x = mino_offset[1] + x
+                if 0 <= clear_y < max_yx[0] and 0 <= clear_x < max_yx[1] - 1:
+                    stdscr.addstr(clear_y, clear_x, " ", A_BOLD)
+
+        # Draw the hold mino using block positions
+        for y_offset, x_offset in MINO_DRAW_LOCATION[mino_type][orientation]:
+            pos = (
+                mino_offset[0] + (mino_height - 1 - y_offset),
+                mino_offset[1] + x_offset * 2,
+                # mino_offset[0] + (mino_height - 1 - y_offset),
+                # mino_offset[1] + x_offset * 2,
+            )
+            if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
+                stdscr.addstr(
+                    pos[0],
+                    pos[1],
+                    mino_char,
+                    color_pair(MINO_COLOR.get(mino_type, 0)),
+                )
+
+        return stdscr
+
 
 class Mino:
     """This will handle the mino."""
@@ -333,6 +431,12 @@ class Mino:
     def orientation(self) -> str:
         """This will return the mino orientation."""
         return self.__orientation
+
+    @orientation.setter
+    def orientation(self, value: str) -> None:
+        """This will set the mino orientation."""
+        if value in MINO_ORIENTATIONS:
+            self.__orientation = value
 
     @property
     def position(self) -> tuple[int, int]:
@@ -488,7 +592,10 @@ class ModeClass:
 
         self.current_mino: Optional[Mino] = None
         self.ghost_mino: Optional[Mino] = None
-        self.current_hold: str = ""
+
+        self.current_hold: Optional[Mino] = None
+        self.hold_used: bool = False
+
         self.keyinput_cooldown: set[str] = set()
         # self.lock_info: dict[str, int] = {
         #     "lock_delay": int(0.5 * TARGET_FPS),
@@ -584,7 +691,10 @@ class ModeClass:
         """This will check the keyinput pressed."""
 
         if self.current_mino:
-            if pressed_keys & {"z", "Z", "ctrl"} and "ccw" not in self.keyinput_cooldown:
+            if (
+                pressed_keys & {"z", "Z", "ctrl"}
+                and "ccw" not in self.keyinput_cooldown
+            ):
                 self.current_mino.rotate("left")
                 self.keyinput_cooldown.add("ccw")
             if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
@@ -606,7 +716,31 @@ class ModeClass:
             if pressed_keys & {"down"}:
                 if not mino_touching_bottom:
                     self.current_mino.soft_drop(self.level)
-
+                    self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+            if (
+                pressed_keys & {"c", "C", "shift"}
+                and not self.hold_used
+            ):
+                if self.current_hold:
+                    temp: Mino = deepcopy(self.current_hold)
+                    self.current_hold = deepcopy(self.current_mino)
+                    self.current_mino = temp
+                    self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
+                    self.current_mino.orientation = "N"
+                    self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
+                        self.level
+                    )
+                    self.current_mino.lock_info = {
+                        "lock_delay": int(0.5 * TARGET_FPS),
+                        "lock_count": 15,
+                        "lock_height": 21,
+                    }
+                    self.hold_used = True
+                else:
+                    self.current_hold = deepcopy(self.current_mino)
+                    self.current_mino = None
+                    self.hold_used = True
+                    self.keyinput_cooldown.add("hold")
         if not pressed_keys & {"z", "Z", "ctrl"}:
             self.keyinput_cooldown.discard("ccw")
         if not pressed_keys & {"x", "X", "up"}:
@@ -622,20 +756,16 @@ class ModeClass:
 
         mino_touching_bottom: bool = self.mino_touching_bottom()
 
-        if self.current_mino.fall_delay > 0:
-            self.current_mino.fall_delay -= 1
-        else:
-            if not mino_touching_bottom:
-                self.current_mino.move_down()
-            self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                self.level
-            )
-
         self.check_keyinput_pressed(pressed_keys, mino_touching_bottom)
         if mino_touching_bottom:
             # print(self.current_mino.type, self.current_mino.lock_info)
-            if self.current_mino.position[0] < self.current_mino.lock_info["lock_height"]:
-                self.current_mino.lock_info["lock_height"] = self.current_mino.position[0]
+            if (
+                self.current_mino.position[0]
+                < self.current_mino.lock_info["lock_height"]
+            ):
+                self.current_mino.lock_info["lock_height"] = self.current_mino.position[
+                    0
+                ]
                 self.current_mino.lock_info["lock_count"] = 15
             elif (
                 pressed_keys
@@ -652,9 +782,18 @@ class ModeClass:
                     self.current_mino.orientation,
                     self.current_mino.position,
                 )
+                self.hold_used = False
                 self.current_mino = None
 
-        self.check_keyinput_pressed(pressed_keys, mino_touching_bottom)
+        if self.current_mino:
+            if self.current_mino.fall_delay > 0:
+                self.current_mino.fall_delay -= 1
+            else:
+                if not mino_touching_bottom and not pressed_keys & {"down", "space"}:
+                    self.current_mino.move_down()
+                self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
+                    self.level
+                )
 
         stdscr = self.board.draw_minos_on_board(
             stdscr, self.offset, self.max_yx, self.current_mino
@@ -704,6 +843,13 @@ class ModeClass:
             offset=self.offset,
             max_yx=self.max_yx,
             queue_list=self.mino_list[0:5],
+        )
+        stdscr = self.board.draw_hold(
+            stdscr,
+            offset=self.offset,
+            max_yx=self.max_yx,
+            hold_used=self.hold_used,
+            hold_mino=self.current_hold
         )
 
         if "esc" in pressed_keys:
