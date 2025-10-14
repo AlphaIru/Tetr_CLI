@@ -28,7 +28,7 @@ ARR: int = int(0.01 * TARGET_FPS)
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
 DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
 
-MINO_TYPES: set[str] = {"I", "O", "T", "S", "Z", "J", "L"}
+MINO_TYPES: set[str] = {"O", "I", "T", "L", "J", "S", "Z"}
 MINO_COLOR: dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
 MINO_ORIENTATIONS: list[str] = ["N", "E", "S", "W"]
 
@@ -45,8 +45,8 @@ MINO_DRAW_LOCATION: dict[str, dict[str, list[tuple[int, int]]]] = {
     },
     "I": {
         "N": [(0, 0), (0, -1), (0, 1), (0, 2)],
-        "S": [(0, 0), (0, -1), (0, 1), (0, 2)],
-        "E": [(0, 0), (-1, 0), (1, 0), (2, 0)],
+        "S": [(-1, 0), (-1, -1), (-1, 1), (-1, 2)],
+        "E": [(1, 1), (0, 1), (-1, 1), (-2, 1)],
         "W": [(0, 0), (1, 0), (-1, 0), (-2, 0)],
     },
     "T": {

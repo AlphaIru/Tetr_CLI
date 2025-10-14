@@ -101,28 +101,6 @@ class Board:
 
         return stdscr
 
-    # def ghost_mino_touching_bottom(
-    #     self,
-    #     positions: list[tuple[int, int]],
-    # ) -> bool:
-    #     """Return True if the ghost mino is touching the ground or a placed block below."""
-    #     for y_pos, x_pos in positions:
-    #         if (
-    #             y_pos == 0
-    #             or self.is_cell_occupied((y_pos - 1, x_pos))
-    #         ):
-    #             return True
-    #     return False
-
-    # def get_ghost_position(self, current_mino: Mino) -> tuple[int, int]:
-    #     """This will return the ghost position."""
-    #     positions: list[tuple[int, int]] = current_mino.get_block_positions()
-    #     counter: int = 0
-    #     while not self.ghost_mino_touching_bottom(positions):
-    #         positions = [(pos[0] - 1, pos[1]) for pos in positions]
-    #         counter += 1
-    #     return (current_mino.position[0] - counter, current_mino.position[1])
-
     def draw_minos_on_board(
         self,
         stdscr: window,
@@ -144,21 +122,23 @@ class Board:
                 x_pos = ghost_position[1] + x_offset
                 if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
                     if draw_board[y_pos][x_pos] == 0:
-                        draw_board[y_pos][x_pos] = -MINO_COLOR[current_mino.type]  # Ghost block
+                        draw_board[y_pos][x_pos] = -MINO_COLOR[
+                            current_mino.type
+                        ]  # Ghost block
 
         # Draw current Mino
         if current_mino:
-            if (
-                current_mino.type in MINO_DRAW_LOCATION
-                and current_mino.orientation in MINO_DRAW_LOCATION[current_mino.type]
-            ):
-                for y_offset, x_offset in MINO_DRAW_LOCATION[current_mino.type][
-                    current_mino.orientation
-                ]:
-                    y_pos = current_mino.position[0] + y_offset
-                    x_pos = current_mino.position[1] + x_offset
-                    if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
-                        draw_board[y_pos][x_pos] = MINO_COLOR[current_mino.type]
+            for y_offset, x_offset in MINO_DRAW_LOCATION[current_mino.type][
+                current_mino.orientation
+            ]:
+                y_pos = current_mino.position[0] + y_offset
+                x_pos = current_mino.position[1] + x_offset
+                if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                    draw_board[y_pos][x_pos] = MINO_COLOR[current_mino.type]
+            # Debug: Mark the pivot
+            # draw_board[current_mino.position[0]][current_mino.position[1]] = (
+            #     MINO_COLOR[current_mino.type] * 10
+            # )
 
         # Draw cells
         max_rows: int = min(max_yx[0], BOARD_HEIGHT)
@@ -171,6 +151,8 @@ class Board:
                 char: str = "  "
                 if visible_rows[y_counter][x_counter] > 0:
                     char = "██"
+                    # Debug for marking pivot
+                    # char = "██" if visible_rows[y_counter][x_counter] < 10 else "●●"
                 elif visible_rows[y_counter][x_counter] < 0:
                     char = "▒▒"
                 elif y_counter == 20:
