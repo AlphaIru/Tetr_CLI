@@ -310,10 +310,15 @@ class Mino:
         self.__type: str = mino_type
         self.__orientation: str = "N"
         # 21st row at the center column
-        self.__position: tuple[int, int] = (21, BOARD_WIDTH // 2 - 1)  # (y, x  )
+        self.__position: tuple[int, int] = (21, BOARD_WIDTH // 2 - 1)  # (y, x)
         self.__soft_drop_counter: int = 0
+
+        self.__auto_repeat_delay: int = int(0.3 * TARGET_FPS)
+        self.__auto_repeat_rate: int = int(0.05 * TARGET_FPS)
+        self.__last_sideways_direction: str = ""
+
         self.__fall_delay: int = self.reset_fall_delay(level)
-        self.lock_info: dict[str, int] = {
+        self.__lock_info: dict[str, int] = {
             "lock_delay": int(0.5 * TARGET_FPS),
             "lock_count": 15,
             "lock_height": 21,
@@ -338,6 +343,37 @@ class Mino:
     def position(self, value: tuple[int, int]) -> None:
         """This will set the mino position."""
         self.__position = value
+
+    @property
+    def lock_info(self) -> dict[str, int]:
+        """This will return the lock info."""
+        return self.__lock_info
+
+    @lock_info.setter
+    def lock_info(self, value: dict[str, int]) -> None:
+        """This will set the lock info."""
+        self.__lock_info = value
+
+    @property
+    def auto_repeat_delay(self) -> int:
+        """This will return the auto repeat delay."""
+        return self.__auto_repeat_delay
+
+    @auto_repeat_delay.setter
+    def auto_repeat_delay(self, value: int) -> None:
+        """This will set the auto repeat delay."""
+        self.__auto_repeat_delay = max(0, value)
+
+    @property
+    def last_sideways_direction(self) -> str:
+        """This will return the last sideways direction."""
+        return self.__last_sideways_direction
+
+    @last_sideways_direction.setter
+    def last_sideways_direction(self, value: str) -> None:
+        """This will set the last sideways direction."""
+        if value in ["left", "right", ""]:
+            self.__last_sideways_direction = value
 
     def get_block_positions(self) -> list[tuple[int, int]]:
         """This will return the block positions of the mino."""
@@ -366,6 +402,32 @@ class Mino:
         elif direction == "left":
             new_index = (current_index - 1) % len(MINO_ORIENTATIONS)
         self.__orientation = MINO_ORIENTATIONS[new_index]
+
+    def move_sideways(self, direction: str) -> None:
+        """This will move the current mino sideways."""
+        if direction == "left":
+            if self.__last_sideways_direction != "left":
+                self.__last_sideways_direction = "left"
+                self.__position = (self.__position[0], self.__position[1] - 1)
+                return
+            if self.__auto_repeat_delay > 0:
+                self.__auto_repeat_delay -= 1
+            elif self.__auto_repeat_rate > 0:
+                self.__auto_repeat_rate -= 1
+            else:
+                self.__position = (self.__position[0], self.__position[1] - 1)
+                self.__auto_repeat_rate = int(0.05 * TARGET_FPS)
+        elif direction == "right":
+            if self.__last_sideways_direction != "right":
+                self.__last_sideways_direction = "right"
+                self.__position = (self.__position[0], self.__position[1] + 1)
+            if self.__auto_repeat_delay > 0:
+                self.__auto_repeat_delay -= 1
+            elif self.__auto_repeat_rate > 0:
+                self.__auto_repeat_rate -= 1
+            else:
+                self.__position = (self.__position[0], self.__position[1] + 1)
+                self.__auto_repeat_rate = int(0.05 * TARGET_FPS)
 
     def move_down(self) -> None:
         """This will move the current mino down."""
@@ -475,6 +537,26 @@ class ModeClass:
                 return True
         return False
 
+    def mino_touching_side(
+        self,
+        direction: str,
+        mino: Optional[Mino] = None,
+    ) -> bool:
+        """Return True if the current mino is touching the side wall or a placed block beside."""
+        if mino is None:
+            mino = self.current_mino
+        if direction == "left":
+            for y_pos, x_pos in mino.get_block_positions():  # type: ignore
+                if x_pos == 0 or self.board.is_cell_occupied((y_pos, x_pos - 1)):
+                    return True
+        elif direction == "right":
+            for y_pos, x_pos in mino.get_block_positions():  # type: ignore
+                if x_pos == BOARD_WIDTH - 1 or self.board.is_cell_occupied(
+                    (y_pos, x_pos + 1)
+                ):
+                    return True
+        return False
+
     def calculate_ghost_mino(self) -> Optional[Mino]:
         """Return a ghost mino at the lowest possible position."""
         if self.current_mino is None:
@@ -494,12 +576,41 @@ class ModeClass:
         ghost.position = (ghost.position[0] - max_drop, ghost.position[1])
         return ghost
 
-    def check_keyinput_pressed(self, pressed_keys):
+    def check_keyinput_pressed(
+        self,
+        pressed_keys,
+        mino_touching_bottom: bool,
+    ):
         """This will check the keyinput pressed."""
+
+        if self.current_mino:
+            if pressed_keys & {"z", "Z", "ctrl"} and "ccw" not in self.keyinput_cooldown:
+                self.current_mino.rotate("left")
+                self.keyinput_cooldown.add("ccw")
+            if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
+                self.current_mino.rotate("right")
+                self.keyinput_cooldown.add("cw")
+            if (
+                pressed_keys & {"left", "right"}
+                and {"left", "right"} not in pressed_keys
+            ):
+                if pressed_keys & {"left"}:
+                    if not self.mino_touching_side("left"):
+                        self.current_mino.move_sideways("left")
+                if pressed_keys & {"right"}:
+                    if not self.mino_touching_side("right"):
+                        self.current_mino.move_sideways("right")
+            else:
+                self.current_mino.auto_repeat_delay = int(0.3 * TARGET_FPS)
+                self.current_mino.last_sideways_direction = ""
+            if pressed_keys & {"down"}:
+                if not mino_touching_bottom:
+                    self.current_mino.soft_drop(self.level)
+
         if not pressed_keys & {"z", "Z", "ctrl"}:
-            self.keyinput_cooldown.discard("left")
+            self.keyinput_cooldown.discard("ccw")
         if not pressed_keys & {"x", "X", "up"}:
-            self.keyinput_cooldown.discard("right")
+            self.keyinput_cooldown.discard("cw")
 
     def play_mode(self, stdscr: window, pressed_keys: set[str]) -> window:
         """This will play the mode."""
@@ -520,36 +631,30 @@ class ModeClass:
                 self.level
             )
 
-        # Checks Pressed Keys
-        if pressed_keys & {"z", "Z", "ctrl"} and "left" not in self.keyinput_cooldown:
-            self.current_mino.rotate("left")
-            self.keyinput_cooldown.add("left")
-        elif pressed_keys & {"x", "X", "up"} and "right" not in self.keyinput_cooldown:
-            self.current_mino.rotate("right")
-            self.keyinput_cooldown.add("right")
-        if pressed_keys & {"down"}:
-            if not mino_touching_bottom:
-                self.current_mino.soft_drop(self.level)
-
+        self.check_keyinput_pressed(pressed_keys, mino_touching_bottom)
         if mino_touching_bottom:
-            # if self.__current_position[0] < self.__lock_info["lock_height"]:
+            # print(self.current_mino.type, self.current_mino.lock_info)
             if self.current_mino.position[0] < self.current_mino.lock_info["lock_height"]:
                 self.current_mino.lock_info["lock_height"] = self.current_mino.position[0]
                 self.current_mino.lock_info["lock_count"] = 15
-            if pressed_keys and not pressed_keys & {"down", "space"}:
+            elif (
+                pressed_keys
+                and not pressed_keys & {"down", "space"}
+                and self.current_mino.lock_info["lock_count"] > 0
+            ):
                 self.current_mino.lock_info["lock_count"] -= 1
                 self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+            elif self.current_mino.lock_info["lock_delay"] > 0:
+                self.current_mino.lock_info["lock_delay"] -= 1
             else:
-                if self.current_mino.lock_info["lock_delay"] > 0:
-                    self.current_mino.lock_info["lock_delay"] -= 1
-                else:
-                    self.board.place_mino(
-                        self.current_mino.type,
-                        self.current_mino.orientation,
-                        self.current_mino.position,
-                    )
+                self.board.place_mino(
+                    self.current_mino.type,
+                    self.current_mino.orientation,
+                    self.current_mino.position,
+                )
+                self.current_mino = None
 
-        self.check_keyinput_pressed(pressed_keys)
+        self.check_keyinput_pressed(pressed_keys, mino_touching_bottom)
 
         stdscr = self.board.draw_minos_on_board(
             stdscr, self.offset, self.max_yx, self.current_mino
