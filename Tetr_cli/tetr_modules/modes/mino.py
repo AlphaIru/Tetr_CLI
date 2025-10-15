@@ -5,15 +5,15 @@
 from functools import lru_cache
 from typing import Callable
 
-from tetr_modules.modes.constants import MINO_DRAW_LOCATION
-
-from .constants import (
+from tetr_modules.modes.constants import (
     BOARD_WIDTH,
     DAS,
     ARR,
+    MINO_DRAW_LOCATION,
     MINO_ORIENTATIONS,
     TARGET_FPS,
 )
+from tetr_modules.modes.srs import SRS_WALL_KICK_DATA
 
 
 class Mino:
@@ -94,33 +94,68 @@ class Mino:
         if value in ["left", "right", ""]:
             self.__last_sideways_direction = value
 
-    def get_block_positions(self) -> list[tuple[int, int]]:
+    def get_block_positions(
+        self,
+        position: tuple[int, int] = (-1, -1),
+        orientation: str = "None",
+    ) -> list[tuple[int, int]]:
         """This will return the block positions of the mino."""
+        if position == (-1, -1):
+            position = self.__position
+        if orientation == "None":
+            orientation = self.__orientation
         positions: list[tuple[int, int]] = []
         if (
             self.type in MINO_DRAW_LOCATION
-            and self.orientation in MINO_DRAW_LOCATION[self.type]
+            and orientation in MINO_DRAW_LOCATION[self.type]
         ):
-            for y_offset, x_offset in MINO_DRAW_LOCATION[self.type][self.orientation]:
-                y_pos = self.__position[0] + y_offset
-                x_pos = self.__position[1] + x_offset
+            for y_offset, x_offset in MINO_DRAW_LOCATION[self.type][orientation]:
+                y_pos = position[0] + y_offset
+                x_pos = position[1] + x_offset
                 positions.append((y_pos, x_pos))
         return positions
 
-    # TODO: Implement SRS wall kick
-    def rotate(self, direction: str) -> None:
+    def rotate(
+        self,
+        direction: str,
+        is_position_valid: Callable[[list[tuple[int, int]]], bool],
+    ) -> None:
         """This will rotate the current mino."""
         if direction not in ["left", "right"]:
             return
 
         current_index: int = MINO_ORIENTATIONS.index(self.orientation)
         new_index: int = 0
-        # Note: This does not handle wall kicks
         if direction == "right":
             new_index = (current_index + 1) % len(MINO_ORIENTATIONS)
         elif direction == "left":
             new_index = (current_index - 1) % len(MINO_ORIENTATIONS)
-        self.__orientation = MINO_ORIENTATIONS[new_index]
+        temp_orientation: str = MINO_ORIENTATIONS[new_index]
+
+        kicks: list[tuple[int, int] | None] = (
+            SRS_WALL_KICK_DATA.get(self.type, {})
+            .get(self.orientation, {})
+            .get(direction, [(0, 0)])
+        )
+        for off_set in kicks:
+            if off_set is None:
+                continue
+            new_y: int = self.__position[0] + off_set[0]
+            new_x: int = self.__position[1] + off_set[1]
+
+            # Debug info
+            # print(f"Trying to rotate {self.type} from {self.__orientation},", end=" ")
+            # print(f"to {temp_orientation}", end=" ")
+            # print(f"Offsets: {off_set[0]}, {off_set[1]}")
+
+            temp_position: tuple[int, int] = (new_y, new_x)
+            block_positions: list[tuple[int, int]] = self.get_block_positions(
+                temp_position, temp_orientation
+            )
+            if is_position_valid(block_positions):
+                self.__orientation = temp_orientation
+                self.__position = temp_position
+                return
 
     def move_sideways(self, direction: str) -> None:
         """This will move the current mino sideways."""
@@ -134,7 +169,7 @@ class Mino:
     def handle_sideways_auto_repeat(
         self,
         pressed_keys: set[str],
-        mino_touching_side_func: Callable[[str, 'Mino'], bool]
+        mino_touching_side_func: Callable[[str, "Mino"], bool],
     ) -> None:
         """Handles auto-repeat for left/right movement."""
         for direction in ["left", "right"]:
@@ -198,7 +233,7 @@ class Mino:
 
     def hard_drop(
         self,
-        mino_touching_bottom_func: Callable[['Mino'], bool],
+        mino_touching_bottom_func: Callable[["Mino"], bool],
     ) -> None:
         """This will handle the hard drop."""
         while not mino_touching_bottom_func(self):

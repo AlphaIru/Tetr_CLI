@@ -11,6 +11,7 @@ from tetr_modules.modes.board import Board
 from tetr_modules.modes.mino import Mino
 from tetr_modules.modes.constants import (
     BOARD_WIDTH,
+    BOARD_HEIGHT,
     DRAW_BOARD_WIDTH,
     DRAW_BOARD_HEIGHT,
     MINO_TYPES,
@@ -184,6 +185,22 @@ class ModeClass:
                     return True
         return False
 
+    def is_position_valid(
+        self,
+        block_positions: list[tuple[int, int]],
+    ) -> bool:
+        """This will check if the position is valid."""
+        for y_pos, x_pos in block_positions:
+            if (
+                x_pos < 0
+                or x_pos >= BOARD_WIDTH
+                or y_pos < 0
+                or y_pos >= BOARD_HEIGHT
+                or self.board.is_cell_occupied((y_pos, x_pos))
+            ):
+                return False
+        return True
+
     def ghost_mino_position(
         self,
         current_mino: Mino,
@@ -217,10 +234,10 @@ class ModeClass:
                 pressed_keys & {"z", "Z", "ctrl"}
                 and "ccw" not in self.keyinput_cooldown
             ):
-                self.current_mino.rotate("left")
+                self.current_mino.rotate("left", self.is_position_valid)
                 self.keyinput_cooldown.add("ccw")
             if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
-                self.current_mino.rotate("right")
+                self.current_mino.rotate("right", self.is_position_valid)
                 self.keyinput_cooldown.add("cw")
             if pressed_keys & {"left", "right"}:
                 self.current_mino.handle_sideways_auto_repeat(
