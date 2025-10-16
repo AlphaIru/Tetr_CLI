@@ -15,7 +15,7 @@ setup(
         "keyboard>=0.13.3",
         "pygame>=2.1.2",
         "wcwidth>=0.1.7",
-        "windows-curses>=2.2.0",
+        'windows-curses>=2.2.0; platform_system == "Windows"',
     ],
     include_package_data=True,
     package_data={

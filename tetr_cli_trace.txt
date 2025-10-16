@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Users\pokem\Tetr_CLI\.venv_3.10test\Scripts\tetr_cli.exe\__main__.py", line 4, in <module>
+ModuleNotFoundError: No module named 'tetr_cli'
