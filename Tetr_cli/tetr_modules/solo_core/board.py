@@ -10,7 +10,7 @@ from curses import (
     window,
 )
 
-from Tetr_cli.tetr_modules.core.constants import (
+from Tetr_cli.tetr_modules.solo_core.constants import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     DRAW_BOARD_HEIGHT,
@@ -19,7 +19,7 @@ from Tetr_cli.tetr_modules.core.constants import (
     MINO_DRAW_LOCATION,
 )
 
-from Tetr_cli.tetr_modules.core.mino import Mino
+from Tetr_cli.tetr_modules.solo_core.mino import Mino
 
 
 class Board:
@@ -68,7 +68,8 @@ class Board:
 
     def clear_lines(self) -> None:
         """This will clear the lines and return the number of lines cleared."""
-        for row in self.__line_clear_queue:
+        # Reverse sort to do it in ascending order
+        for row in sorted(self.__line_clear_queue, reverse=True):
             del self.__board[row]
             self.__board.append([0] * BOARD_WIDTH)
         self.__line_clear_queue.clear()

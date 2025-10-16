@@ -5,14 +5,14 @@ from copy import copy, deepcopy
 from random import shuffle, seed, randint
 from typing import Optional
 
-from Tetr_cli.tetr_modules.core.board import Board
-from Tetr_cli.tetr_modules.core.constants import (
+from Tetr_cli.tetr_modules.solo_core.board import Board
+from Tetr_cli.tetr_modules.solo_core.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
     MINO_TYPES,
     TARGET_FPS,
 )
-from Tetr_cli.tetr_modules.core.mino import Mino
+from Tetr_cli.tetr_modules.solo_core.mino import Mino
 
 
 class SoloBaseMode:
@@ -92,6 +92,11 @@ class SoloBaseMode:
         shuffle(new_mino_list)
         self.mino_list.extend(new_mino_list)
         self.__seed_value += 17  # Increase seed for next shuffle
+
+    def invalidate_draw_cache(self) -> None:
+        """This will invalidate the draw cache."""
+        self._last_drawn_queue = []
+        self._last_drawn_hold = "_init"
 
     def reset_mino(
         self, current_mino_check: bool = False, hold_used_check: bool = False

@@ -5,14 +5,14 @@
 from curses import window, A_BOLD
 from typing import Optional
 
-from Tetr_cli.tetr_modules.core.solo_base import SoloBaseMode
-from Tetr_cli.tetr_modules.core.mino import Mino
-from Tetr_cli.tetr_modules.core.constants import (
+from Tetr_cli.tetr_modules.solo_core.base import SoloBaseMode
+from Tetr_cli.tetr_modules.solo_core.mino import Mino
+from Tetr_cli.tetr_modules.solo_core.constants import (
     MIN_X,
     MIN_Y,
     DRAW_BOARD_HEIGHT,
     DRAW_BOARD_WIDTH,
-    TARGET_FPS
+    TARGET_FPS,
 )
 
 
@@ -39,10 +39,7 @@ class ModeClass(SoloBaseMode):
             new_mino_type: str = self.mino_list.pop(0)
             self.current_mino = Mino(mino_type=new_mino_type, level=self.level)
 
-        self.check_keyinput_pressed(
-            level=self.level,
-            pressed_keys=pressed_keys
-        )
+        self.check_keyinput_pressed(level=self.level, pressed_keys=pressed_keys)
         if not self.current_mino:
             stdscr = self.board.draw_minos_on_board(
                 stdscr=stdscr,
@@ -92,10 +89,7 @@ class ModeClass(SoloBaseMode):
 
         if self.current_mino.fall_delay > 0:
             self.current_mino.fall_delay -= 1
-        elif (
-            not self.mino_touching_bottom(self.current_mino)
-            and not pressed_keys
-        ):
+        elif not self.mino_touching_bottom(self.current_mino) and not pressed_keys:
             self.current_mino.move_down(is_position_valid=self.is_position_valid)
             self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
                 self.level
@@ -148,6 +142,7 @@ class ModeClass(SoloBaseMode):
                 max(1, (self.max_yx[0] - DRAW_BOARD_HEIGHT) // 2),
                 max(1, (self.max_yx[1] - DRAW_BOARD_WIDTH) // 2),
             )
+            self.invalidate_draw_cache()
 
         if check_max_yx[0] < MIN_Y or check_max_yx[1] < MIN_X:
             return stdscr

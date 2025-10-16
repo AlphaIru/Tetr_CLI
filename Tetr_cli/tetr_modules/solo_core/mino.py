@@ -5,7 +5,7 @@
 from functools import lru_cache
 from typing import Callable
 
-from Tetr_cli.tetr_modules.core.constants import (
+from Tetr_cli.tetr_modules.solo_core.constants import (
     BOARD_WIDTH,
     DAS,
     ARR,
@@ -13,7 +13,7 @@ from Tetr_cli.tetr_modules.core.constants import (
     MINO_ORIENTATIONS,
     TARGET_FPS,
 )
-from Tetr_cli.tetr_modules.core.srs import SRS_WALL_KICK_DATA
+from Tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 
 
 class Mino:
