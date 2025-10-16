@@ -5,7 +5,7 @@
 from functools import lru_cache
 from typing import Callable
 
-from tetr_modules.modes.constants import (
+from Tetr_cli.tetr_modules.modes.core.constants import (
     BOARD_WIDTH,
     DAS,
     ARR,
@@ -105,14 +105,11 @@ class Mino:
         if orientation == "None":
             orientation = self.__orientation
         positions: list[tuple[int, int]] = []
-        if (
-            self.type in MINO_DRAW_LOCATION
-            and orientation in MINO_DRAW_LOCATION[self.type]
-        ):
-            for y_offset, x_offset in MINO_DRAW_LOCATION[self.type][orientation]:
-                y_pos = position[0] + y_offset
-                x_pos = position[1] + x_offset
-                positions.append((y_pos, x_pos))
+        mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[self.type][orientation]
+        for y_offset, x_offset in mino_shape:
+            y_pos = position[0] + y_offset
+            x_pos = position[1] + x_offset
+            positions.append((y_pos, x_pos))
         return positions
 
     def rotate(
@@ -191,9 +188,14 @@ class Mino:
                     self.last_sideways_direction = ""
                     self.auto_repeat_delay = DAS
 
-    def move_down(self) -> None:
+    def move_down(
+        self,
+        is_position_valid: Callable[[list[tuple[int, int]]], bool]
+    ) -> None:
         """This will move the current mino down."""
-        self.__position = (self.__position[0] - 1, self.__position[1])
+        new_position = (self.position[0] - 1, self.position[1])
+        if is_position_valid(self.get_block_positions(new_position, self.orientation)):
+            self.position = new_position
 
     @lru_cache(maxsize=4)
     def get_fall_seconds(self, level: int) -> float:
@@ -223,21 +225,28 @@ class Mino:
         soft_drop_seconds: float = seconds / 20  # Soft drop is 20 times faster
         return max(1, int(soft_drop_seconds * TARGET_FPS))
 
-    def soft_drop(self, level: int) -> None:
+    def soft_drop(
+        self,
+        level: int,
+        is_position_valid: Callable[[list[tuple[int, int]]], bool],
+    ) -> None:
         """This will handle the soft drop."""
         self.__soft_drop_counter += 1
         delay: int = self.get_soft_drop_delay(level)
         if self.__soft_drop_counter >= delay:
-            self.move_down()
-            self.__soft_drop_counter = 0
+            new_position = (self.position[0] - 1, self.position[1])
+            if is_position_valid(self.get_block_positions(new_position, self.orientation)):
+                self.position = new_position
+                self.__soft_drop_counter = 0
 
     def hard_drop(
         self,
         mino_touching_bottom_func: Callable[["Mino"], bool],
+        is_position_valid: Callable[[list[tuple[int, int]]], bool],
     ) -> None:
         """This will handle the hard drop."""
         while not mino_touching_bottom_func(self):
-            self.move_down()
+            self.move_down(is_position_valid)
 
 
 if __name__ == "__main__":

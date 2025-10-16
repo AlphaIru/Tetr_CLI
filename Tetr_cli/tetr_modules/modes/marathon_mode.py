@@ -7,9 +7,9 @@ from curses import window, A_BOLD
 from typing import Optional
 from random import shuffle, seed, randint
 
-from tetr_modules.modes.board import Board
-from tetr_modules.modes.mino import Mino
-from tetr_modules.modes.constants import (
+from Tetr_cli.tetr_modules.modes.common.board import Board
+from Tetr_cli.tetr_modules.modes.common.mino import Mino
+from Tetr_cli.tetr_modules.modes.common.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
     DRAW_BOARD_WIDTH,
@@ -70,6 +70,8 @@ class ModeClass:
         self.hold_used: bool = False
 
         self.keyinput_cooldown: set[str] = set()
+        self.lines_cleared: int = 0
+        self.score: int = 0
         self.level: int = 1
 
         self.mino_list: list[str] = []
@@ -137,14 +139,15 @@ class ModeClass:
         """Return True if the current mino is touching the ground or a placed block below."""
         if mino is None:
             return False
+        positions: list[tuple[int, int]] = mino.get_block_positions()
         key: tuple[list[tuple[int, int]], str, str] = (
-            mino.get_block_positions(),
+            positions,
             mino.orientation,
             mino.type,
         )
         if key == self._last_bottom_check:
             return self._last_bottom_result
-        for y_pos, x_pos in mino.get_block_positions():
+        for y_pos, x_pos in positions:
             if y_pos == 0 or self.board.is_cell_occupied((y_pos - 1, x_pos)):
                 self._last_bottom_check = key
                 self._last_bottom_result = True
@@ -161,6 +164,7 @@ class ModeClass:
         """Return True if the current mino is touching the side wall or a placed block beside."""
         if mino is None:
             return False
+        positions: list[tuple[int, int]] = mino.get_block_positions()
         key: tuple[tuple[int, int], str, str, str] = (
             mino.position,
             mino.orientation,
@@ -170,13 +174,13 @@ class ModeClass:
         if key == self._last_side_check:
             return self._last_side_result
         if direction == "left":
-            for y_pos, x_pos in mino.get_block_positions():
+            for y_pos, x_pos in positions:
                 if x_pos == 0 or self.board.is_cell_occupied((y_pos, x_pos - 1)):
                     self._last_side_check = key
                     self._last_side_result = True
                     return True
         elif direction == "right":
-            for y_pos, x_pos in mino.get_block_positions():
+            for y_pos, x_pos in positions:
                 if x_pos == BOARD_WIDTH - 1 or self.board.is_cell_occupied(
                     (y_pos, x_pos + 1)
                 ):
@@ -190,15 +194,13 @@ class ModeClass:
         block_positions: list[tuple[int, int]],
     ) -> bool:
         """This will check if the position is valid."""
-        for y_pos, x_pos in block_positions:
-            if (
-                x_pos < 0
-                or x_pos >= BOARD_WIDTH
-                or y_pos < 0
-                or y_pos >= BOARD_HEIGHT
-                or self.board.is_cell_occupied((y_pos, x_pos))
-            ):
-                return False
+        if any(
+            x_pos < 0 or x_pos >= BOARD_WIDTH or
+            y_pos < 0 or y_pos >= BOARD_HEIGHT or
+            self.board.is_cell_occupied((y_pos, x_pos))
+            for y_pos, x_pos in block_positions
+        ):
+            return False
         return True
 
     def ghost_mino_position(
@@ -222,11 +224,7 @@ class ModeClass:
         self._last_ghost_result = result
         return result
 
-    def check_keyinput_pressed(
-        self,
-        pressed_keys,
-        mino_touching_bottom: bool,
-    ):
+    def check_keyinput_pressed(self, pressed_keys):
         """This will check the keyinput pressed."""
 
         if self.current_mino:
@@ -244,11 +242,14 @@ class ModeClass:
                     pressed_keys, self.mino_touching_side
                 )
             if pressed_keys & {"down"}:
-                if not mino_touching_bottom:
-                    self.current_mino.soft_drop(self.level)
+                if not self.mino_touching_bottom(self.current_mino):
+                    self.current_mino.soft_drop(self.level, self.is_position_valid)
                     self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
             if pressed_keys & {"space"} and "space" not in self.keyinput_cooldown:
-                self.current_mino.hard_drop(self.mino_touching_bottom)
+                self.current_mino.hard_drop(
+                    mino_touching_bottom_func=self.mino_touching_bottom,
+                    is_position_valid=self.is_position_valid
+                )
                 self.board.place_mino(
                     self.current_mino.type,
                     self.current_mino.orientation,
@@ -262,7 +263,7 @@ class ModeClass:
                 and not self.hold_used
             ):
                 if self.current_hold:
-                    temp: Mino = copy(self.current_hold)
+                    temp: Mino = copy(self.current_hold)  # type: ignore
                     self.current_hold = copy(self.current_mino)
                     self.current_mino = temp
                     self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
@@ -295,9 +296,7 @@ class ModeClass:
             new_mino_type: str = self.mino_list.pop(0)
             self.current_mino = Mino(mino_type=new_mino_type, level=self.level)
 
-        mino_touching_bottom: bool = self.mino_touching_bottom(self.current_mino)
-
-        self.check_keyinput_pressed(pressed_keys, mino_touching_bottom)
+        self.check_keyinput_pressed(pressed_keys)
         if not self.current_mino:
             stdscr = self.board.draw_minos_on_board(
                 stdscr=stdscr,
@@ -308,7 +307,7 @@ class ModeClass:
             )
             return stdscr
 
-        if mino_touching_bottom:
+        if self.mino_touching_bottom(self.current_mino):
             # print(self.current_mino.type, self.current_mino.lock_info)
             if (
                 self.current_mino.position[0]
@@ -347,16 +346,20 @@ class ModeClass:
 
         if self.current_mino.fall_delay > 0:
             self.current_mino.fall_delay -= 1
-        else:
-            if not mino_touching_bottom and (
-                not pressed_keys & {"down", "space"}
-                or not pressed_keys & {"c", "C", "shift"}
-                and self.hold_used
-            ):
-                self.current_mino.move_down()
+        elif (
+            not self.mino_touching_bottom(self.current_mino)
+            and not pressed_keys
+        ):
+            self.current_mino.move_down(is_position_valid=self.is_position_valid)
             self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
                 self.level
             )
+
+        lines_cleared = self.board.check_line_filled()
+        if lines_cleared > 0:
+            self.score +=
+
+        self.board.clear_lines()
 
         stdscr = self.board.draw_minos_on_board(
             stdscr=stdscr,

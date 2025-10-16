@@ -10,7 +10,7 @@ from curses import (
     window,
 )
 
-from tetr_modules.modes.constants import (
+from Tetr_cli.tetr_modules.modes.core.constants import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     DRAW_BOARD_HEIGHT,
@@ -27,6 +27,7 @@ class Board:
 
     def __init__(self) -> None:
         """This will initialize this class."""
+        self.__line_clear_queue: list[int] = []
         self.__board: list[list[int]] = [
             ([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)
         ]
@@ -39,12 +40,12 @@ class Board:
         self, mino: str, orientation: str, position: tuple[int, int]
     ) -> None:
         """This will place the mino on the board."""
-        if mino in MINO_DRAW_LOCATION and orientation in MINO_DRAW_LOCATION[mino]:
-            for y_offset, x_offset in MINO_DRAW_LOCATION[mino][orientation]:
-                y_pos = position[0] + y_offset
-                x_pos = position[1] + x_offset
-                if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
-                    self.__board[y_pos][x_pos] = MINO_COLOR[mino]
+        mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
+        for y_offset, x_offset in mino_shape:
+            y_pos = position[0] + y_offset
+            x_pos = position[1] + x_offset
+            if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                self.__board[y_pos][x_pos] = MINO_COLOR[mino]
 
     def is_cell_occupied(self, position: tuple[int, int]) -> bool:
         """Check if a cell is occupied."""
@@ -55,20 +56,24 @@ class Board:
             and self.__board[y_pos][x_pos] != 0
         )
 
-    def get_max_drop(self, mino: "Mino") -> int:  # type: ignore
-        """Returns the maximum number of rows the mino can drop before collision."""
-        min_drop = BOARD_HEIGHT
-        orientation = mino.orientation
-        for y_offset, x_offset in MINO_DRAW_LOCATION[mino.type][orientation]:
-            y = mino.position[0] + y_offset
-            x = mino.position[1] + x_offset
-            drop = 0
-            print(f"Start block at ({y}, {x})")
-            while y + drop + 1 < BOARD_HEIGHT and self.__board[y + drop + 1][x] == 0:
-                drop += 1
-            min_drop = min(min_drop, drop)
-            print(f"Min drop for block at ({y}, {x}): {min_drop}")
-        return min_drop
+    def check_line_filled(self) -> int:
+        """This will check if any lines are filled and queue them to be cleared."""
+        line_cleared: int = 0
+        self.__line_clear_queue.clear()
+        for row in range(BOARD_HEIGHT):
+            if all(cell != 0 for cell in self.__board[row]):
+                self.__line_clear_queue.append(row)
+                line_cleared += 1
+        return line_cleared
+
+    def clear_lines(self) -> None:
+        """This will clear the lines and return the number of lines cleared."""
+        for row in self.__line_clear_queue:
+            del self.__board[row]
+            self.__board.append([0] * BOARD_WIDTH)
+        self.__line_clear_queue.clear()
+
+    # Drawing functions
 
     def draw_blank_board(
         self,
@@ -112,12 +117,15 @@ class Board:
         """Draw the minos on the board."""
 
         draw_board: list[list[int]] = deepcopy(self.__board)
+        mino_shape: list[tuple[int, int]] = []
 
         if current_mino:
-            # Draw ghost Mino
-            for y_offset, x_offset in MINO_DRAW_LOCATION[current_mino.type][
+            mino_shape = MINO_DRAW_LOCATION[current_mino.type][
                 current_mino.orientation
-            ]:
+            ]
+
+            # Draw ghost Mino
+            for y_offset, x_offset in mino_shape:
                 y_pos = ghost_position[0] + y_offset
                 x_pos = ghost_position[1] + x_offset
                 if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
@@ -126,13 +134,11 @@ class Board:
                             current_mino.type
                         ]  # Ghost block
 
-        # Draw current Mino
-        if current_mino:
-            for y_offset, x_offset in MINO_DRAW_LOCATION[current_mino.type][
-                current_mino.orientation
-            ]:
-                y_pos = current_mino.position[0] + y_offset
-                x_pos = current_mino.position[1] + x_offset
+            # Draw current Mino
+            mino_position: tuple[int, int] = current_mino.position
+            for y_offset, x_offset in mino_shape:
+                y_pos = mino_position[0] + y_offset
+                x_pos = mino_position[1] + x_offset
                 if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
                     draw_board[y_pos][x_pos] = MINO_COLOR[current_mino.type]
             # Debug: Mark the pivot
@@ -225,22 +231,19 @@ class Board:
                     queue_offset[0] + 2 + queue_counter * 3,
                     queue_offset[1] + 4,
                 )
-                if (
-                    mino in MINO_DRAW_LOCATION
-                    and orientation in MINO_DRAW_LOCATION[mino]
-                ):
-                    for y_offset, x_offset in MINO_DRAW_LOCATION[mino][orientation]:
-                        pos = (
-                            mino_offset[0] + (mino_height - 1 - y_offset),
-                            mino_offset[1] + x_offset * 2,
+                mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
+                for y_offset, x_offset in mino_shape:
+                    pos = (
+                        mino_offset[0] + (mino_height - 1 - y_offset),
+                        mino_offset[1] + x_offset * 2,
+                    )
+                    if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
+                        stdscr.addstr(
+                            pos[0],
+                            pos[1],
+                            "██",
+                            color_pair(MINO_COLOR.get(mino, 0)),
                         )
-                        if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
-                            stdscr.addstr(
-                                pos[0],
-                                pos[1],
-                                "██",
-                                color_pair(MINO_COLOR.get(mino, 0)),
-                            )
         return stdscr
 
     def draw_hold(
@@ -316,7 +319,10 @@ class Board:
                     stdscr.addstr(clear_y, clear_x, " ", A_BOLD)
 
         # Draw the hold mino using block positions
-        for y_offset, x_offset in MINO_DRAW_LOCATION[mino_type][orientation]:
+        mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][
+            orientation
+        ]
+        for y_offset, x_offset in mino_shape:
             pos = (
                 mino_offset[0] + (mino_height - 1 - y_offset),
                 mino_offset[1] + x_offset * 2,
