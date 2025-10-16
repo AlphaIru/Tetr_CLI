@@ -208,3 +208,5 @@ __marimo__/
 
 
 test/
+core_backup/
+.venv_test/

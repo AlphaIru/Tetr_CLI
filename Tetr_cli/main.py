@@ -32,9 +32,12 @@ from curses import (
 from pygame import mixer
 from pygame.mixer import Sound
 
-from tetr_modules.checker import screen_dimension_check, screen_dimension_warning
-from tetr_modules.debug import DebugClass
-from tetr_modules.mode import GameMode
+from Tetr_cli.tetr_modules.checker import (
+    screen_dimension_check,
+    screen_dimension_warning,
+)
+from Tetr_cli.tetr_modules.debug import DebugClass
+from Tetr_cli.tetr_modules.mode import GameMode
 
 
 TARGET_FPS: int = 30

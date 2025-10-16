@@ -42,7 +42,7 @@ class GameMode:
         if new_mode_name not in self.__mode_list:
             raise ValueError(f'"{new_mode_name}" mode is not accessible!')
         self.__mode_name = new_mode_name
-        module = import_module(f"tetr_modules.modes.{self.__mode_name}_mode")
+        module = import_module(f"Tetr_cli.tetr_modules.modes.{self.__mode_name}_mode")
         self.__mode_instance = module.ModeClass()
 
 

@@ -7,10 +7,10 @@ from sys import argv
 
 from keyboard import hook, unhook_all  # type: ignore
 
-from main import main
+from Tetr_cli.main import main
 
 
-def starter(argv_console: list[str]) -> None:
+def starter() -> None:
     """The true starter of the code."""
     pressed_keys: set[str] = set()
     lock: Lock = Lock()
@@ -25,7 +25,7 @@ def starter(argv_console: list[str]) -> None:
 
     hook(on_key_event)
     try:
-        run(main(pressed_keys, True if len(argv_console) > 1 else False))
+        run(main(pressed_keys, True if len(argv) > 1 else False))
         print("\n\n")
         print("Thank you for playing!")
         print("Game made by Airun_Iru")
@@ -37,4 +37,4 @@ def starter(argv_console: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    starter(argv)
+    starter()

@@ -10,7 +10,7 @@ from curses import (
     window,
 )
 
-from Tetr_cli.tetr_modules.modes.core.constants import (
+from Tetr_cli.tetr_modules.core.constants import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     DRAW_BOARD_HEIGHT,
@@ -19,7 +19,7 @@ from Tetr_cli.tetr_modules.modes.core.constants import (
     MINO_DRAW_LOCATION,
 )
 
-from .mino import Mino
+from Tetr_cli.tetr_modules.core.mino import Mino
 
 
 class Board:
