@@ -1,0 +1,7 @@
+ansicon>=1.83.0
+jinxed>=1.1.0
+keyboard>=0.13.3
+pygame>=2.1.2
+wcwidth>=0.1.7
+windows-curses>=2.2.0
+types_setuptools>=80.9.0
