@@ -3,6 +3,7 @@
 # coding: utf-8
 
 from time import perf_counter
+from typing import Set
 
 from curses import window
 
@@ -16,11 +17,11 @@ class DebugClass:
         self.total_frame_count: int = 0
         self.frame_rate: float = 0.0
         self.start_time: float = perf_counter()
-        self.keypress: set[str] = set()
+        self.keypress: Set[str] = set()
         self.mode: str = "main_menu"
         return
 
-    def update_keypress(self, keypress: set[str]) -> None:
+    def update_keypress(self, keypress: Set[str]) -> None:
         """Updates the keypress in the debug class."""
         self.keypress = keypress
 

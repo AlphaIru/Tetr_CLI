@@ -1,18 +1,19 @@
-"""This is a starter file for Tetr_CLI. This will be sent to main to reduce confusions."""
+"""This is a starter file for tetr_cli. This will be sent to main to reduce confusions."""
 # coding: utf-8
 
 from asyncio import run, CancelledError
 from threading import Lock
+from typing import Set
 from sys import argv
 
 from keyboard import hook, unhook_all  # type: ignore
 
-from Tetr_cli.main import main
+from tetr_cli.main import main
 
 
 def starter() -> None:
     """The true starter of the code."""
-    pressed_keys: set[str] = set()
+    pressed_keys: Set[str] = set()
     lock: Lock = Lock()
 
     def on_key_event(event):

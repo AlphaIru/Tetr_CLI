@@ -1,6 +1,7 @@
 """This module contains the SRS rotation system implementation."""
 
-from pprint import pprint
+# from pprint import pprint
+from typing import Optional, Dict, List, Tuple
 
 # Dictionary implementation:
 # Mino type
@@ -29,7 +30,7 @@ from pprint import pprint
 #  Point 5 is for reverse, and to go out the well (D, E, F)
 
 
-SRS_WALL_KICK_DATA: dict[str, dict[str, dict[str, list[tuple[int, int] | None]]]] = {
+SRS_WALL_KICK_DATA: Dict[str, Dict[str, Dict[str, List[Optional[Tuple[int, int]]]]]] = {
     "O": {
         "N": {
             "left": [  # West
@@ -496,4 +497,4 @@ SRS_WALL_KICK_DATA: dict[str, dict[str, dict[str, list[tuple[int, int] | None]]]
 
 if __name__ == "__main__":
     print("This is a module, please run the starter.py.")
-    pprint(SRS_WALL_KICK_DATA)
+    # pprint(SRS_WALL_KICK_DATA)

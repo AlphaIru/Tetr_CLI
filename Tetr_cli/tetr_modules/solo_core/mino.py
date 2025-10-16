@@ -3,9 +3,9 @@
 # coding: utf-8
 
 from functools import lru_cache
-from typing import Callable
+from typing import Callable, Optional, Set, Dict, List, Tuple
 
-from Tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.solo_core.constants import (
     BOARD_WIDTH,
     DAS,
     ARR,
@@ -13,7 +13,7 @@ from Tetr_cli.tetr_modules.solo_core.constants import (
     MINO_ORIENTATIONS,
     TARGET_FPS,
 )
-from Tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
+from tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 
 
 class Mino:
@@ -24,14 +24,14 @@ class Mino:
         self.__type: str = mino_type
         self.__orientation: str = "N"
         # 21st row at the center column
-        self.__position: tuple[int, int] = (21, BOARD_WIDTH // 2 - 1)  # (y, x)
+        self.__position: Tuple[int, int] = (21, BOARD_WIDTH // 2 - 1)  # (y, x)
         self.__soft_drop_counter: int = 0
 
         self.__auto_repeat_delay: int = DAS
         self.__last_sideways_direction: str = ""
 
         self.__fall_delay: int = self.reset_fall_delay(level)
-        self.__lock_info: dict[str, int] = {
+        self.__lock_info: Dict[str, int] = {
             "lock_delay": int(0.5 * TARGET_FPS),
             "lock_count": 15,
             "lock_height": 21,
@@ -54,22 +54,22 @@ class Mino:
             self.__orientation = value
 
     @property
-    def position(self) -> tuple[int, int]:
+    def position(self) -> Tuple[int, int]:
         """This will return the mino position."""
         return self.__position
 
     @position.setter
-    def position(self, value: tuple[int, int]) -> None:
+    def position(self, value: Tuple[int, int]) -> None:
         """This will set the mino position."""
         self.__position = value
 
     @property
-    def lock_info(self) -> dict[str, int]:
+    def lock_info(self) -> Dict[str, int]:
         """This will return the lock info."""
         return self.__lock_info
 
     @lock_info.setter
-    def lock_info(self, value: dict[str, int]) -> None:
+    def lock_info(self, value: Dict[str, int]) -> None:
         """This will set the lock info."""
         self.__lock_info = value
 
@@ -96,16 +96,16 @@ class Mino:
 
     def get_block_positions(
         self,
-        position: tuple[int, int] = (-1, -1),
+        position: Tuple[int, int] = (-1, -1),
         orientation: str = "None",
-    ) -> list[tuple[int, int]]:
+    ) -> List[Tuple[int, int]]:
         """This will return the block positions of the mino."""
         if position == (-1, -1):
             position = self.__position
         if orientation == "None":
             orientation = self.__orientation
-        positions: list[tuple[int, int]] = []
-        mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[self.type][orientation]
+        positions: List[Tuple[int, int]] = []
+        mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[self.type][orientation]
         for y_offset, x_offset in mino_shape:
             y_pos = position[0] + y_offset
             x_pos = position[1] + x_offset
@@ -115,7 +115,7 @@ class Mino:
     def rotate(
         self,
         direction: str,
-        is_position_valid: Callable[[list[tuple[int, int]]], bool],
+        is_position_valid: Callable[[List[Tuple[int, int]]], bool],
     ) -> None:
         """This will rotate the current mino."""
         if direction not in ["left", "right"]:
@@ -129,7 +129,8 @@ class Mino:
             new_index = (current_index - 1) % len(MINO_ORIENTATIONS)
         temp_orientation: str = MINO_ORIENTATIONS[new_index]
 
-        kicks: list[tuple[int, int] | None] = (
+        # kicks: List[Tuple[int, int] | None] = (
+        kicks: List[Optional[Tuple[int, int]]] = (
             SRS_WALL_KICK_DATA.get(self.type, {})
             .get(self.orientation, {})
             .get(direction, [(0, 0)])
@@ -145,8 +146,8 @@ class Mino:
             # print(f"to {temp_orientation}", end=" ")
             # print(f"Offsets: {off_set[0]}, {off_set[1]}")
 
-            temp_position: tuple[int, int] = (new_y, new_x)
-            block_positions: list[tuple[int, int]] = self.get_block_positions(
+            temp_position: Tuple[int, int] = (new_y, new_x)
+            block_positions: List[Tuple[int, int]] = self.get_block_positions(
                 temp_position, temp_orientation
             )
             if is_position_valid(block_positions):
@@ -165,7 +166,7 @@ class Mino:
 
     def handle_sideways_auto_repeat(
         self,
-        pressed_keys: set[str],
+        pressed_keys: Set[str],
         mino_touching_side_func: Callable[[str, "Mino"], bool],
     ) -> None:
         """Handles auto-repeat for left/right movement."""
@@ -190,7 +191,7 @@ class Mino:
 
     def move_down(
         self,
-        is_position_valid: Callable[[list[tuple[int, int]]], bool]
+        is_position_valid: Callable[[List[Tuple[int, int]]], bool]
     ) -> None:
         """This will move the current mino down."""
         new_position = (self.position[0] - 1, self.position[1])
@@ -228,7 +229,7 @@ class Mino:
     def soft_drop(
         self,
         level: int,
-        is_position_valid: Callable[[list[tuple[int, int]]], bool],
+        is_position_valid: Callable[[List[Tuple[int, int]]], bool],
     ) -> None:
         """This will handle the soft drop."""
         self.__soft_drop_counter += 1
@@ -242,7 +243,7 @@ class Mino:
     def hard_drop(
         self,
         mino_touching_bottom_func: Callable[["Mino"], bool],
-        is_position_valid: Callable[[list[tuple[int, int]]], bool],
+        is_position_valid: Callable[[List[Tuple[int, int]]], bool],
     ) -> None:
         """This will handle the hard drop."""
         while not mino_touching_bottom_func(self):

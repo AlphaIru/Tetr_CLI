@@ -2,6 +2,8 @@
 # coding: utf-8
 
 from copy import deepcopy
+from typing import Dict, List, Set
+
 from curses import A_BOLD, A_REVERSE, window
 
 
@@ -12,9 +14,9 @@ class ModeClass:
         """This will initizalize this class."""
         self.__selected_option: int = 0
         self.__key_cooldown: int = 0
-        self.__options: list[str] = ["Solo", "Multiplayer", "Quit"]
+        self.__options: List[str] = ["Solo", "Multiplayer", "Quit"]
         self.__action: str = ""
-        self.__sound_action: dict[str, list[str]] = {"BGM": ["stop"], "SFX": []}
+        self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
 
     def pop_action(self) -> str:
         """This will return the action and reset it."""
@@ -22,13 +24,13 @@ class ModeClass:
         self.__action = ""
         return action
 
-    def pop_sound_action(self) -> dict[str, list[str]]:
+    def pop_sound_action(self) -> Dict[str, List[str]]:
         """This will return the sound action and reset it."""
-        sound_action: dict[str, list[str]] = deepcopy(self.__sound_action)
+        sound_action: Dict[str, List[str]] = deepcopy(self.__sound_action)
         self.__sound_action["SFX"] = []
         return sound_action
 
-    def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will progress the menu based on the inputs."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1

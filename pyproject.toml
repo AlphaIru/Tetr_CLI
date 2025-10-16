@@ -3,29 +3,29 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Tetr_cli"
+name = "tetr_cli"
 version = "0.8.0"
-description = "Setup script for the Tetr_cli package."
+description = "Setup script for the tetr_cli package."
 authors = [
     { name = "Airun_Iru", email = "hugo_s_tanaka@yahoo.com" }
 ]
 
 dependencies = [
-    "ansicon>=1.89.0",
-    "jinxed>=1.3.0",
-    "keyboard>=0.13.5",
-    "pygame>=2.6.1",
-    "wcwidth>=0.2.13",
-    "windows-curses>=2.4.1"
+    "ansicon>=1.88.0",
+    "jinxed>=1.1.0",
+    "keyboard>=0.13.3",
+    "pygame>=2.1.2",
+    "wcwidth>=0.1.7",
+    "windows-curses>=2.2.0"
 ]
 requires-python = ">=3.8"
 readme = "README.md"
 
 [project.scripts]
-Tetr_cli = "Tetr_cli.starter:starter"
+tetr_cli = "tetr_cli.starter:starter"
 
 [tool.setuptools.package-data]
-"Tetr_cli" = [
+"tetr_cli" = [
     "tetr_modules/sounds/sfx/*.wav",
     "tetr_modules/sounds/bgm/*.wav",
     "tetr_modules/sounds/sfx/*.ftm",

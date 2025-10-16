@@ -4,6 +4,7 @@
 
 from asyncio import sleep
 from pathlib import Path
+from typing import Set, Dict, List
 
 import curses
 from curses import (
@@ -32,12 +33,12 @@ from curses import (
 from pygame import mixer
 from pygame.mixer import Sound
 
-from Tetr_cli.tetr_modules.checker import (
+from tetr_cli.tetr_modules.checker import (
     screen_dimension_check,
     screen_dimension_warning,
 )
-from Tetr_cli.tetr_modules.debug import DebugClass
-from Tetr_cli.tetr_modules.mode import GameMode
+from tetr_cli.tetr_modules.debug import DebugClass
+from tetr_cli.tetr_modules.mode import GameMode
 
 
 TARGET_FPS: int = 30
@@ -49,35 +50,35 @@ current_path: Path = Path(__file__).parent.parent.resolve()
 # O, I, T, L, J, S, Z
 
 
-async def load_sfx() -> dict[str, Sound]:
+async def load_sfx() -> Dict[str, Sound]:
     """Load all sound effects."""
 
     mixer.init()
 
     sound_effects = {
         "select_move": mixer.Sound(
-            str(current_path / "Tetr_cli/tetr_modules/sounds/sfx/select_move.wav")
+            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/select_move.wav")
         ),
         "select_confirm": mixer.Sound(
-            str(current_path / "Tetr_cli/tetr_modules/sounds/sfx/quad.wav")
+            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/quad.wav")
         ),
         "quad": mixer.Sound(
-            str(current_path / "Tetr_cli/tetr_modules/sounds/sfx/quad.wav")
+            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/quad.wav")
         ),
         "3_2_1": mixer.Sound(
-            str(current_path / "Tetr_cli/tetr_modules/sounds/sfx/3_2_1.wav")
+            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/3_2_1.wav")
         ),
         "go": mixer.Sound(
-            str(current_path / "Tetr_cli/tetr_modules/sounds/sfx/go.wav")
+            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/go.wav")
         )
     }
     return sound_effects
 
 
 async def play_sounds(
-    sound_action: dict[str, list[str]],
+    sound_action: Dict[str, List[str]],
     current_bgm: str,
-    sound_effect_dict: dict[str, Sound],
+    sound_effect_dict: Dict[str, Sound],
 ) -> str:
     """Play sounds."""
 
@@ -89,7 +90,7 @@ async def play_sounds(
             current_bgm = sound_action["BGM"][0]
             try:
                 mixer.music.load(
-                    str(current_path / f"Tetr_cli/tetr_modules/sounds/bgm/{current_bgm}.wav")
+                    str(current_path / f"tetr_cli/tetr_modules/sounds/bgm/{current_bgm}.wav")
                 )
                 mixer.music.play(-1)
             except Exception as err:
@@ -115,14 +116,14 @@ async def run_action(action: str, current_mode: GameMode) -> GameMode:
     return current_mode
 
 
-async def main(pressed_keys: set[str], debug_mode: bool) -> None:
+async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
     mixer.init()
     mixer.music.set_volume(0.25)
 
-    sound_effect_dict: dict[str, Sound] = await load_sfx()
+    sound_effect_dict: Dict[str, Sound] = await load_sfx()
 
     stdscr: window = initscr()
     start_color()
@@ -189,7 +190,7 @@ async def main(pressed_keys: set[str], debug_mode: bool) -> None:
 
         # stdscr.refresh()
 
-        sound_action: dict[str, list[str]] = current_mode.get_sound_action()
+        sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
         current_bgm = await play_sounds(
             sound_action=sound_action,
             current_bgm=current_bgm,

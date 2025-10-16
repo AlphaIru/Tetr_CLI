@@ -3,16 +3,16 @@
 
 from copy import copy, deepcopy
 from random import shuffle, seed, randint
-from typing import Optional
+from typing import Optional, Dict, Set, List, Tuple
 
-from Tetr_cli.tetr_modules.solo_core.board import Board
-from Tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.solo_core.board import Board
+from tetr_cli.tetr_modules.solo_core.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
     MINO_TYPES,
     TARGET_FPS,
 )
-from Tetr_cli.tetr_modules.solo_core.mino import Mino
+from tetr_cli.tetr_modules.solo_core.mino import Mino
 
 
 class SoloBaseMode:
@@ -28,7 +28,7 @@ class SoloBaseMode:
         self.ghost_mino: Optional[Mino] = None
 
         # Queue
-        self.mino_list: list[str] = []
+        self.mino_list: List[str] = []
         self.__seed_value: int = 0
 
         # Hold
@@ -36,30 +36,30 @@ class SoloBaseMode:
         self.hold_used: bool = False
 
         # User inputs
-        self.keyinput_cooldown: set[str] = set()
+        self.keyinput_cooldown: Set[str] = set()
 
         # Optimizations for drawing
-        self._last_drawn_queue: list[str] = []
+        self._last_drawn_queue: List[str] = []
         self._last_drawn_hold: Optional[str] = "_init"
 
         # Optimizations for collision checks
-        self._last_bottom_check: tuple[list[tuple[int, int]], str, str] = ([], "", "")
+        self._last_bottom_check: Tuple[List[Tuple[int, int]], str, str] = ([], "", "")
         self._last_bottom_result: bool = False
-        self._last_side_check: tuple[tuple[int, int], str, str, str] = (
+        self._last_side_check: Tuple[Tuple[int, int], str, str, str] = (
             (-1, -1),
             "",
             "",
             "",
         )
         self._last_side_result: bool = False
-        self._last_ghost_check: tuple[tuple[int, int], str, str] = ((-1, -1), "", "")
-        self._last_ghost_result: tuple[int, int] = (-1, -1)
+        self._last_ghost_check: Tuple[Tuple[int, int], str, str] = ((-1, -1), "", "")
+        self._last_ghost_result: Tuple[int, int] = (-1, -1)
 
         # Actions
         self.action: str = ""
-        self.sound_action: dict[str, list[str]] = {"BGM": ["stop"], "SFX": []}
-        self.offset: tuple[int, int] = (0, 0)  # (offset_y, offset_x)
-        self.max_yx: tuple[int, int] = (0, 0)  # (max_y, max_x)
+        self.sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
+        self.offset: Tuple[int, int] = (0, 0)  # (offset_y, offset_x)
+        self.max_yx: Tuple[int, int] = (0, 0)  # (max_y, max_x)
 
     def pop_action(self) -> str:
         """This will return the action and reset it."""
@@ -67,9 +67,9 @@ class SoloBaseMode:
         self.action = ""
         return action
 
-    def pop_sound_action(self) -> dict[str, list[str]]:
+    def pop_sound_action(self) -> Dict[str, List[str]]:
         """This will return the sound action and reset it."""
-        sound_action: dict[str, list[str]] = deepcopy(self.sound_action)
+        sound_action: Dict[str, List[str]] = deepcopy(self.sound_action)
         self.sound_action["SFX"] = []
         return sound_action
 
@@ -77,7 +77,7 @@ class SoloBaseMode:
         self, initial: bool = False, input_seed: int = 0
     ) -> None:
         """This will generate the next mino."""
-        new_mino_list: list[str] = []
+        new_mino_list: List[str] = []
         if initial:
             if self.__seed_value == 0:
                 self.__seed_value = (
@@ -118,8 +118,8 @@ class SoloBaseMode:
         """This will check if the current mino is touching the bottom."""
         if mino is None:
             return False
-        positions: list[tuple[int, int]] = mino.get_block_positions()
-        key: tuple[list[tuple[int, int]], str, str] = (
+        positions: List[Tuple[int, int]] = mino.get_block_positions()
+        key: Tuple[List[Tuple[int, int]], str, str] = (
             positions,
             mino.orientation,
             mino.type,
@@ -143,8 +143,8 @@ class SoloBaseMode:
         """This will check if the current mino is touching the side."""
         if mino is None:
             return False
-        positions: list[tuple[int, int]] = mino.get_block_positions()
-        key: tuple[tuple[int, int], str, str, str] = (
+        positions: List[Tuple[int, int]] = mino.get_block_positions()
+        key: Tuple[Tuple[int, int], str, str, str] = (
             mino.position,
             mino.orientation,
             mino.type,
@@ -170,7 +170,7 @@ class SoloBaseMode:
 
     def is_position_valid(
         self,
-        block_positions: list[tuple[int, int]],
+        block_positions: List[Tuple[int, int]],
     ) -> bool:
         """This will check if the position is valid."""
         if any(
@@ -187,9 +187,9 @@ class SoloBaseMode:
     def ghost_mino_position(
         self,
         current_mino: Mino,
-    ) -> tuple[int, int]:
+    ) -> Tuple[int, int]:
         """This will return the ghost mino position."""
-        key: tuple[tuple[int, int], str, str] = (
+        key: Tuple[Tuple[int, int], str, str] = (
             current_mino.position,
             current_mino.orientation,
             current_mino.type,
@@ -200,12 +200,12 @@ class SoloBaseMode:
         ghost_mino: Mino = copy(current_mino)
         while not self.mino_touching_bottom(ghost_mino):
             ghost_mino.position = (ghost_mino.position[0] - 1, ghost_mino.position[1])
-        result: tuple[int, int] = ghost_mino.position
+        result: Tuple[int, int] = ghost_mino.position
         self._last_ghost_check = key
         self._last_ghost_result = result
         return result
 
-    def check_keyinput_pressed(self, pressed_keys: set[str], level: int):
+    def check_keyinput_pressed(self, pressed_keys: Set[str], level: int):
         """This will check the keyinput pressed."""
 
         if self.current_mino:

@@ -3,14 +3,14 @@
 # coding: utf-8
 
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, List, Tuple
 from curses import (
     A_BOLD,
     color_pair,
     window,
 )
 
-from Tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.solo_core.constants import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     DRAW_BOARD_HEIGHT,
@@ -19,7 +19,7 @@ from Tetr_cli.tetr_modules.solo_core.constants import (
     MINO_DRAW_LOCATION,
 )
 
-from Tetr_cli.tetr_modules.solo_core.mino import Mino
+from tetr_cli.tetr_modules.solo_core.mino import Mino
 
 
 class Board:
@@ -27,8 +27,8 @@ class Board:
 
     def __init__(self) -> None:
         """This will initialize this class."""
-        self.__line_clear_queue: list[int] = []
-        self.__board: list[list[int]] = [
+        self.__line_clear_queue: List[int] = []
+        self.__board: List[List[int]] = [
             ([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)
         ]
 
@@ -37,17 +37,17 @@ class Board:
         self.__board = [([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)]
 
     def place_mino(
-        self, mino: str, orientation: str, position: tuple[int, int]
+        self, mino: str, orientation: str, position: Tuple[int, int]
     ) -> None:
         """This will place the mino on the board."""
-        mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
+        mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
         for y_offset, x_offset in mino_shape:
             y_pos = position[0] + y_offset
             x_pos = position[1] + x_offset
             if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
                 self.__board[y_pos][x_pos] = MINO_COLOR[mino]
 
-    def is_cell_occupied(self, position: tuple[int, int]) -> bool:
+    def is_cell_occupied(self, position: Tuple[int, int]) -> bool:
         """Check if a cell is occupied."""
         y_pos, x_pos = position
         return (
@@ -79,7 +79,7 @@ class Board:
     def draw_blank_board(
         self,
         stdscr: window,
-        offset: tuple[int, int],  # (offset_y, offset_x)
+        offset: Tuple[int, int],  # (offset_y, offset_x)
     ) -> window:
         """Draw the Game board centered on the screen."""
         # Draw top border
@@ -110,15 +110,15 @@ class Board:
     def draw_minos_on_board(
         self,
         stdscr: window,
-        offset: tuple[int, int],  # (offset_y, offset_x)
-        max_yx: tuple[int, int],  # (max_y, max_x)
+        offset: Tuple[int, int],  # (offset_y, offset_x)
+        max_yx: Tuple[int, int],  # (max_y, max_x)
         current_mino: Optional["Mino"] = None,  # type: ignore
-        ghost_position: tuple[int, int] = (-1, -1),
+        ghost_position: Tuple[int, int] = (-1, -1),
     ) -> window:
         """Draw the minos on the board."""
 
-        draw_board: list[list[int]] = deepcopy(self.__board)
-        mino_shape: list[tuple[int, int]] = []
+        draw_board: List[List[int]] = deepcopy(self.__board)
+        mino_shape: List[Tuple[int, int]] = []
 
         if current_mino:
             mino_shape = MINO_DRAW_LOCATION[current_mino.type][
@@ -136,7 +136,7 @@ class Board:
                         ]  # Ghost block
 
             # Draw current Mino
-            mino_position: tuple[int, int] = current_mino.position
+            mino_position: Tuple[int, int] = current_mino.position
             for y_offset, x_offset in mino_shape:
                 y_pos = mino_position[0] + y_offset
                 x_pos = mino_position[1] + x_offset
@@ -151,7 +151,7 @@ class Board:
         max_rows: int = min(max_yx[0], BOARD_HEIGHT)
         # This is to adjust the drawing height if the terminal is too small
         adjusted_height: int = max_rows - DRAW_BOARD_HEIGHT
-        visible_rows: list[list[int]] = draw_board[0:max_rows]
+        visible_rows: List[List[int]] = draw_board[0:max_rows]
         for y_counter, row in enumerate(visible_rows):
             # y_counter=0 is bottom, y_counter=20 is top of box
             for x_counter, cell in enumerate(row):
@@ -180,13 +180,13 @@ class Board:
     def draw_queue(
         self,
         stdscr: window,
-        offset: tuple[int, int],  # (offset_y, offset_x)
-        max_yx: tuple[int, int],  # (max_y, max_x)
-        queue_list: list[str],
+        offset: Tuple[int, int],  # (offset_y, offset_x)
+        max_yx: Tuple[int, int],  # (max_y, max_x)
+        queue_list: List[str],
     ) -> window:
         """Draw the next mino queue."""
 
-        queue_offset: tuple[int, int] = (offset[0], offset[1] + DRAW_BOARD_WIDTH + 1)
+        queue_offset: Tuple[int, int] = (offset[0], offset[1] + DRAW_BOARD_WIDTH + 1)
         horizontal_length: int = 12
         horizontal_line: str = "-" * horizontal_length + "+"
         vertical_length: int = 17
@@ -206,8 +206,8 @@ class Board:
             queue_offset[0] + vertical_length, queue_offset[1], horizontal_line, A_BOLD
         )
 
-        mino_offset: tuple[int, int] = (0, 0)
-        pos: tuple[int, int] = (0, 0)
+        mino_offset: Tuple[int, int] = (0, 0)
+        pos: Tuple[int, int] = (0, 0)
 
         mino_height: int = 2
         mino_width: int = 4
@@ -232,7 +232,7 @@ class Board:
                     queue_offset[0] + 2 + queue_counter * 3,
                     queue_offset[1] + 4,
                 )
-                mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
+                mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
                 for y_offset, x_offset in mino_shape:
                     pos = (
                         mino_offset[0] + (mino_height - 1 - y_offset),
@@ -250,8 +250,8 @@ class Board:
     def draw_hold(
         self,
         stdscr: window,
-        offset: tuple[int, int],  # (offset_y, offset_x)
-        max_yx: tuple[int, int],  # (max_y, max_x)
+        offset: Tuple[int, int],  # (offset_y, offset_x)
+        max_yx: Tuple[int, int],  # (max_y, max_x)
         hold_used: bool,
         hold_mino: Optional["Mino"] = None,  # type: ignore
     ) -> window:
@@ -259,7 +259,7 @@ class Board:
 
         horizontal_length: int = 12
         vertical_length: int = 6
-        hold_offset: tuple[int, int] = (offset[0], offset[1] - horizontal_length - 3)
+        hold_offset: Tuple[int, int] = (offset[0], offset[1] - horizontal_length - 3)
         horizontal_line: str = "+" + "-" * horizontal_length
 
         # Draw top
@@ -309,7 +309,7 @@ class Board:
 
         mino_height: int = 2
         mino_width: int = 4
-        mino_offset: tuple[int, int] = (hold_offset[0] + 3, hold_offset[1] + 5)
+        mino_offset: Tuple[int, int] = (hold_offset[0] + 3, hold_offset[1] + 5)
         orientation: str = "N"
 
         for y in range(mino_height):
@@ -320,7 +320,7 @@ class Board:
                     stdscr.addstr(clear_y, clear_x, " ", A_BOLD)
 
         # Draw the hold mino using block positions
-        mino_shape: list[tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][
+        mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][
             orientation
         ]
         for y_offset, x_offset in mino_shape:

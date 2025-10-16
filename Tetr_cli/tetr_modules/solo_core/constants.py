@@ -1,7 +1,9 @@
 """This will hold constants for different game modes."""
 # coding: utf-8
 
-POINTS_TABLE: dict[str, int] = {
+from typing import Set, Dict, List, Tuple
+
+POINTS_TABLE: Dict[str, int] = {
     "Single": 100,
     "Double": 300,
     "Triple": 500,
@@ -28,15 +30,15 @@ ARR: int = int(0.01 * TARGET_FPS)
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
 DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
 
-MINO_TYPES: set[str] = {"O", "I", "T", "L", "J", "S", "Z"}
-MINO_COLOR: dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
-MINO_ORIENTATIONS: list[str] = ["N", "E", "S", "W"]
+MINO_TYPES: Set[str] = {"O", "I", "T", "L", "J", "S", "Z"}
+MINO_COLOR: Dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
+MINO_ORIENTATIONS: List[str] = ["N", "E", "S", "W"]
 
 # Mino Draw Location: Mino_type -> orientation (in NSEW) ->
 # (current_position, 1st_block_position, 2nd_block_position, 3rd_block_position)
 #
 # Note: (y, x) format
-MINO_DRAW_LOCATION: dict[str, dict[str, list[tuple[int, int]]]] = {
+MINO_DRAW_LOCATION: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
     "O": {
         "N": [(0, 0), (0, 1), (1, 0), (1, 1)],
         "S": [(0, 0), (0, 1), (1, 0), (1, 1)],

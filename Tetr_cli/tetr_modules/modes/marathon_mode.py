@@ -3,11 +3,11 @@
 # coding: utf-8
 
 from curses import window, A_BOLD
-from typing import Optional
+from typing import Optional, List, Set, Tuple
 
-from Tetr_cli.tetr_modules.solo_core.base import SoloBaseMode
-from Tetr_cli.tetr_modules.solo_core.mino import Mino
-from Tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.solo_core.base import SoloBaseMode
+from tetr_cli.tetr_modules.solo_core.mino import Mino
+from tetr_cli.tetr_modules.solo_core.constants import (
     MIN_X,
     MIN_Y,
     DRAW_BOARD_HEIGHT,
@@ -31,7 +31,7 @@ class ModeClass(SoloBaseMode):
         self.score: int = 0
         self.lines_cleared: int = 0
 
-    def play_mode(self, stdscr: window, pressed_keys: set[str]) -> window:
+    def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will play the mode."""
         if len(self.mino_list) <= 14:
             self.mino_list_generator()
@@ -133,9 +133,9 @@ class ModeClass(SoloBaseMode):
 
         return stdscr
 
-    def increment_frame(self, stdscr: window, pressed_keys: set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will increment the frame."""
-        check_max_yx: tuple[int, int] = stdscr.getmaxyx()
+        check_max_yx: Tuple[int, int] = stdscr.getmaxyx()
         if check_max_yx != self.max_yx:
             self.max_yx = check_max_yx
             self.offset = (
@@ -147,7 +147,7 @@ class ModeClass(SoloBaseMode):
         if check_max_yx[0] < MIN_Y or check_max_yx[1] < MIN_X:
             return stdscr
 
-        queue_to_draw: list[str] = self.mino_list[0:5]
+        queue_to_draw: List[str] = self.mino_list[0:5]
         hold_to_draw: Optional[str] = (
             self.current_hold.type if self.current_hold else None
         )
