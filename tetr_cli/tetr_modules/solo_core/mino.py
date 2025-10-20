@@ -5,6 +5,13 @@
 from functools import lru_cache
 from typing import Callable, Optional, Set, Dict, List, Tuple
 
+try:
+    from pynput import keyboard
+    PYNPUT_AVAILABLE = True
+except ImportError:
+    PYNPUT_AVAILABLE = False
+
+
 from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     DAS,
@@ -172,6 +179,9 @@ class Mino:
         """Handles auto-repeat for left/right movement."""
         for direction in ["left", "right"]:
             if direction in pressed_keys:
+                if not PYNPUT_AVAILABLE:
+                    if not mino_touching_side_func(direction, self):
+                        self.move_sideways(direction)
                 if self.last_sideways_direction != direction:
                     self.auto_repeat_delay = DAS
                     self.last_sideways_direction = direction
@@ -184,10 +194,9 @@ class Mino:
                         if not mino_touching_side_func(direction, self):
                             self.move_sideways(direction)
                         self.auto_repeat_delay = ARR
-            else:
-                if self.last_sideways_direction == direction:
-                    self.last_sideways_direction = ""
-                    self.auto_repeat_delay = DAS
+            elif self.last_sideways_direction == direction:
+                self.last_sideways_direction = ""
+                self.auto_repeat_delay = DAS
 
     def handle_sideways_curses_input(
         self,
