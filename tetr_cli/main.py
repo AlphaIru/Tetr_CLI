@@ -3,6 +3,7 @@
 # coding: utf-8
 
 from asyncio import sleep
+from time import perf_counter
 from typing import Set, Dict, List
 
 import curses
@@ -84,7 +85,7 @@ async def main(
     stdscr.keypad(True)
 
     stdscr.nodelay(True)
-    key: int = 0
+    key_input: int = 0
     current_mode: GameMode = GameMode()
     current_mode.change_mode("main_menu")
     current_bgm: str = ""
@@ -110,21 +111,27 @@ async def main(
         init_pair(7, COLOR_RED, -1)  # Z
         init_pair(8, COLOR_WHITE, COLOR_BLACK)  # Light gray on black
 
+    start_time: float = 0.0
+    elapsed_time: float = 0.0
+
     while True:
-        await sleep(FRAME_DURATION)
-        key = stdscr.getch()
+        if elapsed_time < FRAME_DURATION:
+            await sleep(FRAME_DURATION - elapsed_time)
+        start_time = perf_counter()
+
+        key_input = stdscr.getch()
         # stdscr.clear()
 
-        if key == KEY_RESIZE:
+        if key_input == KEY_RESIZE:
             resize_term(*stdscr.getmaxyx())
             stdscr.clear()
             stdscr.refresh()
 
         if ncurses_mode:
-            if key == -1:
+            if key_input == -1:
                 pressed_keys.clear()
             else:
-                pressed_keys.update(curses_key_name(key))
+                pressed_keys.update(curses_key_name(key_input))
 
         stdscr.noutrefresh()
 
@@ -170,6 +177,7 @@ async def main(
 
         if action and pressed_keys is not None:
             pressed_keys.clear()
+        elapsed_time = perf_counter() - start_time
 
     endwin()
 
