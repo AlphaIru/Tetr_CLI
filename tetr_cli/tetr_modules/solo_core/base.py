@@ -104,6 +104,8 @@ class SoloBaseMode:
         """This will reset the current mino."""
         self.current_mino = None if not current_mino_check else self.current_mino
         self.hold_used = hold_used_check
+        if not hold_used_check:
+            self._last_drawn_hold = "_init"
         self._last_bottom_check = ([], "", "")
         self._last_bottom_result = False
         self._last_side_check = ((-1, -1), "", "", "")
