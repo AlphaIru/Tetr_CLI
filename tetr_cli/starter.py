@@ -60,7 +60,6 @@ def starter() -> None:
 
     if not ncurses_mode:
         listener.stop()
-    endwin()
 
 
 if __name__ == "__main__":

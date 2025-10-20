@@ -167,12 +167,13 @@ class Board:
                 # The extra -1 is to adjust for zero indexing
                 y: int = offset[0] + ((max_rows - 1) - y_counter) - adjusted_height
                 x: int = offset[1] + x_counter * 2
+                color: int = abs(cell)
                 if 0 <= y < max_yx[0] and 0 <= x < max_yx[1] - 1:
                     stdscr.addstr(
                         y,
                         x,
                         char,
-                        abs(color_pair(cell)) if cell else A_BOLD,
+                        color_pair(color) if cell else A_BOLD,
                     )
         return stdscr
 
