@@ -3,9 +3,11 @@
 # coding: utf-8
 
 from asyncio import run, CancelledError
+from os import system
+from platform import system as check_platform
+from sys import argv, exit as sys_exit
 from threading import Lock
 from typing import Set
-from sys import argv, exit as sys_exit
 
 try:
     from pynput import keyboard  # type: ignore
@@ -53,10 +55,14 @@ def starter() -> None:
         print("Force quit detected!")
         if not ncurses_mode:
             listener.stop()
+        if check_platform() == "Linux":
+            system("reset")
         sys_exit(-1)
 
     if not ncurses_mode:
         listener.stop()
+    if check_platform() == "Linux":
+        system("reset")
 
 
 if __name__ == "__main__":
