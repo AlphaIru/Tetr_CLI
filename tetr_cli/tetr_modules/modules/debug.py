@@ -5,7 +5,7 @@
 from time import perf_counter
 from typing import Set
 
-from curses import window
+from curses import window, error as curses_error
 
 
 class DebugClass:
@@ -54,16 +54,20 @@ class DebugClass:
                 + (f", Frame rate: {self.frame_rate:.2f}"),
             )
 
-        number_of_blanks: int = max_x - (
-            len(f"Current keys: {self.__keypress_set_to_string()} ") + 1
-        )
         if max_y > 1:
-            stdscr.addstr(
-                max_y - 1,
-                0,
-                f"Current keys: {self.__keypress_set_to_string()} "
-                + " " * number_of_blanks,
-            )
+            the_string: str = f"Current keys: {self.__keypress_set_to_string()} "
+            if len(the_string) > max_x:
+                the_string = the_string[:(max_x - 1)]
+            else:
+                the_string = the_string + " " * (max_x - len(the_string) - 1)
+            try:
+                stdscr.addstr(
+                    max_y - 1,
+                    0,
+                    the_string,
+                )
+            except curses_error:
+                pass
 
         return stdscr
 

@@ -12,7 +12,7 @@ setup(
     install_requires=[
         "ansicon>=1.83.0",
         "jinxed>=1.1.0",
-        "keyboard>=0.13.3",
+        "pynput>=1.7.6",
         "pygame>=2.1.2",
         "wcwidth>=0.1.7",
         'windows-curses>=2.2.0; platform_system == "Windows"',

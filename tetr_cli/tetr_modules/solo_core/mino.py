@@ -5,7 +5,7 @@
 from functools import lru_cache
 from typing import Callable, Optional, Set, Dict, List, Tuple
 
-from tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     DAS,
     ARR,
@@ -188,6 +188,17 @@ class Mino:
                 if self.last_sideways_direction == direction:
                     self.last_sideways_direction = ""
                     self.auto_repeat_delay = DAS
+
+    def handle_sideways_curses_input(
+        self,
+        pressed_keys: Set[str],
+        mino_touching_side_func: Callable[[str, "Mino"], bool],
+    ) -> None:
+        """Handles continuous movement for left/right in curses mode."""
+        for direction in ["left", "right"]:
+            if direction in pressed_keys:
+                if not mino_touching_side_func(direction, self):
+                    self.move_sideways(direction)
 
     def move_down(
         self,

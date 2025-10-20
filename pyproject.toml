@@ -13,13 +13,17 @@ authors = [
 dependencies = [
     "ansicon>=1.88.0",
     "jinxed>=1.1.0",
-    "keyboard>=0.13.3",
+    "pynput>=1.7.6",
     "pygame>=2.1.2",
     "wcwidth>=0.1.7",
     'windows-curses>=2.2.0; platform_system == "Windows"'
 ]
 requires-python = ">=3.8"
 readme = "README.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tetr_cli", "tetr_cli.*"]
 
 [project.scripts]
 tetr_cli = "tetr_cli.starter:starter"

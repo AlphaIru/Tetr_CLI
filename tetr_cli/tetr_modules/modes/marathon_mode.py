@@ -7,7 +7,7 @@ from typing import Optional, List, Set, Tuple
 
 from tetr_cli.tetr_modules.solo_core.base import SoloBaseMode
 from tetr_cli.tetr_modules.solo_core.mino import Mino
-from tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.modules.constants import (
     MIN_X,
     MIN_Y,
     DRAW_BOARD_HEIGHT,
