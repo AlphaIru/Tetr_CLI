@@ -6,10 +6,16 @@ from threading import Lock
 from typing import Set
 from sys import argv, exit as sys_exit
 
-from pynput import keyboard  # type: ignore
+try:
+    from pynput import keyboard  # type: ignore
+except ImportError:
+    pass
 
 from tetr_cli.main import main
-from tetr_cli.keyboard_handlers.pynput_handler import setup_pynput_listener
+try:
+    from tetr_cli.keyboard_handlers.pynput_handler import setup_pynput_listener
+except ImportError:
+    pass
 
 
 def parse_flag(flag_aliases: list[str]) -> bool:
