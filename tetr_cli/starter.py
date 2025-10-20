@@ -8,8 +8,9 @@ from sys import argv, exit as sys_exit
 
 try:
     from pynput import keyboard  # type: ignore
+    NO_PYNPUT = False
 except ImportError:
-    pass
+    NO_PYNPUT = True
 
 from tetr_cli.main import main
 try:
@@ -28,6 +29,8 @@ def starter() -> None:
 
     debug_mode: bool = parse_flag(["--debug", "-d"])
     ncurses_mode: bool = parse_flag(["--curses", "--ncurses", "--c"])
+    if NO_PYNPUT:
+        ncurses_mode = True
 
     pressed_keys: Set[str] = set()
 

@@ -68,10 +68,13 @@ async def main(
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
-    mixer.init()
-    mixer.music.set_volume(0.25)
-
-    sound_effect_dict: Dict[str, Sound] = await load_sfx()
+    audio_check: bool = True
+    try:
+        mixer.init()
+        mixer.music.set_volume(0.25)
+        sound_effect_dict: Dict[str, Sound] = await load_sfx()
+    except Exception:
+        audio_check = False
 
     stdscr: window = initscr()
     start_color()
@@ -147,12 +150,13 @@ async def main(
 
         # stdscr.refresh()
 
-        sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
-        current_bgm = await play_sounds(
-            sound_action=sound_action,
-            current_bgm=current_bgm,
-            sound_effect_dict=sound_effect_dict,
-        )
+        if audio_check:
+            sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
+            current_bgm = await play_sounds(
+                sound_action=sound_action,
+                current_bgm=current_bgm,
+                sound_effect_dict=sound_effect_dict,
+            )
 
         action: str = current_mode.get_mode_action()
         if action == "Quit":
