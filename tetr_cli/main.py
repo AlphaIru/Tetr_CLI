@@ -33,7 +33,7 @@ from curses import (
 from pygame import mixer
 from pygame.mixer import Sound
 
-from tetr_cli.keyboard_handlers.curses_handler import curses_key_name
+from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
 
 from tetr_cli.tetr_modules.mode import GameMode
 from tetr_cli.tetr_modules.modules.checker import (
@@ -52,9 +52,9 @@ FRAME_DURATION: float = 1 / TARGET_FPS
 
 async def run_action(action: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
-    if action == "Solo":
+    if action == "Solo_Menu":
         current_mode.change_mode("solo_menu")
-    elif action == "Go_Back":
+    elif action == "Main_Menu":
         current_mode.change_mode("main_menu")
     elif action == "Marathon":
         current_mode.change_mode("marathon")
@@ -142,10 +142,7 @@ async def main(
             )
             stdscr = debug_stats.update_debug(stdscr=stdscr)
 
-        current_mode.increment_frame(
-            stdscr=stdscr,
-            pressed_keys=pressed_keys
-        )
+        current_mode.increment_frame(stdscr=stdscr, pressed_keys=pressed_keys)
         doupdate()
 
         if await screen_dimension_check(stdscr=stdscr) is False:

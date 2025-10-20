@@ -18,9 +18,12 @@ async def load_sfx() -> Dict[str, Sound]:
 
     sound_effects = {
         "select_move": mixer.Sound(str(sound_path / "sfx/select_move.wav")),
-        "select_confirm": mixer.Sound(str(sound_path / "sfx/quad.wav")),
+        "select_confirm": mixer.Sound(str(sound_path / "sfx/select_confirm.wav")),
+        "select_back": mixer.Sound(str(sound_path / "sfx/select_back.wav")),
+        "single": mixer.Sound(str(sound_path / "sfx/single.wav")),
+        "double": mixer.Sound(str(sound_path / "sfx/double.wav")),
         "quad": mixer.Sound(str(sound_path / "sfx/quad.wav")),
-        "3_2_1": mixer.Sound(str(sound_path / "sfx/3_2_1.wav")),
+        "countdown": mixer.Sound(str(sound_path / "sfx/countdown.wav")),
         "go": mixer.Sound(str(sound_path / "sfx/go.wav")),
     }
     return sound_effects

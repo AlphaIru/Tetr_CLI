@@ -1,4 +1,5 @@
 """This is a starter file for tetr_cli. This will be sent to main to reduce confusions."""
+
 # coding: utf-8
 
 from asyncio import run, CancelledError
@@ -8,13 +9,17 @@ from sys import argv, exit as sys_exit
 
 try:
     from pynput import keyboard  # type: ignore
+
     NO_PYNPUT = False
 except ImportError:
     NO_PYNPUT = True
 
 from tetr_cli.main import main
+
 try:
-    from tetr_cli.keyboard_handlers.pynput_handler import setup_pynput_listener
+    from tetr_cli.tetr_modules.keyboard_handlers.pynput_handler import (
+        setup_pynput_listener,
+    )
 except ImportError:
     pass
 
