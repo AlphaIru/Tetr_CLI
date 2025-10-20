@@ -160,8 +160,9 @@ async def main(
 
         action: str = current_mode.get_mode_action()
         if action == "Quit":
-            mixer.music.stop()
-            mixer.quit()
+            if audio_check:
+                mixer.music.stop()
+                mixer.quit()
             break
         if action:
             stdscr.clear()
