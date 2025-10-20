@@ -3,8 +3,7 @@
 # coding: utf-8
 
 from asyncio import run, CancelledError
-from os import system
-from platform import system as check_platform
+from curses import endwin
 from sys import argv, exit as sys_exit
 from threading import Lock
 from typing import Set
@@ -49,20 +48,19 @@ def starter() -> None:
     try:
         run(main(pressed_keys, debug_mode=debug_mode, ncurses_mode=ncurses_mode))
         print("\n\n")
+        endwin()
         print("Thank you for playing!")
         print("Game made by Airun_Iru")
     except (CancelledError, KeyboardInterrupt):
+        endwin()
         print("Force quit detected!")
         if not ncurses_mode:
             listener.stop()
-        if check_platform() == "Linux":
-            system("reset")
         sys_exit(-1)
 
     if not ncurses_mode:
         listener.stop()
-    if check_platform() == "Linux":
-        system("reset")
+    endwin()
 
 
 if __name__ == "__main__":
