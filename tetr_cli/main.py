@@ -165,9 +165,6 @@ async def main(
 
             action: str = current_mode.get_mode_action()
             if action == "Quit":
-                if audio_check:
-                    mixer.music.stop()
-                    mixer.quit()
                 break
             if action:
                 stdscr.clear()
@@ -179,7 +176,7 @@ async def main(
     except KeyboardInterrupt:
         pass
 
-    if audio_check:
+    if mixer and audio_check:
         mixer.music.stop()
         mixer.quit()
     endwin()
