@@ -32,7 +32,11 @@ class GameMode:
             raise RuntimeError("Mode not loaded.")
         return self.__mode_instance.pop_sound_action()
 
-    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def increment_frame(
+        self,
+        stdscr: window,
+        pressed_keys: Set[str]
+    ) -> window:
         """This will increment frame based on the current mode."""
         if self.__mode_instance is None:
             raise RuntimeError("Mode not loaded.")

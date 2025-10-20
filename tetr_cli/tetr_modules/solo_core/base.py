@@ -6,7 +6,7 @@ from random import shuffle, seed, randint
 from typing import Optional, Dict, Set, List, Tuple
 
 from tetr_cli.tetr_modules.solo_core.board import Board
-from tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
     MINO_TYPES,
@@ -205,71 +205,74 @@ class SoloBaseMode:
         self._last_ghost_result = result
         return result
 
-    def check_keyinput_pressed(self, pressed_keys: Set[str], level: int):
+    def check_keyinput_pressed(self, pressed_keys: Set[str], level: int) -> None:
         """This will check the keyinput pressed."""
 
-        if self.current_mino:
-            if (
-                pressed_keys & {"z", "Z", "ctrl"}
-                and "ccw" not in self.keyinput_cooldown
-            ):
-                self.current_mino.rotate("left", self.is_position_valid)
-                self.keyinput_cooldown.add("ccw")
-            if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
-                self.current_mino.rotate("right", self.is_position_valid)
-                self.keyinput_cooldown.add("cw")
-            if pressed_keys & {"left", "right"}:
-                self.current_mino.handle_sideways_auto_repeat(
-                    pressed_keys, self.mino_touching_side
-                )
-            if pressed_keys & {"down"}:
-                if not self.mino_touching_bottom(self.current_mino):
-                    self.current_mino.soft_drop(
-                        level=level, is_position_valid=self.is_position_valid
-                    )
-                    self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
-            if pressed_keys & {"space"} and "space" not in self.keyinput_cooldown:
-                self.current_mino.hard_drop(
-                    mino_touching_bottom_func=self.mino_touching_bottom,
-                    is_position_valid=self.is_position_valid,
-                )
-                self.board.place_mino(
-                    self.current_mino.type,
-                    self.current_mino.orientation,
-                    self.current_mino.position,
-                )
-                self.reset_mino()
-                self.keyinput_cooldown.add("space")
-            if (
-                pressed_keys & {"c", "C", "shift"}
-                and {"space"} not in pressed_keys
-                and not self.hold_used
-            ):
-                if self.current_hold:
-                    temp: Mino = copy(self.current_hold)  # type: ignore
-                    self.current_hold = copy(self.current_mino)
-                    self.current_mino = temp
-                    self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
-                    self.current_mino.orientation = "N"
-                    self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                        level=level
-                    )
-                    self.current_mino.lock_info = {
-                        "lock_delay": int(0.5 * TARGET_FPS),
-                        "lock_count": 15,
-                        "lock_height": 21,
-                    }
-                    self.reset_mino(current_mino_check=True, hold_used_check=True)
-                else:
-                    self.current_hold = copy(self.current_mino)
-                    self.reset_mino(hold_used_check=True)
-                    self.keyinput_cooldown.add("hold")
         if not pressed_keys & {"z", "Z", "ctrl"}:
             self.keyinput_cooldown.discard("ccw")
         if not pressed_keys & {"x", "X", "up"}:
             self.keyinput_cooldown.discard("cw")
         if not pressed_keys & {"space"}:
             self.keyinput_cooldown.discard("space")
+
+        if not self.current_mino:
+            return
+
+        if (
+            pressed_keys & {"z", "Z", "ctrl"}
+            and "ccw" not in self.keyinput_cooldown
+        ):
+            self.current_mino.rotate("left", self.is_position_valid)
+            self.keyinput_cooldown.add("ccw")
+        if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
+            self.current_mino.rotate("right", self.is_position_valid)
+            self.keyinput_cooldown.add("cw")
+        if pressed_keys & {"left", "right"}:
+            self.current_mino.handle_sideways_auto_repeat(
+                pressed_keys, self.mino_touching_side
+            )
+        if pressed_keys & {"down"}:
+            if not self.mino_touching_bottom(self.current_mino):
+                self.current_mino.soft_drop(
+                    level=level, is_position_valid=self.is_position_valid
+                )
+                self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+        if pressed_keys & {"space"} and "space" not in self.keyinput_cooldown:
+            self.current_mino.hard_drop(
+                mino_touching_bottom_func=self.mino_touching_bottom,
+                is_position_valid=self.is_position_valid,
+            )
+            self.board.place_mino(
+                self.current_mino.type,
+                self.current_mino.orientation,
+                self.current_mino.position,
+            )
+            self.reset_mino()
+            self.keyinput_cooldown.add("space")
+        if (
+            pressed_keys & {"c", "C", "shift"}
+            and {"space"} not in pressed_keys
+            and not self.hold_used
+        ):
+            if self.current_hold:
+                temp: Mino = copy(self.current_hold)  # type: ignore
+                self.current_hold = copy(self.current_mino)
+                self.current_mino = temp
+                self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
+                self.current_mino.orientation = "N"
+                self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
+                    level=level
+                )
+                self.current_mino.lock_info = {
+                    "lock_delay": int(0.5 * TARGET_FPS),
+                    "lock_count": 15,
+                    "lock_height": 21,
+                }
+                self.reset_mino(current_mino_check=True, hold_used_check=True)
+            else:
+                self.current_hold = copy(self.current_mino)
+                self.reset_mino(hold_used_check=True)
+                self.keyinput_cooldown.add("hold")
 
 
 if __name__ == "__main__":

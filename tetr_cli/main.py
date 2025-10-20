@@ -3,7 +3,6 @@
 # coding: utf-8
 
 from asyncio import sleep
-from pathlib import Path
 from typing import Set, Dict, List
 
 import curses
@@ -33,76 +32,21 @@ from curses import (
 from pygame import mixer
 from pygame.mixer import Sound
 
-from tetr_cli.tetr_modules.checker import (
+from tetr_cli.keyboard_handlers.curses_handler import curses_key_name
+
+from tetr_cli.tetr_modules.mode import GameMode
+from tetr_cli.tetr_modules.modules.checker import (
     screen_dimension_check,
     screen_dimension_warning,
 )
-from tetr_cli.tetr_modules.debug import DebugClass
-from tetr_cli.tetr_modules.mode import GameMode
+from tetr_cli.tetr_modules.modules.constants import TARGET_FPS
+from tetr_cli.tetr_modules.modules.debug import DebugClass
+from tetr_cli.tetr_modules.modules.sound import load_sfx, play_sounds
 
 
-TARGET_FPS: int = 30
 FRAME_DURATION: float = 1 / TARGET_FPS
 
-
-current_path: Path = Path(__file__).parent.parent.resolve()
-
 # O, I, T, L, J, S, Z
-
-
-async def load_sfx() -> Dict[str, Sound]:
-    """Load all sound effects."""
-
-    mixer.init()
-
-    sound_effects = {
-        "select_move": mixer.Sound(
-            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/select_move.wav")
-        ),
-        "select_confirm": mixer.Sound(
-            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/quad.wav")
-        ),
-        "quad": mixer.Sound(
-            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/quad.wav")
-        ),
-        "3_2_1": mixer.Sound(
-            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/3_2_1.wav")
-        ),
-        "go": mixer.Sound(
-            str(current_path / "tetr_cli/tetr_modules/sounds/sfx/go.wav")
-        )
-    }
-    return sound_effects
-
-
-async def play_sounds(
-    sound_action: Dict[str, List[str]],
-    current_bgm: str,
-    sound_effect_dict: Dict[str, Sound],
-) -> str:
-    """Play sounds."""
-
-    if sound_action and "BGM" in sound_action:
-        if not sound_action["BGM"] or sound_action["BGM"][0] == "stop":
-            mixer.music.stop()
-            current_bgm = ""
-        elif sound_action["BGM"][0] != current_bgm:
-            current_bgm = sound_action["BGM"][0]
-            try:
-                mixer.music.load(
-                    str(current_path / f"tetr_cli/tetr_modules/sounds/bgm/{current_bgm}.wav")
-                )
-                mixer.music.play(-1)
-            except Exception as err:
-                print(f"Failed to load or play BGM: {err}")
-
-    if sound_action and "SFX" in sound_action:
-        for sfx in sound_action["SFX"]:
-            try:
-                sound_effect_dict[sfx].play()
-            except Exception as err:
-                print(f"Failed to play SFX: {err}")
-    return current_bgm
 
 
 async def run_action(action: str, current_mode: GameMode) -> GameMode:
@@ -116,7 +60,11 @@ async def run_action(action: str, current_mode: GameMode) -> GameMode:
     return current_mode
 
 
-async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
+async def main(
+    pressed_keys: Set[str],
+    debug_mode: bool,
+    ncurses_mode: bool = True,
+) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
@@ -142,21 +90,21 @@ async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
 
     if curses.COLORS >= 256:
         init_pair(1, COLOR_YELLOW, -1)  # O
-        init_pair(2, COLOR_CYAN, -1)    # I
+        init_pair(2, COLOR_CYAN, -1)  # I
         init_pair(3, COLOR_MAGENTA, -1)  # T
         init_pair(4, 208, -1)  # L
-        init_pair(5, COLOR_BLUE, -1)     # J
-        init_pair(6, COLOR_GREEN, -1)    # S
-        init_pair(7, COLOR_RED, -1)      # Z
+        init_pair(5, COLOR_BLUE, -1)  # J
+        init_pair(6, COLOR_GREEN, -1)  # S
+        init_pair(7, COLOR_RED, -1)  # Z
         init_pair(8, 244, -1)  # Garbage
     else:
         init_pair(1, COLOR_YELLOW, -1)  # O
-        init_pair(2, COLOR_CYAN, -1)    # I
+        init_pair(2, COLOR_CYAN, -1)  # I
         init_pair(3, COLOR_MAGENTA, -1)  # T
         init_pair(4, COLOR_YELLOW, COLOR_BLACK)  # L
-        init_pair(5, COLOR_BLUE, -1)     # J
-        init_pair(6, COLOR_GREEN, -1)    # S
-        init_pair(7, COLOR_RED, -1)      # Z
+        init_pair(5, COLOR_BLUE, -1)  # J
+        init_pair(6, COLOR_GREEN, -1)  # S
+        init_pair(7, COLOR_RED, -1)  # Z
         init_pair(8, COLOR_WHITE, COLOR_BLACK)  # Light gray on black
 
     while True:
@@ -169,6 +117,12 @@ async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
             stdscr.clear()
             stdscr.refresh()
 
+        if ncurses_mode:
+            if key == -1:
+                pressed_keys.clear()
+            else:
+                pressed_keys.update(curses_key_name(key))
+
         stdscr.noutrefresh()
 
         if debug_mode:
@@ -178,7 +132,10 @@ async def main(pressed_keys: Set[str], debug_mode: bool) -> None:
             )
             stdscr = debug_stats.update_debug(stdscr=stdscr)
 
-        current_mode.increment_frame(stdscr=stdscr, pressed_keys=pressed_keys)
+        current_mode.increment_frame(
+            stdscr=stdscr,
+            pressed_keys=pressed_keys
+        )
         doupdate()
 
         if await screen_dimension_check(stdscr=stdscr) is False:

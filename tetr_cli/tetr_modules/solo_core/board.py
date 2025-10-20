@@ -10,7 +10,7 @@ from curses import (
     window,
 )
 
-from tetr_cli.tetr_modules.solo_core.constants import (
+from tetr_cli.tetr_modules.modules.constants import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     DRAW_BOARD_HEIGHT,
@@ -165,8 +165,7 @@ class Board:
                 elif y_counter == 20:
                     char = "- "
                 # The extra -1 is to adjust for zero indexing
-                y: int = offset[0] + (max_rows - 1 - y_counter) - adjusted_height
-                # y: int = offset[0] + y_counter - adjusted_height
+                y: int = offset[0] + ((max_rows - 1) - y_counter) - adjusted_height
                 x: int = offset[1] + x_counter * 2
                 if 0 <= y < max_yx[0] and 0 <= x < max_yx[1] - 1:
                     stdscr.addstr(

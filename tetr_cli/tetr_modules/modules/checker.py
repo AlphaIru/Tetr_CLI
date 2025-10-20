@@ -3,8 +3,7 @@
 
 from curses import window
 
-MIN_X: int = 80
-MIN_Y: int = 24
+from tetr_cli.tetr_modules.modules.constants import MIN_X, MIN_Y
 
 
 async def screen_dimension_check(stdscr: window) -> bool:
@@ -14,7 +13,7 @@ async def screen_dimension_check(stdscr: window) -> bool:
     max_x: int = 0
 
     max_y, max_x = stdscr.getmaxyx()
-    return False if (max_y < MIN_Y or max_x < MIN_X) else True
+    return not (max_y < MIN_Y or max_x < MIN_X)
 
 
 async def screen_dimension_warning(stdscr: window) -> window:
