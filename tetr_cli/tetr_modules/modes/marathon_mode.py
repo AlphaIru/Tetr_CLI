@@ -89,7 +89,10 @@ class ModeClass(SoloBaseMode):
 
         if self.current_mino.fall_delay > 0:
             self.current_mino.fall_delay -= 1
-        elif not self.mino_touching_bottom(self.current_mino) and not pressed_keys:
+        elif not self.mino_touching_bottom(self.current_mino) and not (
+            # pressed_keys
+            pressed_keys - {"down", "space"}
+        ):
             self.current_mino.move_down(is_position_valid=self.is_position_valid)
             self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
                 self.level
@@ -97,6 +100,13 @@ class ModeClass(SoloBaseMode):
 
         lines_cleared = self.board.check_line_filled()
         if lines_cleared > 0:
+            self.lines_cleared += lines_cleared
+            if lines_cleared == 1:
+                self.sound_action["SFX"].append("single")
+            elif lines_cleared == 2 or lines_cleared == 3:
+                self.sound_action["SFX"].append("double")
+            if lines_cleared == 4:
+                self.sound_action["SFX"].append("quad")
             self.board.clear_lines()
             # self.score +=
 
@@ -122,7 +132,7 @@ class ModeClass(SoloBaseMode):
 
         if self.counter % TARGET_FPS == 0:
             if self.counter > 0:
-                self.sound_action["SFX"].append("3_2_1")
+                self.sound_action["SFX"].append("countdown")
 
         self.counter -= 1
         if self.counter <= 0:
@@ -173,7 +183,8 @@ class ModeClass(SoloBaseMode):
             self._last_drawn_hold = hold_to_draw
 
         if "esc" in pressed_keys:
-            self.action = "Go_Back"
+            self.action = "Solo_Menu"
+            self.sound_action["SFX"].append("back")
             return stdscr
 
         if self.mode == "countdown":

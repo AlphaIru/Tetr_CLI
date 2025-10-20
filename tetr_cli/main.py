@@ -33,7 +33,7 @@ from curses import (
 from pygame import mixer
 from pygame.mixer import Sound
 
-from tetr_cli.keyboard_handlers.curses_handler import curses_key_name
+from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
 
 from tetr_cli.tetr_modules.mode import GameMode
 from tetr_cli.tetr_modules.modules.checker import (
@@ -52,9 +52,9 @@ FRAME_DURATION: float = 1 / TARGET_FPS
 
 async def run_action(action: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
-    if action == "Solo":
+    if action == "Solo_Menu":
         current_mode.change_mode("solo_menu")
-    elif action == "Go_Back":
+    elif action == "Main_Menu":
         current_mode.change_mode("main_menu")
     elif action == "Marathon":
         current_mode.change_mode("marathon")
@@ -114,71 +114,74 @@ async def main(
     start_time: float = 0.0
     elapsed_time: float = 0.0
 
-    while True:
-        if elapsed_time < FRAME_DURATION:
-            await sleep(FRAME_DURATION - elapsed_time)
-        start_time = perf_counter()
+    try:
+        while True:
+            if elapsed_time < FRAME_DURATION:
+                await sleep(FRAME_DURATION - elapsed_time)
+            start_time = perf_counter()
 
-        key_input = stdscr.getch()
-        # stdscr.clear()
+            key_input = stdscr.getch()
+            # stdscr.clear()
 
-        if key_input == KEY_RESIZE:
-            resize_term(*stdscr.getmaxyx())
-            stdscr.clear()
-            stdscr.refresh()
+            if key_input == KEY_RESIZE:
+                resize_term(*stdscr.getmaxyx())
+                stdscr.clear()
+                stdscr.refresh()
 
-        if ncurses_mode:
-            if key_input == -1:
-                pressed_keys.clear()
-            else:
-                pressed_keys.update(curses_key_name(key_input))
+            if ncurses_mode:
+                if key_input == -1:
+                    pressed_keys.clear()
+                else:
+                    pressed_keys.update(curses_key_name(key_input))
 
-        stdscr.noutrefresh()
+            stdscr.noutrefresh()
 
-        if debug_mode:
-            debug_stats.update_keypress(keypress=pressed_keys)
-            debug_stats.update_current_mode(
-                new_mode=current_mode.get_current_mode_name()
-            )
-            stdscr = debug_stats.update_debug(stdscr=stdscr)
+            if debug_mode:
+                debug_stats.update_keypress(keypress=pressed_keys)
+                debug_stats.update_current_mode(
+                    new_mode=current_mode.get_current_mode_name()
+                )
+                stdscr = debug_stats.update_debug(stdscr=stdscr)
 
-        current_mode.increment_frame(
-            stdscr=stdscr,
-            pressed_keys=pressed_keys
-        )
-        doupdate()
-
-        if await screen_dimension_check(stdscr=stdscr) is False:
-            stdscr.clear()
-            stdscr = await screen_dimension_warning(stdscr=stdscr)
-            stdscr = debug_stats.update_debug(stdscr=stdscr)
+            current_mode.increment_frame(stdscr=stdscr, pressed_keys=pressed_keys)
             doupdate()
-            continue
 
-        # stdscr.refresh()
+            if await screen_dimension_check(stdscr=stdscr) is False:
+                stdscr.clear()
+                stdscr = await screen_dimension_warning(stdscr=stdscr)
+                stdscr = debug_stats.update_debug(stdscr=stdscr)
+                doupdate()
+                continue
 
-        if audio_check:
-            sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
-            current_bgm = await play_sounds(
-                sound_action=sound_action,
-                current_bgm=current_bgm,
-                sound_effect_dict=sound_effect_dict,
-            )
+            # stdscr.refresh()
 
-        action: str = current_mode.get_mode_action()
-        if action == "Quit":
             if audio_check:
-                mixer.music.stop()
-                mixer.quit()
-            break
-        if action:
-            stdscr.clear()
-            current_mode = await run_action(action=action, current_mode=current_mode)
+                sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
+                current_bgm = await play_sounds(
+                    sound_action=sound_action,
+                    current_bgm=current_bgm,
+                    sound_effect_dict=sound_effect_dict,
+                )
 
-        if action and pressed_keys is not None:
-            pressed_keys.clear()
-        elapsed_time = perf_counter() - start_time
+            action: str = current_mode.get_mode_action()
+            if action == "Quit":
+                if audio_check:
+                    mixer.music.stop()
+                    mixer.quit()
+                break
+            if action:
+                stdscr.clear()
+                current_mode = await run_action(action=action, current_mode=current_mode)
 
+            if action and pressed_keys is not None:
+                pressed_keys.clear()
+            elapsed_time = perf_counter() - start_time
+    except KeyboardInterrupt:
+        pass
+
+    if audio_check:
+        mixer.music.stop()
+        mixer.quit()
     endwin()
 
 

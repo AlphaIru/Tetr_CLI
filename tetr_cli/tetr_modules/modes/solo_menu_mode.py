@@ -7,6 +7,13 @@ from typing import Dict, List, Set
 
 from curses import A_BOLD, A_REVERSE, window
 
+OPTION_TO_ACTION: Dict[str, str] = {
+    "Marathon": "Marathon",
+    "Sprint": "Sprint",
+    "Ultra": "Ultra",
+    "Go_Back": "Main_Menu",
+}
+
 
 class ModeClass:
     """This will handle the solo mode menu."""
@@ -48,8 +55,11 @@ class ModeClass:
             self.__key_cooldown = 3
             self.__sound_action["SFX"].append("select_move")
         elif "enter" in pressed_keys:
-            self.__action = self.__options[self.__selected_option]
-            self.__sound_action["SFX"].append("select_confirm")  # sound for confirming selection
+            self.__action = OPTION_TO_ACTION.get(self.__options[self.__selected_option], "")
+            if self.__options[self.__selected_option] == "Go_Back":
+                self.__sound_action["SFX"].append("select_back")
+            else:
+                self.__sound_action["SFX"].append("select_confirm")
             return stdscr
 
         height: int = 0
