@@ -28,6 +28,7 @@ class SoloBaseMode:
         # Game stats
         self.level: int = 1
         self.back_to_back: bool = False
+        self.combo_count: int = 0
         self.lines_cleared: int = 0
         self.score: int = 0
 
@@ -231,6 +232,10 @@ class SoloBaseMode:
             return
         all_clear_detected: bool = self.board.detect_all_clear()
         t_spin_detected: str = self.board.detect_t_spin(self.current_mino)
+        if lines_clear_detected > 0:
+            self.combo_count += 1
+        else:
+            self.combo_count = 0
 
         self.board.clear_lines()
         current_score, back_to_back = calculate_line_score(
@@ -238,6 +243,7 @@ class SoloBaseMode:
             level=self.level,
             t_spin=t_spin_detected,
             all_clear=all_clear_detected,
+            combo=self.combo_count,
             back_to_back=self.back_to_back,
         )
         self.score += current_score

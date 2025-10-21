@@ -51,7 +51,7 @@ class ModeClass(SoloBaseMode):
         # stdscr.addstr(
         #     self.offset[0] + DRAW_BOARD_HEIGHT + 1,
         #     self.offset[1] + DRAW_BOARD_WIDTH + 2,
-        #     f"Fall delay: {self.current_mino.fall_delay if self.current_mino else '0'}",
+        #     f"Combo: {self.combo_count}",
         # )
         return stdscr
 

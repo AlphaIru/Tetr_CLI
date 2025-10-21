@@ -9,6 +9,7 @@ def calculate_line_score(
     level: int,
     t_spin: str = "",
     all_clear: bool = False,
+    combo: int = 0,
     back_to_back: bool = False,
 ) -> tuple[int, bool]:
     """This will calculate the score based on the given parameters."""
@@ -25,6 +26,8 @@ def calculate_line_score(
         base_score = SCORE_TABLE["regular"].get(lines_cleared, 0)
 
     score = int(base_score * level)
+    if combo > 1:
+        score += (combo * 50 * level)
     if back_to_back:
         score = int(score * 1.5)
     if lines_cleared < 4 and not t_spin:
