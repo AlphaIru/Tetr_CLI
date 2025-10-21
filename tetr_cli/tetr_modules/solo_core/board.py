@@ -17,6 +17,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_WIDTH,
     MINO_COLOR,
     MINO_DRAW_LOCATION,
+    T_SPIN_CORNER_CHECKS,
 )
 
 from tetr_cli.tetr_modules.solo_core.mino import Mino
@@ -56,7 +57,47 @@ class Board:
             and self.__board[y_pos][x_pos] != 0
         )
 
-    def check_line_filled(self) -> int:
+    def detect_t_spin(self, mino: "Mino") -> str:  # type: ignore
+        """This will detect if the current mino is performing a T-Spin."""
+        if mino.type != "T":
+            return ""
+
+        pivot_y, pivot_x = mino.position
+        corner_offsets: List[Tuple[int, int]] = T_SPIN_CORNER_CHECKS[mino.orientation]
+        occupied_corners: List[bool] = [False, False, False, False]
+
+        for counter, (y_offset, x_offset) in enumerate(corner_offsets):
+            corner_y = pivot_y + y_offset
+            corner_x = pivot_x + x_offset
+            if (
+                corner_y < 0
+                or corner_y >= BOARD_HEIGHT
+                or corner_x < 0
+                or corner_x >= BOARD_WIDTH
+                or self.__board[corner_y][corner_x] != 0
+            ):
+                occupied_corners[counter] = True
+
+        # Note:
+        # T-Spin:  A and B + (C or d)
+        # Mini T-Spin: C and D + (A or B)
+        if occupied_corners[0] and occupied_corners[1] and (
+            occupied_corners[2] or occupied_corners[3]
+        ):
+            if mino.kick_number > 0 and sum(occupied_corners) >= 3:
+                return "T-Spin"
+
+        if occupied_corners[2] and occupied_corners[3] and (
+            occupied_corners[0] or occupied_corners[1]
+        ):
+            if mino.kick_number == 5:
+                return "T-Spin"
+            if mino.kick_number > 0:
+                return "Mini T-Spin"
+
+        return ""
+
+    def check_line_clear(self) -> int:
         """This will check if any lines are filled and queue them to be cleared."""
         line_cleared: int = 0
         self.__line_clear_queue.clear()

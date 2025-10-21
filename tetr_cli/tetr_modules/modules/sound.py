@@ -23,6 +23,9 @@ async def load_sfx() -> Dict[str, Sound]:
         "single": mixer.Sound(str(sound_path / "sfx/single.wav")),
         "double": mixer.Sound(str(sound_path / "sfx/double.wav")),
         "quad": mixer.Sound(str(sound_path / "sfx/quad.wav")),
+        "t_spin_single": mixer.Sound(str(sound_path / "sfx/t_spin_single.wav")),
+        "t_spin_double": mixer.Sound(str(sound_path / "sfx/t_spin_double.wav")),
+        "t_spin_triple": mixer.Sound(str(sound_path / "sfx/t_spin_triple.wav")),
         "countdown": mixer.Sound(str(sound_path / "sfx/countdown.wav")),
         "go": mixer.Sound(str(sound_path / "sfx/go.wav")),
     }

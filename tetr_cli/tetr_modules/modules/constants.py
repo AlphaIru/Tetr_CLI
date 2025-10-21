@@ -1,4 +1,5 @@
 """This will hold constants for different game modes."""
+
 # coding: utf-8
 
 from typing import Set, Dict, List, Tuple
@@ -26,6 +27,14 @@ BOARD_HEIGHT: int = 40
 
 DAS: int = int(0.05 * TARGET_FPS)
 ARR: int = int(0.01 * TARGET_FPS)
+
+# (y, x), A B C D
+T_SPIN_CORNER_CHECKS: Dict[str, List[Tuple[int, int]]] = {
+    "N": [(1, -1), (1, 1), (-1, -1), (-1, 1)],
+    "E": [(1, 1), (-1, 1), (1, -1), (-1, -1)],
+    "S": [(-1, 1), (-1, -1), (1, 1), (1, -1)],
+    "W": [(-1, -1), (1, -1), (-1, 1), (1, 1)],
+}
 
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
 DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra

@@ -27,9 +27,6 @@ class ModeClass(SoloBaseMode):
         self.mino_list_generator(initial=True)
         self.counter: int = TARGET_FPS * 3  # Formally countdown
         self.mode: str = "countdown"
-        self.level: int = 1
-        self.score: int = 0
-        self.lines_cleared: int = 0
 
     def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will play the mode."""
@@ -39,7 +36,7 @@ class ModeClass(SoloBaseMode):
             new_mino_type: str = self.mino_list.pop(0)
             self.current_mino = Mino(mino_type=new_mino_type, level=self.level)
 
-        self.check_keyinput_pressed(level=self.level, pressed_keys=pressed_keys)
+        self.check_keyinput_pressed(pressed_keys=pressed_keys)
         if not self.current_mino:
             stdscr = self.board.draw_minos_on_board(
                 stdscr=stdscr,
@@ -75,6 +72,7 @@ class ModeClass(SoloBaseMode):
                     self.current_mino.orientation,
                     self.current_mino.position,
                 )
+                self.calculate_score()
                 self.reset_mino()
 
         if not self.current_mino:
@@ -91,24 +89,25 @@ class ModeClass(SoloBaseMode):
             self.current_mino.fall_delay -= 1
         elif not self.mino_touching_bottom(self.current_mino) and not (
             # pressed_keys
-            pressed_keys - {"down", "space"}
+            pressed_keys
+            - {"down", "space"}
         ):
             self.current_mino.move_down(is_position_valid=self.is_position_valid)
             self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
                 self.level
             )
 
-        lines_cleared = self.board.check_line_filled()
-        if lines_cleared > 0:
-            self.lines_cleared += lines_cleared
-            if lines_cleared == 1:
-                self.sound_action["SFX"].append("single")
-            elif lines_cleared == 2 or lines_cleared == 3:
-                self.sound_action["SFX"].append("double")
-            if lines_cleared == 4:
-                self.sound_action["SFX"].append("quad")
-            self.board.clear_lines()
-            # self.score +=
+        # lines_cleared = self.board.check_line_filled()
+        # if lines_cleared > 0:
+        #     self.lines_cleared += lines_cleared
+        #     if lines_cleared == 1:
+        #         self.sound_action["SFX"].append("single")
+        #     elif lines_cleared == 2 or lines_cleared == 3:
+        #         self.sound_action["SFX"].append("double")
+        #     if lines_cleared == 4:
+        #         self.sound_action["SFX"].append("quad")
+        #     self.board.clear_lines()
+        #     # self.score +=
 
         stdscr = self.board.draw_minos_on_board(
             stdscr=stdscr,

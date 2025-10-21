@@ -1,18 +1,23 @@
 """This holds the base attributes and methods for all modes."""
+
 # coding: utf-8
 
 from copy import copy, deepcopy
 from random import shuffle, seed, randint
 from typing import Optional, Dict, Set, List, Tuple
 
-from tetr_cli.tetr_modules.solo_core.board import Board
 from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
     MINO_TYPES,
     TARGET_FPS,
 )
+from tetr_cli.tetr_modules.solo_core.board import Board
 from tetr_cli.tetr_modules.solo_core.mino import Mino
+from tetr_cli.tetr_modules.solo_core.score import (
+    calculate_drop_score,
+    calculate_line_score,
+)
 
 
 class SoloBaseMode:
@@ -20,6 +25,12 @@ class SoloBaseMode:
 
     def __init__(self) -> None:
         """This will initialize this class."""
+        # Game stats
+        self.level: int = 1
+        self.back_to_back: bool = False
+        self.lines_cleared: int = 0
+        self.score: int = 0
+
         # Board
         self.board: Board = Board()
 
@@ -73,9 +84,7 @@ class SoloBaseMode:
         self.sound_action["SFX"] = []
         return sound_action
 
-    def mino_list_generator(
-        self, initial: bool = False, input_seed: int = 0
-    ) -> None:
+    def mino_list_generator(self, initial: bool = False, input_seed: int = 0) -> None:
         """This will generate the next mino."""
         new_mino_list: List[str] = []
         if initial:
@@ -103,6 +112,8 @@ class SoloBaseMode:
     ) -> None:
         """This will reset the current mino."""
         self.current_mino = None if not current_mino_check else self.current_mino
+        if self.current_mino:
+            self.current_mino.kick_number = 0
         self.hold_used = hold_used_check
         if not hold_used_check:
             self._last_drawn_hold = "_init"
@@ -207,7 +218,49 @@ class SoloBaseMode:
         self._last_ghost_result = result
         return result
 
-    def check_keyinput_pressed(self, pressed_keys: Set[str], level: int) -> None:
+    def calculate_score(self, rows_dropped: int = 0) -> None:
+        """This will calculate the score from hard drop."""
+
+        self.score += calculate_drop_score(
+            soft_drop_distance=0,
+            hard_drop_distance=rows_dropped,
+        )
+
+        lines_clear_detected: int = self.board.check_line_clear()
+        if not self.current_mino:
+            return
+        t_spin_detected: str = self.board.detect_t_spin(self.current_mino)
+
+        self.board.clear_lines()
+        current_score, back_to_back = calculate_line_score(
+            lines_cleared=lines_clear_detected,
+            level=self.level,
+            t_spin=t_spin_detected,
+            back_to_back=self.back_to_back,
+        )
+        self.score += current_score
+        self.back_to_back = back_to_back
+        self.lines_cleared += lines_clear_detected
+
+        if t_spin_detected:
+            if lines_clear_detected <= 1:
+                self.sound_action["SFX"].append("t_spin_single")
+            elif lines_clear_detected == 2:
+                self.sound_action["SFX"].append("t_spin_double")
+            elif lines_clear_detected == 3:
+                self.sound_action["SFX"].append("t_spin_triple")
+        else:
+            if lines_clear_detected == 1:
+                self.sound_action["SFX"].append("single")
+            elif lines_clear_detected == 2 or lines_clear_detected == 3:
+                self.sound_action["SFX"].append("double")
+            elif lines_clear_detected == 4:
+                self.sound_action["SFX"].append("quad")
+
+        if self.lines_cleared // 10 + 1 > self.level:
+            self.level = self.lines_cleared // 10 + 1
+
+    def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""
 
         if not pressed_keys & {"z", "Z", "ctrl"}:
@@ -220,10 +273,7 @@ class SoloBaseMode:
         if not self.current_mino:
             return
 
-        if (
-            pressed_keys & {"z", "Z", "ctrl"}
-            and "ccw" not in self.keyinput_cooldown
-        ):
+        if pressed_keys & {"z", "Z", "ctrl"} and "ccw" not in self.keyinput_cooldown:
             self.current_mino.rotate("left", self.is_position_valid)
             self.keyinput_cooldown.add("ccw")
         if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
@@ -236,11 +286,15 @@ class SoloBaseMode:
         if pressed_keys & {"down"}:
             if not self.mino_touching_bottom(self.current_mino):
                 self.current_mino.soft_drop(
-                    level=level, is_position_valid=self.is_position_valid
+                    level=self.level, is_position_valid=self.is_position_valid
                 )
                 self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+                self.score += calculate_drop_score(
+                    soft_drop_distance=1,
+                    hard_drop_distance=0,
+                )
         if pressed_keys & {"space"} and "space" not in self.keyinput_cooldown:
-            self.current_mino.hard_drop(
+            rows_dropped = self.current_mino.hard_drop(
                 mino_touching_bottom_func=self.mino_touching_bottom,
                 is_position_valid=self.is_position_valid,
             )
@@ -249,6 +303,9 @@ class SoloBaseMode:
                 self.current_mino.orientation,
                 self.current_mino.position,
             )
+
+            self.calculate_score(rows_dropped)
+
             self.reset_mino()
             self.keyinput_cooldown.add("space")
         if (
@@ -263,7 +320,7 @@ class SoloBaseMode:
                 self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
                 self.current_mino.orientation = "N"
                 self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                    level=level
+                    level=self.level
                 )
                 self.current_mino.lock_info = {
                     "lock_delay": int(0.5 * TARGET_FPS),
