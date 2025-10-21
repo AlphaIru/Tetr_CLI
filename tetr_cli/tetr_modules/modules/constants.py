@@ -1,4 +1,5 @@
 """This will hold constants for different game modes."""
+
 # coding: utf-8
 
 from typing import Set, Dict, List, Tuple
@@ -26,6 +27,14 @@ BOARD_HEIGHT: int = 40
 
 DAS: int = int(0.05 * TARGET_FPS)
 ARR: int = int(0.01 * TARGET_FPS)
+
+# (y, x), A B C D
+T_SPIN_CORNER_CHECKS: Dict[str, List[Tuple[int, int]]] = {
+    "N": [(1, -1), (1, 1), (-1, -1), (-1, 1)],
+    "E": [(1, 1), (-1, 1), (1, -1), (-1, -1)],
+    "S": [(-1, 1), (-1, -1), (1, 1), (1, -1)],
+    "W": [(-1, -1), (1, -1), (-1, 1), (1, 1)],
+}
 
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
 DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
@@ -80,6 +89,32 @@ MINO_DRAW_LOCATION: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
         "S": [(0, 0), (0, -1), (-1, 0), (-1, 1)],
         "E": [(0, 0), (-1, 0), (0, 1), (1, 1)],
         "W": [(0, 0), (1, 0), (0, -1), (-1, -1)],
+    },
+}
+
+SCORE_TABLE: Dict[str, Dict[int, int]] = {
+    "regular": {
+        1: 100,
+        2: 300,
+        3: 500,
+        4: 800,
+    },
+    "t_spin": {
+        0: 400,
+        1: 800,
+        2: 1200,
+        3: 1600,
+    },
+    "mini_t_spin": {
+        0: 100,
+        1: 200,
+    },
+    "all_clear": {
+        1: 800,
+        2: 1200,
+        3: 1600,
+        4: 2000,
+        5: 3200,  # Back-to-back all clear
     },
 }
 

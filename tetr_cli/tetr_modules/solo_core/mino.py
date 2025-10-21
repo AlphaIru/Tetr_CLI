@@ -23,6 +23,8 @@ class Mino:
         """This will initialize this class."""
         self.__type: str = mino_type
         self.__orientation: str = "N"
+        self.__kick_number: int = 0
+
         # 21st row at the center column
         self.__position: Tuple[int, int] = (21, BOARD_WIDTH // 2 - 1)  # (y, x)
         self.__soft_drop_counter: int = 0
@@ -62,6 +64,16 @@ class Mino:
     def position(self, value: Tuple[int, int]) -> None:
         """This will set the mino position."""
         self.__position = value
+
+    @property
+    def kick_number(self) -> int:
+        """This will return the kick number."""
+        return self.__kick_number
+
+    @kick_number.setter
+    def kick_number(self, value: int) -> None:
+        """This will set the kick number."""
+        self.__kick_number = max(0, value)
 
     @property
     def lock_info(self) -> Dict[str, int]:
@@ -135,7 +147,7 @@ class Mino:
             .get(self.orientation, {})
             .get(direction, [(0, 0)])
         )
-        for off_set in kicks:
+        for kick_num, off_set in enumerate(kicks, start=1):
             if off_set is None:
                 continue
             new_y: int = self.__position[0] + off_set[0]
@@ -151,9 +163,11 @@ class Mino:
                 temp_position, temp_orientation
             )
             if is_position_valid(block_positions):
+                self.__kick_number = kick_num
                 self.__orientation = temp_orientation
                 self.__position = temp_position
                 return
+        self.__kick_number = 0  # No kick applied if rotation fails
 
     def move_sideways(self, direction: str) -> None:
         """This will move the current mino sideways."""
@@ -170,23 +184,37 @@ class Mino:
         mino_touching_side_func: Callable[[str, "Mino"], bool],
     ) -> None:
         """Handles auto-repeat for left/right movement."""
-        for direction in ["left", "right"]:
-            if direction in pressed_keys:
-                if self.last_sideways_direction != direction:
-                    self.auto_repeat_delay = DAS
-                    self.last_sideways_direction = direction
-                    if not mino_touching_side_func(direction, self):
-                        self.move_sideways(direction)
-                else:
-                    if self.auto_repeat_delay > 0:
-                        self.auto_repeat_delay -= 1
-                    else:
-                        if not mino_touching_side_func(direction, self):
-                            self.move_sideways(direction)
-                        self.auto_repeat_delay = ARR
-            elif self.last_sideways_direction == direction:
-                self.last_sideways_direction = ""
+        direction: str = ""
+        if "left" in pressed_keys and "right" not in pressed_keys:
+            direction = "left"
+        elif "right" in pressed_keys and "left" not in pressed_keys:
+            direction = "right"
+        if mino_touching_side_func(direction, self):
+            direction = ""
+
+        if direction == "":
+            self.last_sideways_direction = ""
+            self.auto_repeat_delay = DAS
+            return
+
+        if self.last_sideways_direction != direction:
+            self.auto_repeat_delay = DAS
+            self.last_sideways_direction = direction
+            if not mino_touching_side_func(direction, self):
+                self.move_sideways(direction)
+                self.__kick_number = 0
+            else:
                 self.auto_repeat_delay = DAS
+        else:
+            if self.auto_repeat_delay > 0:
+                self.auto_repeat_delay -= 1
+            else:
+                if not mino_touching_side_func(direction, self):
+                    self.move_sideways(direction)
+                    self.__kick_number = 0
+                    self.auto_repeat_delay = ARR
+                else:
+                    self.auto_repeat_delay = DAS
 
     def handle_sideways_curses_input(
         self,
@@ -198,6 +226,7 @@ class Mino:
             if direction in pressed_keys:
                 if not mino_touching_side_func(direction, self):
                     self.move_sideways(direction)
+                    self.__kick_number = 0
 
     def move_down(
         self,
@@ -207,6 +236,7 @@ class Mino:
         new_position = (self.position[0] - 1, self.position[1])
         if is_position_valid(self.get_block_positions(new_position, self.orientation)):
             self.position = new_position
+            self.__kick_number = 0
 
     @lru_cache(maxsize=4)
     def get_fall_seconds(self, level: int) -> float:
@@ -217,7 +247,7 @@ class Mino:
     def reset_fall_delay(self, level: int) -> int:
         """This will return the fall delay for the given level."""
         seconds: float = self.get_fall_seconds(level)
-        return max(1, int(seconds * TARGET_FPS))
+        return max(0, int(seconds * TARGET_FPS))
 
     @property
     def fall_delay(self) -> int:
@@ -234,7 +264,7 @@ class Mino:
         """This will return the soft drop delay for the given level."""
         seconds: float = self.get_fall_seconds(level)
         soft_drop_seconds: float = seconds / 20  # Soft drop is 20 times faster
-        return max(1, int(soft_drop_seconds * TARGET_FPS))
+        return max(0, int(soft_drop_seconds * TARGET_FPS))
 
     def soft_drop(
         self,
@@ -249,15 +279,27 @@ class Mino:
             if is_position_valid(self.get_block_positions(new_position, self.orientation)):
                 self.position = new_position
                 self.__soft_drop_counter = 0
+                self.__kick_number = 0
 
     def hard_drop(
         self,
         mino_touching_bottom_func: Callable[["Mino"], bool],
         is_position_valid: Callable[[List[Tuple[int, int]]], bool],
-    ) -> None:
+    ) -> int:
         """This will handle the hard drop."""
+        rows_dropped: int = 0
+        previous_position: Tuple[int, int] = self.position
         while not mino_touching_bottom_func(self):
+            previous_position = self.position
             self.move_down(is_position_valid)
+
+            if self.position != previous_position:
+                rows_dropped += 1
+            else:
+                break
+        if rows_dropped > 0:
+            self.__kick_number = 0
+        return rows_dropped
 
 
 if __name__ == "__main__":

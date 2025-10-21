@@ -17,6 +17,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_WIDTH,
     MINO_COLOR,
     MINO_DRAW_LOCATION,
+    T_SPIN_CORNER_CHECKS,
 )
 
 from tetr_cli.tetr_modules.solo_core.mino import Mino
@@ -56,7 +57,62 @@ class Board:
             and self.__board[y_pos][x_pos] != 0
         )
 
-    def check_line_filled(self) -> int:
+    def detect_all_clear(self) -> bool:
+        """This will detect if the board is all clear."""
+        for row in self.__board:
+            # In order to be all clear all cells in each row must be the same:
+            # (zero) or (non-zero)
+            filled_check: bool = True if row[0] != 0 else False
+            for cell in row:
+                if (cell != 0) != filled_check:
+                    return False
+        return True
+
+    def detect_t_spin(self, mino: "Mino") -> str:  # type: ignore
+        """This will detect if the current mino is performing a T-Spin."""
+        if mino.type != "T":
+            return ""
+
+        pivot_y, pivot_x = mino.position
+        corner_offsets: List[Tuple[int, int]] = T_SPIN_CORNER_CHECKS[mino.orientation]
+        occupied_corners: List[bool] = [False, False, False, False]
+
+        for counter, (y_offset, x_offset) in enumerate(corner_offsets):
+            corner_y = pivot_y + y_offset
+            corner_x = pivot_x + x_offset
+            if (
+                corner_y < 0
+                or corner_y >= BOARD_HEIGHT
+                or corner_x < 0
+                or corner_x >= BOARD_WIDTH
+                or self.__board[corner_y][corner_x] != 0
+            ):
+                occupied_corners[counter] = True
+
+        # Note:
+        # T-Spin:  A and B + (C or d)
+        # Mini T-Spin: C and D + (A or B)
+        if (
+            occupied_corners[0]
+            and occupied_corners[1]
+            and (occupied_corners[2] or occupied_corners[3])
+        ):
+            if mino.kick_number > 0 and sum(occupied_corners) >= 3:
+                return "T-Spin"
+
+        if (
+            occupied_corners[2]
+            and occupied_corners[3]
+            and (occupied_corners[0] or occupied_corners[1])
+        ):
+            if mino.kick_number == 5:
+                return "T-Spin"
+            if mino.kick_number > 0:
+                return "Mini T-Spin"
+
+        return ""
+
+    def check_line_clear(self) -> int:
         """This will check if any lines are filled and queue them to be cleared."""
         line_cleared: int = 0
         self.__line_clear_queue.clear()
@@ -121,9 +177,7 @@ class Board:
         mino_shape: List[Tuple[int, int]] = []
 
         if current_mino:
-            mino_shape = MINO_DRAW_LOCATION[current_mino.type][
-                current_mino.orientation
-            ]
+            mino_shape = MINO_DRAW_LOCATION[current_mino.type][current_mino.orientation]
 
             # Draw ghost Mino
             for y_offset, x_offset in mino_shape:
@@ -232,7 +286,9 @@ class Board:
                     queue_offset[0] + 2 + queue_counter * 3,
                     queue_offset[1] + 4,
                 )
-                mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino][orientation]
+                mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino][
+                    orientation
+                ]
                 for y_offset, x_offset in mino_shape:
                     pos = (
                         mino_offset[0] + (mino_height - 1 - y_offset),
@@ -320,9 +376,7 @@ class Board:
                     stdscr.addstr(clear_y, clear_x, " ", A_BOLD)
 
         # Draw the hold mino using block positions
-        mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][
-            orientation
-        ]
+        mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][orientation]
         for y_offset, x_offset in mino_shape:
             pos = (
                 mino_offset[0] + (mino_height - 1 - y_offset),
