@@ -92,5 +92,31 @@ MINO_DRAW_LOCATION: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
     },
 }
 
+SCORE_TABLE: Dict[str, Dict[int, int]] = {
+    "regular": {
+        1: 100,
+        2: 300,
+        3: 500,
+        4: 800,
+    },
+    "t_spin": {
+        0: 400,
+        1: 800,
+        2: 1200,
+        3: 1600,
+    },
+    "mini_t_spin": {
+        0: 100,
+        1: 200,
+    },
+    "all_clear": {
+        1: 800,
+        2: 1200,
+        3: 1600,
+        4: 2000,
+        5: 3200,  # Back-to-back all clear
+    },
+}
+
 if __name__ == "__main__":
     print("This is a constants module for modes.")

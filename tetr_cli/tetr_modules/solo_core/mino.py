@@ -184,25 +184,37 @@ class Mino:
         mino_touching_side_func: Callable[[str, "Mino"], bool],
     ) -> None:
         """Handles auto-repeat for left/right movement."""
-        for direction in ["left", "right"]:
-            if direction in pressed_keys:
-                if self.last_sideways_direction != direction:
-                    self.auto_repeat_delay = DAS
-                    self.last_sideways_direction = direction
-                    if not mino_touching_side_func(direction, self):
-                        self.move_sideways(direction)
-                        self.__kick_number = 0
-                else:
-                    if self.auto_repeat_delay > 0:
-                        self.auto_repeat_delay -= 1
-                    else:
-                        if not mino_touching_side_func(direction, self):
-                            self.move_sideways(direction)
-                            self.__kick_number = 0
-                        self.auto_repeat_delay = ARR
-            elif self.last_sideways_direction == direction:
-                self.last_sideways_direction = ""
+        direction: str = ""
+        if "left" in pressed_keys and "right" not in pressed_keys:
+            direction = "left"
+        elif "right" in pressed_keys and "left" not in pressed_keys:
+            direction = "right"
+        if mino_touching_side_func(direction, self):
+            direction = ""
+
+        if direction == "":
+            self.last_sideways_direction = ""
+            self.auto_repeat_delay = DAS
+            return
+
+        if self.last_sideways_direction != direction:
+            self.auto_repeat_delay = DAS
+            self.last_sideways_direction = direction
+            if not mino_touching_side_func(direction, self):
+                self.move_sideways(direction)
+                self.__kick_number = 0
+            else:
                 self.auto_repeat_delay = DAS
+        else:
+            if self.auto_repeat_delay > 0:
+                self.auto_repeat_delay -= 1
+            else:
+                if not mino_touching_side_func(direction, self):
+                    self.move_sideways(direction)
+                    self.__kick_number = 0
+                    self.auto_repeat_delay = ARR
+                else:
+                    self.auto_repeat_delay = DAS
 
     def handle_sideways_curses_input(
         self,

@@ -229,6 +229,7 @@ class SoloBaseMode:
         lines_clear_detected: int = self.board.check_line_clear()
         if not self.current_mino:
             return
+        all_clear_detected: bool = self.board.detect_all_clear()
         t_spin_detected: str = self.board.detect_t_spin(self.current_mino)
 
         self.board.clear_lines()
@@ -236,6 +237,7 @@ class SoloBaseMode:
             lines_cleared=lines_clear_detected,
             level=self.level,
             t_spin=t_spin_detected,
+            all_clear=all_clear_detected,
             back_to_back=self.back_to_back,
         )
         self.score += current_score

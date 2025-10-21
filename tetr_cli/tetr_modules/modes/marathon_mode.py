@@ -28,6 +28,33 @@ class ModeClass(SoloBaseMode):
         self.counter: int = TARGET_FPS * 3  # Formally countdown
         self.mode: str = "countdown"
 
+    def show_stats(self, stdscr: window) -> window:
+        """This will show the stats on bottom right."""
+        # Note: DRAW_BOARD_HEIGHT is the border height
+        # so we minus 2 to get the inner height
+        stdscr.addstr(
+            self.offset[0] + DRAW_BOARD_HEIGHT - 2,
+            self.offset[1] + DRAW_BOARD_WIDTH + 2,
+            f"Level: {self.level}",
+        )
+        stdscr.addstr(
+            self.offset[0] + DRAW_BOARD_HEIGHT - 1,
+            self.offset[1] + DRAW_BOARD_WIDTH + 2,
+            f"Lines: {self.lines_cleared}",
+        )
+        stdscr.addstr(
+            self.offset[0] + DRAW_BOARD_HEIGHT,
+            self.offset[1] + DRAW_BOARD_WIDTH + 2,
+            f"Score: {self.score}",
+        )
+        # Debug info
+        # stdscr.addstr(
+        #     self.offset[0] + DRAW_BOARD_HEIGHT + 1,
+        #     self.offset[1] + DRAW_BOARD_WIDTH + 2,
+        #     f"Fall delay: {self.current_mino.fall_delay if self.current_mino else '0'}",
+        # )
+        return stdscr
+
     def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will play the mode."""
         if len(self.mino_list) <= 14:
@@ -88,26 +115,12 @@ class ModeClass(SoloBaseMode):
         if self.current_mino.fall_delay > 0:
             self.current_mino.fall_delay -= 1
         elif not self.mino_touching_bottom(self.current_mino) and not (
-            # pressed_keys
-            pressed_keys
-            - {"down", "space"}
+            pressed_keys & {"down", "space"}
         ):
             self.current_mino.move_down(is_position_valid=self.is_position_valid)
             self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
                 self.level
             )
-
-        # lines_cleared = self.board.check_line_filled()
-        # if lines_cleared > 0:
-        #     self.lines_cleared += lines_cleared
-        #     if lines_cleared == 1:
-        #         self.sound_action["SFX"].append("single")
-        #     elif lines_cleared == 2 or lines_cleared == 3:
-        #         self.sound_action["SFX"].append("double")
-        #     if lines_cleared == 4:
-        #         self.sound_action["SFX"].append("quad")
-        #     self.board.clear_lines()
-        #     # self.score +=
 
         stdscr = self.board.draw_minos_on_board(
             stdscr=stdscr,
@@ -162,6 +175,8 @@ class ModeClass(SoloBaseMode):
         )
 
         stdscr = self.board.draw_blank_board(stdscr, self.offset)
+        stdscr = self.show_stats(stdscr)
+
         if queue_to_draw != self._last_drawn_queue:
             stdscr = self.board.draw_queue(
                 stdscr,
@@ -181,9 +196,13 @@ class ModeClass(SoloBaseMode):
             )
             self._last_drawn_hold = hold_to_draw
 
+        if {"r", "R"} & pressed_keys:
+            self.action = "Marathon"
+            self.sound_action["SFX"].append("select_confirm")
+            return stdscr
         if "esc" in pressed_keys:
             self.action = "Solo_Menu"
-            self.sound_action["SFX"].append("back")
+            self.sound_action["SFX"].append("select_back")
             return stdscr
 
         if self.mode == "countdown":

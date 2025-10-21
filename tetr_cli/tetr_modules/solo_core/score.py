@@ -1,39 +1,28 @@
 """This will handle score related functions."""
 # coding: utf-8
 
+from tetr_cli.tetr_modules.modules.constants import SCORE_TABLE
+
 
 def calculate_line_score(
     lines_cleared: int,
     level: int,
     t_spin: str = "",
+    all_clear: bool = False,
     back_to_back: bool = False,
 ) -> tuple[int, bool]:
     """This will calculate the score based on the given parameters."""
-    if t_spin == "T-Spin":
-        if lines_cleared == 1:
-            base_score = 800
-        elif lines_cleared == 2:
-            base_score = 1200
-        elif lines_cleared == 3:
-            base_score = 1600
-        else:
-            base_score = 400
+    base_score: int = 0
+    if all_clear:
+        if lines_cleared == 4 and back_to_back:
+            lines_cleared = 5  # Special case for back-to-back all clear
+        base_score = SCORE_TABLE["all_clear"].get(lines_cleared, 0)
+    elif t_spin == "T-Spin":
+        base_score = SCORE_TABLE["t_spin"].get(lines_cleared, 0)
     elif t_spin == "Mini T-Spin":
-        if lines_cleared == 1:
-            base_score = 200
-        else:
-            base_score = 100
+        base_score = SCORE_TABLE["mini_t_spin"].get(lines_cleared, 0)
     else:
-        if lines_cleared == 1:
-            base_score = 100
-        elif lines_cleared == 2:
-            base_score = 300
-        elif lines_cleared == 3:
-            base_score = 500
-        elif lines_cleared == 4:
-            base_score = 800
-        else:
-            base_score = 0
+        base_score = SCORE_TABLE["regular"].get(lines_cleared, 0)
 
     score = int(base_score * level)
     if back_to_back:
