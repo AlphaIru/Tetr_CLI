@@ -4,6 +4,7 @@
 from curses import window
 
 from tetr_cli.tetr_modules.modules.constants import MIN_X, MIN_Y
+from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
 async def screen_dimension_check(stdscr: window) -> bool:
@@ -16,7 +17,7 @@ async def screen_dimension_check(stdscr: window) -> bool:
     return not (max_y < MIN_Y or max_x < MIN_X)
 
 
-async def screen_dimension_warning(stdscr: window) -> window:
+async def screen_dimension_warning(stdscr: window) -> None:
     """This will display the warning to the user."""
 
     max_y: int = 0
@@ -24,19 +25,19 @@ async def screen_dimension_warning(stdscr: window) -> window:
 
     max_y, max_x = stdscr.getmaxyx()
 
-    stdscr.addstr(
+    safe_addstr(
+        stdscr,
         0,
         0,
         "Warning! Your screen is too small! Please check the dimmension is large enough!",
     )
     if max_y > 2:
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             1,
             0,
             f"Currently, your screen is {max_x}x{max_y}, please make sure to have 80x24.",
         )
-
-    return stdscr
 
 
 if __name__ == "__main__":

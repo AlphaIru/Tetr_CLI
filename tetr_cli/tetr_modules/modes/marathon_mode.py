@@ -14,6 +14,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_WIDTH,
     TARGET_FPS,
 )
+from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
 class ModeClass(SoloBaseMode):
@@ -27,35 +28,40 @@ class ModeClass(SoloBaseMode):
         self.mino_list_generator(initial=True)
         self.counter: int = TARGET_FPS * 3  # Formally countdown
         self.mode: str = "countdown"
+        self.last_action_text: str = ""
 
-    def show_stats(self, stdscr: window) -> window:
+    def show_stats(self, stdscr: window) -> None:
         """This will show the stats on bottom right."""
         # Note: DRAW_BOARD_HEIGHT is the border height
         # so we minus 2 to get the inner height
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             self.offset[0] + DRAW_BOARD_HEIGHT - 2,
             self.offset[1] + DRAW_BOARD_WIDTH + 2,
             f"Level: {self.level}",
         )
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             self.offset[0] + DRAW_BOARD_HEIGHT - 1,
             self.offset[1] + DRAW_BOARD_WIDTH + 2,
             f"Lines: {self.lines_cleared}",
         )
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             self.offset[0] + DRAW_BOARD_HEIGHT,
             self.offset[1] + DRAW_BOARD_WIDTH + 2,
             f"Score: {self.score}",
         )
         # Debug info
-        # stdscr.addstr(
+        # safe_addstr(
+        #     stdscr,
         #     self.offset[0] + DRAW_BOARD_HEIGHT + 1,
         #     self.offset[1] + DRAW_BOARD_WIDTH + 2,
         #     f"Combo: {self.combo_count}",
         # )
-        return stdscr
+        # return
 
-    def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will play the mode."""
         if len(self.mino_list) <= 14:
             self.mino_list_generator()
@@ -65,14 +71,13 @@ class ModeClass(SoloBaseMode):
 
         self.check_keyinput_pressed(pressed_keys=pressed_keys)
         if not self.current_mino:
-            stdscr = self.board.draw_minos_on_board(
+            self.board.draw_minos_on_board(
                 stdscr=stdscr,
                 offset=self.offset,
                 max_yx=self.max_yx,
                 current_mino=self.current_mino,
                 ghost_position=(-1, -1),  # Placeholder value
             )
-            return stdscr
 
         if self.mino_touching_bottom(self.current_mino):
             # print(self.current_mino.type, self.current_mino.lock_info)
@@ -102,27 +107,18 @@ class ModeClass(SoloBaseMode):
                 self.calculate_score()
                 self.reset_mino()
 
-        if not self.current_mino:
-            stdscr = self.board.draw_minos_on_board(
-                stdscr=stdscr,
-                offset=self.offset,
-                max_yx=self.max_yx,
-                current_mino=self.current_mino,
-                ghost_position=(-1, -1),  # Placeholder value
-            )
-            return stdscr
+        if self.current_mino:
+            if self.current_mino.fall_delay > 0:
+                self.current_mino.fall_delay -= 1
+            elif not self.mino_touching_bottom(self.current_mino) and not (
+                pressed_keys & {"down", "space"}
+            ):
+                self.current_mino.move_down(is_position_valid=self.is_position_valid)
+                self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
+                    self.level
+                )
 
-        if self.current_mino.fall_delay > 0:
-            self.current_mino.fall_delay -= 1
-        elif not self.mino_touching_bottom(self.current_mino) and not (
-            pressed_keys & {"down", "space"}
-        ):
-            self.current_mino.move_down(is_position_valid=self.is_position_valid)
-            self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                self.level
-            )
-
-        stdscr = self.board.draw_minos_on_board(
+        self.board.draw_minos_on_board(
             stdscr=stdscr,
             offset=self.offset,
             max_yx=self.max_yx,
@@ -130,12 +126,11 @@ class ModeClass(SoloBaseMode):
             ghost_position=self.ghost_mino_position(self.current_mino),
         )
 
-        return stdscr
-
-    def countdown_mode(self, stdscr: window) -> window:
+    def countdown_mode(self, stdscr: window) -> None:
         """This will handle the countdown mode."""
         if self.counter >= 0:
-            stdscr.addstr(
+            safe_addstr(
+                stdscr,
                 self.max_yx[0] // 2,
                 self.max_yx[1] // 2,
                 str((self.counter // TARGET_FPS) + 1),
@@ -150,12 +145,26 @@ class ModeClass(SoloBaseMode):
         if self.counter <= 0:
             self.mode = "play_music_wait"
             self.sound_action["SFX"].append("go")
-            stdscr.addstr(self.max_yx[0] // 2, self.max_yx[1] // 2, "Go", A_BOLD)
+            safe_addstr(stdscr, self.max_yx[0] // 2, self.max_yx[1] // 2, "Go", A_BOLD)
             self.counter = TARGET_FPS // 2
 
-        return stdscr
+    def display_action_text(self, stdscr: window) -> None:
+        """Displays action text above the board."""
+        if self.action:
+            self.last_action_text = self.action
+            self.counter = TARGET_FPS
+        if self.counter > 0 and self.last_action_text:
+            safe_addstr(
+                stdscr,
+                self.offset[0] - 2,
+                self.offset[1],
+                self.last_action_text,
+                A_BOLD,
+            )
+        else:
+            self.last_action_text = ""
 
-    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will increment the frame."""
         check_max_yx: Tuple[int, int] = stdscr.getmaxyx()
         if check_max_yx != self.max_yx:
@@ -167,18 +176,19 @@ class ModeClass(SoloBaseMode):
             self.invalidate_draw_cache()
 
         if check_max_yx[0] < MIN_Y or check_max_yx[1] < MIN_X:
-            return stdscr
+            return
 
         queue_to_draw: List[str] = self.mino_list[0:5]
         hold_to_draw: Optional[str] = (
             self.current_hold.type if self.current_hold else None
         )
 
-        stdscr = self.board.draw_blank_board(stdscr, self.offset)
-        stdscr = self.show_stats(stdscr)
+        self.board.draw_blank_board(stdscr, self.offset)
+        self.show_stats(stdscr)
+        self.display_action_text(stdscr)
 
         if queue_to_draw != self._last_drawn_queue:
-            stdscr = self.board.draw_queue(
+            self.board.draw_queue(
                 stdscr,
                 offset=self.offset,
                 max_yx=self.max_yx,
@@ -187,7 +197,7 @@ class ModeClass(SoloBaseMode):
             self._last_drawn_queue = queue_to_draw.copy()
 
         if hold_to_draw != self._last_drawn_hold:
-            stdscr = self.board.draw_hold(
+            self.board.draw_hold(
                 stdscr,
                 offset=self.offset,
                 max_yx=self.max_yx,
@@ -199,32 +209,31 @@ class ModeClass(SoloBaseMode):
         if {"r", "R"} & pressed_keys:
             self.action = "Marathon"
             self.sound_action["SFX"].append("select_confirm")
-            return stdscr
+            return
         if "esc" in pressed_keys:
             self.action = "Solo_Menu"
             self.sound_action["SFX"].append("select_back")
-            return stdscr
+            return
 
         if self.mode == "countdown":
-            stdscr = self.countdown_mode(stdscr)
-            return stdscr
+            self.countdown_mode(stdscr)
+            return
 
-        stdscr = self.play_mode(stdscr, pressed_keys)
+        self.play_mode(stdscr, pressed_keys)
 
         if self.mode == "play_music_wait":
             self.counter -= 1
             if self.counter <= 0:
                 self.mode = "play"
                 self.sound_action["BGM"] = ["Korobeiniki"]
-                return stdscr
-            stdscr.addstr(
+                return
+            safe_addstr(
+                stdscr,
                 self.max_yx[0] // 2,
                 self.max_yx[1] // 2,
                 "Go",
                 A_BOLD,
             )
-
-        return stdscr
 
 
 if __name__ == "__main__":

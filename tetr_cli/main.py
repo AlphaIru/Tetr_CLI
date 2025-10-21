@@ -141,19 +141,18 @@ async def main(
                 debug_stats.update_current_mode(
                     new_mode=current_mode.get_current_mode_name()
                 )
-                stdscr = debug_stats.update_debug(stdscr=stdscr)
+                debug_stats.update_debug(stdscr=stdscr)
 
             current_mode.increment_frame(stdscr=stdscr, pressed_keys=pressed_keys)
             doupdate()
 
             if await screen_dimension_check(stdscr=stdscr) is False:
                 stdscr.clear()
-                stdscr = await screen_dimension_warning(stdscr=stdscr)
-                stdscr = debug_stats.update_debug(stdscr=stdscr)
+                await screen_dimension_warning(stdscr=stdscr)
+                if debug_mode:
+                    debug_stats.update_debug(stdscr=stdscr)
                 doupdate()
                 continue
-
-            # stdscr.refresh()
 
             if audio_check:
                 sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
@@ -168,7 +167,9 @@ async def main(
                 break
             if action:
                 stdscr.clear()
-                current_mode = await run_action(action=action, current_mode=current_mode)
+                current_mode = await run_action(
+                    action=action, current_mode=current_mode
+                )
 
             if action and pressed_keys is not None:
                 pressed_keys.clear()

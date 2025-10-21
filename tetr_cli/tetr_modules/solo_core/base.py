@@ -14,7 +14,7 @@ from tetr_cli.tetr_modules.modules.constants import (
 )
 from tetr_cli.tetr_modules.solo_core.board import Board
 from tetr_cli.tetr_modules.solo_core.mino import Mino
-from tetr_cli.tetr_modules.solo_core.score import (
+from tetr_cli.tetr_modules.modules.score import (
     calculate_drop_score,
     calculate_line_score,
 )
@@ -203,6 +203,8 @@ class SoloBaseMode:
         current_mino: Mino,
     ) -> Tuple[int, int]:
         """This will return the ghost mino position."""
+        if current_mino is None:
+            return (-1, -1)
         key: Tuple[Tuple[int, int], str, str] = (
             current_mino.position,
             current_mino.orientation,
