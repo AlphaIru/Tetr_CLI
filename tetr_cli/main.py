@@ -50,13 +50,13 @@ FRAME_DURATION: float = 1 / TARGET_FPS
 # O, I, T, L, J, S, Z
 
 
-async def run_action(action: str, current_mode: GameMode) -> GameMode:
+async def run_transition(transition: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
-    if action == "Solo_Menu":
+    if transition == "Solo_Menu":
         current_mode.change_mode("solo_menu")
-    elif action == "Main_Menu":
+    elif transition == "Main_Menu":
         current_mode.change_mode("main_menu")
-    elif action == "Marathon":
+    elif transition == "Marathon":
         current_mode.change_mode("marathon")
     return current_mode
 
@@ -162,17 +162,20 @@ async def main(
                     sound_effect_dict=sound_effect_dict,
                 )
 
-            action: str = current_mode.get_mode_action()
-            if action == "Quit":
-                break
-            if action:
-                stdscr.clear()
-                current_mode = await run_action(
-                    action=action, current_mode=current_mode
+            actions: Dict[str, List[str]] = current_mode.get_mode_action()
+            if "transition" in actions:
+                if "Quit" in actions["transition"]:
+                    break
+                transition_value: str = actions["transition"][0]
+                current_mode = await run_transition(
+                    transition=transition_value, current_mode=current_mode
                 )
+                stdscr.clear()
+                if pressed_keys is not None:
+                    pressed_keys.clear()
 
-            if action and pressed_keys is not None:
-                pressed_keys.clear()
+            # if actions and pressed_keys is not None:
+            #     pressed_keys.clear()
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass

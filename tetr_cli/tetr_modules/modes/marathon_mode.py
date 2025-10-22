@@ -28,7 +28,7 @@ class ModeClass(SoloBaseMode):
         self.mino_list_generator(initial=True)
         self.counter: int = TARGET_FPS * 3  # Formally countdown
         self.mode: str = "countdown"
-        self.last_action_text: str = ""
+        self.last_action_text: List[str] = []
 
     def show_stats(self, stdscr: window) -> None:
         """This will show the stats on bottom right."""
@@ -150,19 +150,20 @@ class ModeClass(SoloBaseMode):
 
     def display_action_text(self, stdscr: window) -> None:
         """Displays action text above the board."""
-        if self.action:
-            self.last_action_text = self.action
-            self.counter = TARGET_FPS
-        if self.counter > 0 and self.last_action_text:
-            safe_addstr(
-                stdscr,
-                self.offset[0] - 2,
-                self.offset[1],
-                self.last_action_text,
-                A_BOLD,
-            )
-        else:
-            self.last_action_text = ""
+        pass
+        # if "action_text" in self.action:
+        #     self.last_action_text = self.action["action_text"]
+        #     self.counter = TARGET_FPS
+        # if self.counter > 0 and self.last_action_text:
+        #     safe_addstr(
+        #         stdscr,
+        #         self.offset[0] - 2,
+        #         self.offset[1],
+        #         self.last_action_text,
+        #         A_BOLD,
+        #     )
+        # else:
+        #     self.last_action_text = ""
 
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will increment the frame."""
@@ -207,11 +208,11 @@ class ModeClass(SoloBaseMode):
             self._last_drawn_hold = hold_to_draw
 
         if {"r", "R"} & pressed_keys:
-            self.action = "Marathon"
+            self.action["transition"] = ["Marathon"]
             self.sound_action["SFX"].append("select_confirm")
             return
         if "esc" in pressed_keys:
-            self.action = "Solo_Menu"
+            self.action["transition"] = ["Solo_Menu"]
             self.sound_action["SFX"].append("select_back")
             return
 

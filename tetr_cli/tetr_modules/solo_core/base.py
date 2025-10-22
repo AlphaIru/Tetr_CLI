@@ -68,16 +68,16 @@ class SoloBaseMode:
         self._last_ghost_result: Tuple[int, int] = (-1, -1)
 
         # Actions
-        self.action: str = ""
+        self.action: Dict[str, List[str]] = {}
         self.sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
         self.offset: Tuple[int, int] = (0, 0)  # (offset_y, offset_x)
         self.max_yx: Tuple[int, int] = (0, 0)  # (max_y, max_x)
 
-    def pop_action(self) -> str:
+    def pop_action(self) -> Dict[str, List[str]]:
         """This will return the action and reset it."""
-        action: str = deepcopy(self.action)
-        self.action = ""
-        return action
+        actions: Dict[str, List[str]] = deepcopy(self.action)
+        self.action = {}
+        return actions
 
     def pop_sound_action(self) -> Dict[str, List[str]]:
         """This will return the sound action and reset it."""
