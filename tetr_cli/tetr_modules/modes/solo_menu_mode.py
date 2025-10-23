@@ -7,6 +7,8 @@ from typing import Dict, List, Set
 
 from curses import A_BOLD, A_REVERSE, window
 
+from tetr_cli.tetr_modules.modules.safe_curses import calculate_centered_menu
+
 OPTION_TO_ACTION: Dict[str, str] = {
     "Marathon": "Marathon",
     "Sprint": "Sprint",
@@ -63,16 +65,7 @@ class ModeClass:
                 self.__sound_action["SFX"].append("select_confirm")
             return stdscr
 
-        height: int = 0
-        width: int = 0
-        height, width = stdscr.getmaxyx()
-
-        # Those "// 2" just finds the center.
-        # +2 in block_width account for "> "
-
-        start_y: int = (height // 2) - len(self.__options) // 2
-        block_width: int = max(len(option) for option in self.__options) + 2
-        start_x: int = (width - block_width) // 2
+        start_y, start_x, width = calculate_centered_menu(stdscr, self.__options)
 
         title = "Solo Mode Menu"
         stdscr.addstr(start_y - 2, (width - len(title)) // 2, title, A_BOLD)
