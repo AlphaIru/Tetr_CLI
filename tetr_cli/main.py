@@ -65,11 +65,12 @@ async def main(
     pressed_keys: Set[str],
     debug_mode: bool,
     ncurses_mode: bool = True,
+    no_music_mode: bool = False,
 ) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
-    audio_check: bool = True
+    audio_check: bool = True if not no_music_mode else False
     try:
         mixer.init()
         mixer.music.set_volume(0.25)

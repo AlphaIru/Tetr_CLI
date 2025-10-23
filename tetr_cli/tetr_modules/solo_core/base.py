@@ -240,7 +240,8 @@ class SoloBaseMode:
             self.combo_count = 0
 
         self.board.clear_lines()
-        current_score, back_to_back = calculate_line_score(
+        action_text: List[str] = []
+        current_score, back_to_back, action_text = calculate_line_score(
             lines_cleared=lines_clear_detected,
             level=self.level,
             t_spin=t_spin_detected,
@@ -251,6 +252,8 @@ class SoloBaseMode:
         self.score += current_score
         self.back_to_back = back_to_back
         self.lines_cleared += lines_clear_detected
+        if action_text:
+            self.action["action_text"] = action_text
 
         if t_spin_detected:
             if lines_clear_detected <= 1:
@@ -267,8 +270,8 @@ class SoloBaseMode:
             elif lines_clear_detected == 4:
                 self.sound_action["SFX"].append("quad")
 
-        if self.lines_cleared // 10 + 1 > self.level:
-            self.level = self.lines_cleared // 10 + 1
+        # Level up for every 10 lines cleared
+        self.level = max(self.level, (self.lines_cleared // 10) + 1)
 
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""

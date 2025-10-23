@@ -28,7 +28,6 @@ class ModeClass(SoloBaseMode):
         self.mino_list_generator(initial=True)
         self.counter: int = TARGET_FPS * 3  # Formally countdown
         self.mode: str = "countdown"
-        self.last_action_text: List[str] = []
 
     def show_stats(self, stdscr: window) -> None:
         """This will show the stats on bottom right."""
@@ -60,6 +59,43 @@ class ModeClass(SoloBaseMode):
         #     f"Combo: {self.combo_count}",
         # )
         # return
+
+    def clear_action_text(self, stdscr: window) -> None:
+        """Clears the action text."""
+        blank_line: str = " " * (self.offset[1] - 1)
+        _y_offset: int = self.offset[0] + 12
+        _x_offset: int = 0
+        for _line_num in range(3):
+            safe_addstr(
+                stdscr,
+                _y_offset + _line_num,
+                _x_offset,
+                blank_line,
+            )
+
+    def display_action_text(self, stdscr: window) -> None:
+        """Displays action text above the board."""
+
+        # Display action text if available
+        if "action_text" in self.action:
+            self.clear_action_text(stdscr)
+            self.counter = 2 * TARGET_FPS
+            _y_offset: int = self.offset[0] + 12
+            for _line_num in range(len(self.action["action_text"])):
+                safe_addstr(
+                    stdscr,
+                    _y_offset + _line_num,
+                    self.offset[1] - len(self.action["action_text"][_line_num]) - 2,
+                    self.action["action_text"][_line_num],
+                    A_BOLD,
+                )
+            return
+
+        # Countdown the counter
+        if self.counter > 0:
+            self.counter -= 1
+        if self.counter == 0:
+            self.clear_action_text(stdscr)
 
     def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will play the mode."""
@@ -125,6 +161,7 @@ class ModeClass(SoloBaseMode):
             current_mino=self.current_mino,
             ghost_position=self.ghost_mino_position(self.current_mino),
         )
+        self.display_action_text(stdscr)
 
     def countdown_mode(self, stdscr: window) -> None:
         """This will handle the countdown mode."""
@@ -148,23 +185,6 @@ class ModeClass(SoloBaseMode):
             safe_addstr(stdscr, self.max_yx[0] // 2, self.max_yx[1] // 2, "Go", A_BOLD)
             self.counter = TARGET_FPS // 2
 
-    def display_action_text(self, stdscr: window) -> None:
-        """Displays action text above the board."""
-        pass
-        # if "action_text" in self.action:
-        #     self.last_action_text = self.action["action_text"]
-        #     self.counter = TARGET_FPS
-        # if self.counter > 0 and self.last_action_text:
-        #     safe_addstr(
-        #         stdscr,
-        #         self.offset[0] - 2,
-        #         self.offset[1],
-        #         self.last_action_text,
-        #         A_BOLD,
-        #     )
-        # else:
-        #     self.last_action_text = ""
-
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will increment the frame."""
         check_max_yx: Tuple[int, int] = stdscr.getmaxyx()
@@ -186,7 +206,7 @@ class ModeClass(SoloBaseMode):
 
         self.board.draw_blank_board(stdscr, self.offset)
         self.show_stats(stdscr)
-        self.display_action_text(stdscr)
+        self.board.add_title(stdscr, self.offset, "Marathon")
 
         if queue_to_draw != self._last_drawn_queue:
             self.board.draw_queue(

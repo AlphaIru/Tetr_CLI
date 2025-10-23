@@ -132,6 +132,16 @@ class Board:
 
     # Drawing functions
 
+    def add_title(self, stdscr: window, offset: Tuple[int, int], title: str) -> None:
+        """This will add a title to the action."""
+        safe_addstr(
+            stdscr,
+            offset[0] + 10,  # Center of board height
+            offset[1] - 12,  # Left of board
+            title,
+            A_BOLD,
+        )
+
     def draw_blank_board(
         self,
         stdscr: window,
@@ -247,9 +257,13 @@ class Board:
         vertical_length: int = 17
 
         # Draw the box and text
-        safe_addstr(stdscr, queue_offset[0] - 1, queue_offset[1], horizontal_line, A_BOLD)
+        safe_addstr(
+            stdscr, queue_offset[0] - 1, queue_offset[1], horizontal_line, A_BOLD
+        )
         safe_addstr(stdscr, queue_offset[0], queue_offset[1] + 2, "Next", A_BOLD)
-        safe_addstr(stdscr, queue_offset[0] + 1, queue_offset[1], horizontal_line, A_BOLD)
+        safe_addstr(
+            stdscr, queue_offset[0] + 1, queue_offset[1], horizontal_line, A_BOLD
+        )
         for counter in range(vertical_length):
             safe_addstr(
                 stdscr,
@@ -263,7 +277,7 @@ class Board:
             queue_offset[0] + vertical_length,
             queue_offset[1],
             horizontal_line,
-            A_BOLD
+            A_BOLD,
         )
 
         mino_offset: Tuple[int, int] = (0, 0)
