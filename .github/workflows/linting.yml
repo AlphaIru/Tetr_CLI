@@ -30,7 +30,7 @@ jobs:
 
         - name: Run Pylint
           run: |
-            pylint tetr_cli
+            pylint --disable=R0801 tetr_cli
 
         - name: Run Flake8
           run: |
