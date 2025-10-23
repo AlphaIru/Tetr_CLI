@@ -2,7 +2,9 @@
 # coding: utf-8
 
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict, List, Set
+
+from tetr_cli.tetr_modules.modules.database import load_keybinds
 
 
 class BaseModeClass:
@@ -12,6 +14,8 @@ class BaseModeClass:
         """Initialize the base mode class."""
         self.__action: Dict[str, List[str]] = {}
         self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
+        self.__user_keybinds: Dict[str, Set[str]] = load_keybinds()
+        # print(f"Loaded keybinds: {self.__user_keybinds}")
 
     @property
     def action(self) -> Dict[str, List[str]]:
@@ -32,6 +36,10 @@ class BaseModeClass:
     def sound_action(self, value: Dict[str, List[str]]) -> None:
         """This will set the sound action dictionary."""
         self.__sound_action = value
+
+    def get_user_keybind(self, input_name: str) -> Set[str]:
+        """This will return the user keybinds dictionary."""
+        return self.__user_keybinds[input_name]
 
     def pop_action(self) -> Dict[str, List[str]]:
         """This will return the action and reset it."""

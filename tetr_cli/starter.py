@@ -72,7 +72,7 @@ def starter() -> None:
         while input_key.lower() not in ("y", "n", "yes", "no"):
             input_key = input(
                 "Are you sure you want to reset the settings and data?"
-                " This action cannot be undone! (y/n): "
+                " This action cannot be undone! (y/n): ",
             )
         if input_key.lower() in ("y", "yes"):
             initialize_database(reset=True)
