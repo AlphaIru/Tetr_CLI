@@ -112,9 +112,10 @@ def starter() -> None:
         if not ncurses_mode:
             listener.stop()
         sys_exit(-1)
-
-    if not ncurses_mode:
-        listener.stop()
+    finally:
+        endwin()
+        if not ncurses_mode:
+            listener.stop()
 
 
 if __name__ == "__main__":

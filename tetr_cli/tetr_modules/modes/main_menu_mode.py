@@ -29,20 +29,24 @@ class ModeClass(BaseModeClass):
         """This will progress the menu based on the inputs."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1
-        elif "up" in pressed_keys:
+        elif self.get_user_keybind("menu_up", menu_mode=True) & pressed_keys:
             self.__selected_option = max(0, self.__selected_option - 1)
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif "down" in pressed_keys:
+        elif self.get_user_keybind("menu_down", menu_mode=True) & pressed_keys:
             self.__selected_option = min(
                 len(self.__options) - 1, self.__selected_option + 1
             )
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif "enter" in pressed_keys:
+        elif self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
             transition_name: str = self.__options[self.__selected_option]
             self.action["transition"] = [OPTION_TO_ACTION.get(transition_name, "")]
             self.sound_action["SFX"].append("select_confirm")
+            return stdscr
+        elif self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+            self.action["transition"] = ["Quit"]
+            self.sound_action["SFX"].append("select_back")
             return stdscr
 
         start_y, start_x, width = calculate_centered_menu(stdscr, self.__options)

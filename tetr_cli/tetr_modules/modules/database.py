@@ -11,18 +11,23 @@ DATABASE_PATH: Path = Path(__file__).parent.parent.resolve()
 DB_FILE: str = str(DATABASE_PATH / "data.db")
 
 
-DEFAULT_KEYBINDS: List[Tuple[str, str, Optional[str]]] = [
-    ("move_left", "left", None),
-    ("move_right", "right", None),
-    ("rotate_clockwise", "up", "x"),
-    ("rotate_counterclockwise", "z", "ctrl"),
-    ("soft_drop", "down", None),
-    ("hard_drop", "space", None),
-    ("hold_piece", "c", None),
-    ("confirm", "enter", None),
-    ("back", "backspace", "esc"),
-    ("restart", "r", None),
+DEFAULT_KEYBINDS: List[Tuple[str, bool, str, Optional[str]]] = [
+    ("move_left", False, "left", None),
+    ("move_right", False, "right", None),
+    ("rotate_cw", False, "up", "x"),
+    ("rotate_ccw", False, "z", "ctrl"),
+    ("soft_drop", False, "down", None),
+    ("hard_drop", False, "space", None),
+    ("hold_piece", False, "c", None),
+    ("restart", False, "r", None),
+    ("menu_confirm", True, "enter", None),
+    ("menu_back", True, "backspace", "esc"),
+    ("menu_up", True, "up", None),
+    ("menu_down", True, "down", None),
+    ("menu_left", True, "left", None),
+    ("menu_right", True, "right", None),
 ]
+
 
 DEFAULT_SETTINGS: List[Tuple[str, str]] = [
     ("music_volume", "70"),
@@ -43,14 +48,14 @@ DEFAULT_SCORES: List[Tuple[str, int, str]] = [
 # Scores Table Functions
 def drop_scores(cursor: Cursor) -> None:
     """Reset the database by dropping existing tables and recreating them."""
-    cursor.execute("DROP TABLE IF EXISTS score")
+    cursor.execute("DROP TABLE IF EXISTS scores")
 
 
 def create_scores_table(cursor: Cursor) -> None:
     """Create the score table if it does not exist."""
     cursor.execute(
         """
-    CREATE TABLE IF NOT EXISTS score (
+    CREATE TABLE IF NOT EXISTS scores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         player_name TEXT NOT NULL,
         score INTEGER NOT NULL,
@@ -64,7 +69,7 @@ def insert_default_scores(cursor: Cursor) -> None:
     """Insert default score into the score table."""
     cursor.executemany(
         """
-        INSERT INTO score (player_name, score, date_played) VALUES (?, ?, ?)
+        INSERT INTO scores (player_name, score, date_played) VALUES (?, ?, ?)
         """,
         DEFAULT_SCORES,
     )
@@ -73,14 +78,14 @@ def insert_default_scores(cursor: Cursor) -> None:
 # Settings Table Functions
 def drop_settings(cursor: Cursor) -> None:
     """Reset the setting table."""
-    cursor.execute("DROP TABLE IF EXISTS setting")
+    cursor.execute("DROP TABLE IF EXISTS settings")
 
 
 def create_settings_table(cursor: Cursor) -> None:
     """Create the setting table if it does not exist."""
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS setting (
+        CREATE TABLE IF NOT EXISTS settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         setting_name TEXT NOT NULL,
         setting_value TEXT NOT NULL
@@ -93,7 +98,7 @@ def insert_default_settings(cursor: Cursor) -> None:
     """Insert default setting into the setting table."""
     cursor.executemany(
         """
-    INSERT INTO setting (setting_name, setting_value) VALUES (?, ?)
+    INSERT INTO settings (setting_name, setting_value) VALUES (?, ?)
     """,
         DEFAULT_SETTINGS,
     )
@@ -102,16 +107,17 @@ def insert_default_settings(cursor: Cursor) -> None:
 # Keybinds Table Functions
 def drop_keybinds(cursor: Cursor) -> None:
     """Reset the keybind table."""
-    cursor.execute("DROP TABLE IF EXISTS keybind")
+    cursor.execute("DROP TABLE IF EXISTS keybinds")
 
 
 def create_keybinds_table(cursor: Cursor) -> None:
     """Create the keybind table if it does not exist."""
     cursor.execute(
         """
-    CREATE TABLE IF NOT EXISTS keybind (
+    CREATE TABLE IF NOT EXISTS keybinds (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         key_name TEXT NOT NULL,
+        is_menu_keybind BOOLEAN DEFAULT 0,
         key_value1 TEXT NOT NULL,
         key_value2 TEXT DEFAULT NULL
     )
@@ -124,9 +130,9 @@ def insert_default_keybinds(cursor: Cursor) -> None:
 
     cursor.executemany(
         """
-    INSERT INTO keybind (key_name, key_value1, key_value2) VALUES (?, ?, ?)
+    INSERT INTO keybinds (key_name, is_menu_keybind, key_value1, key_value2) VALUES (?, ?, ?, ?)
     """,
-        DEFAULT_KEYBINDS
+        DEFAULT_KEYBINDS,
     )
 
 
@@ -155,50 +161,89 @@ def initialize_database(reset: bool = False) -> None:
         if reset:
             reset_all(cursor)
             conn.commit()
+            conn.close()
             return
 
         create_scores_table(cursor)
         create_keybinds_table(cursor)
         create_settings_table(cursor)
 
-        cursor.execute("SELECT COUNT(*) FROM score")
+        cursor.execute("SELECT COUNT(*) FROM scores")
         if cursor.fetchone()[0] == 0:
             insert_default_scores(cursor)
 
-        cursor.execute("SELECT COUNT(*) FROM keybind")
+        cursor.execute("SELECT COUNT(*) FROM keybinds")
         if cursor.fetchone()[0] == 0:
             insert_default_keybinds(cursor)
 
-        cursor.execute("SELECT COUNT(*) FROM setting")
+        cursor.execute("SELECT COUNT(*) FROM settings")
         if cursor.fetchone()[0] == 0:
             insert_default_settings(cursor)
 
         conn.commit()
     except SQLiteError as e:
         print(f"Database error: {e}")
+        conn.close()
     except Exception as e:
         print(f"Unexpected error: {e}")
-    finally:
         conn.close()
 
+    conn.close()
 
-def load_keybinds() -> Dict[str, Set[str]]:
+
+def validate_keybinds(
+    given_keybinds: Dict[str, Set[str]],
+) -> bool:
+    """Validate that there are no conflicting keybinds in given keybinds."""
+    binded_keys: Set[str] = set()
+    for user_keys in given_keybinds.values():
+        for key in user_keys:
+            if key in binded_keys:
+                return False
+            binded_keys.add(key)
+    return True
+
+
+def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
     """Load user keybind from the database."""
 
-    rows: List[Tuple[str, str, Optional[str]]] = []
+    rows: List[Tuple[str, bool, str, Optional[str]]] = []
     with connect(DB_FILE) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT key_name, key_value1, key_value2 FROM keybind")
+        cursor.execute("SELECT key_name, is_menu_keybind, key_value1, key_value2 FROM keybinds")
         rows = cursor.fetchall()
 
-    user_keybinds: Dict[str, Set[str]] = {}
+    user_keybinds: Dict[str, Dict[str, Set[str]]] = {}
+    menu_keybinds: Dict[str, Set[str]] = {}
+    game_keybinds: Dict[str, Set[str]] = {}
 
-    for key_name, key_value1, key_value2 in rows:
-        if key_name not in user_keybinds:
-            user_keybinds[key_name] = set()
-        user_keybinds[key_name].add(key_value1)
-        if key_value2 is not None:
-            user_keybinds[key_name].add(key_value2)
+    for key_name, is_menu_keybind, key_value1, key_value2 in rows:
+        if is_menu_keybind:
+            if key_name not in menu_keybinds:
+                menu_keybinds[key_name] = set()
+            menu_keybinds[key_name].add(key_value1)
+            if key_value2 is not None:
+                menu_keybinds[key_name].add(key_value2)
+        else:
+            if key_name not in game_keybinds:
+                game_keybinds[key_name] = set()
+            game_keybinds[key_name].add(key_value1)
+            if key_value2 is not None:
+                game_keybinds[key_name].add(key_value2)
+
+    if (
+        not validate_keybinds(menu_keybinds)
+        or not validate_keybinds(game_keybinds)
+    ):
+        with connect(DB_FILE) as conn:
+            cursor = conn.cursor()
+            drop_keybinds(cursor)
+            create_keybinds_table(cursor)
+            insert_default_keybinds(cursor)
+        return load_keybinds()
+
+    user_keybinds["menu_keys"] = menu_keybinds
+    user_keybinds["game_keys"] = game_keybinds
 
     return user_keybinds
 

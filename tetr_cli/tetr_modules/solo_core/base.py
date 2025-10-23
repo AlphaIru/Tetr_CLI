@@ -1,4 +1,5 @@
 """This holds the base attributes and methods for all modes."""
+
 # coding: utf-8
 
 from copy import copy
@@ -264,27 +265,37 @@ class SoloBaseMode(BaseModeClass):
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""
 
-        if not pressed_keys & {"z", "Z", "ctrl"}:
+        if not pressed_keys & self.get_user_keybind("rotate_ccw"):
             self.keyinput_cooldown.discard("ccw")
-        if not pressed_keys & {"x", "X", "up"}:
+        if not pressed_keys & self.get_user_keybind("rotate_cw"):
             self.keyinput_cooldown.discard("cw")
-        if not pressed_keys & {"space"}:
-            self.keyinput_cooldown.discard("space")
+        if not pressed_keys & self.get_user_keybind("hard_drop"):
+            self.keyinput_cooldown.discard("hard_drop")
 
         if not self.current_mino:
             return
 
-        if pressed_keys & {"z", "Z", "ctrl"} and "ccw" not in self.keyinput_cooldown:
+        if (
+            pressed_keys & self.get_user_keybind("rotate_ccw")
+            and "ccw" not in self.keyinput_cooldown
+        ):
             self.current_mino.rotate("left", self.is_position_valid)
             self.keyinput_cooldown.add("ccw")
-        if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
+        if (
+            pressed_keys & self.get_user_keybind("rotate_cw")
+            and "cw" not in self.keyinput_cooldown
+        ):
             self.current_mino.rotate("right", self.is_position_valid)
             self.keyinput_cooldown.add("cw")
-        if pressed_keys & {"left", "right"}:
+        if pressed_keys & (
+            (self.get_user_keybind("move_left")).union(
+                self.get_user_keybind("move_right")
+            )
+        ):
             self.current_mino.handle_sideways_auto_repeat(
                 pressed_keys, self.mino_touching_side
             )
-        if pressed_keys & {"down"}:
+        if pressed_keys & self.get_user_keybind("soft_drop"):
             if not self.mino_touching_bottom(self.current_mino):
                 self.current_mino.soft_drop(
                     level=self.level, is_position_valid=self.is_position_valid
@@ -294,7 +305,10 @@ class SoloBaseMode(BaseModeClass):
                     soft_drop_distance=1,
                     hard_drop_distance=0,
                 )
-        if pressed_keys & {"space"} and "space" not in self.keyinput_cooldown:
+        if (
+            pressed_keys & self.get_user_keybind("hard_drop")
+            and "hard_drop" not in self.keyinput_cooldown
+        ):
             rows_dropped = self.current_mino.hard_drop(
                 mino_touching_bottom_func=self.mino_touching_bottom,
                 is_position_valid=self.is_position_valid,
@@ -308,10 +322,10 @@ class SoloBaseMode(BaseModeClass):
             self.calculate_score(rows_dropped)
 
             self.reset_mino()
-            self.keyinput_cooldown.add("space")
+            self.keyinput_cooldown.add("hard_drop")
         if (
-            pressed_keys & {"c", "C", "shift"}
-            and {"space"} not in pressed_keys
+            pressed_keys & self.get_user_keybind("hold_piece")
+            and not pressed_keys & self.get_user_keybind("hard_drop")
             and not self.hold_used
         ):
             if self.current_hold:

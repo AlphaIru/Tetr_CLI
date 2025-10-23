@@ -227,11 +227,11 @@ class ModeClass(SoloBaseMode):
             )
             self._last_drawn_hold = hold_to_draw
 
-        if {"r", "R"} & pressed_keys:
+        if self.get_user_keybind("restart") & pressed_keys:
             self.action["transition"] = ["Marathon"]
             self.sound_action["SFX"].append("select_confirm")
             return
-        if "esc" in pressed_keys:
+        if self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
             self.action["transition"] = ["Solo_Menu"]
             self.sound_action["SFX"].append("select_back")
             return

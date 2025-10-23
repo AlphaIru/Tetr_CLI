@@ -23,6 +23,7 @@ from curses import (
     initscr,
     init_pair,
     endwin,
+    nocbreak,
     noecho,
     start_color,
     resize_term,
@@ -82,6 +83,7 @@ async def main(
     start_color()
     cbreak()
     noecho()
+    nocbreak()
     curs_set(False)
     stdscr.keypad(True)
 
