@@ -1,12 +1,11 @@
 """ "This will handle the solo mode menu."""
-
 # coding: utf-8
 
-from copy import deepcopy
 from typing import Dict, List, Set
 
 from curses import A_BOLD, A_REVERSE, window
 
+from tetr_cli.tetr_modules.modules.base_mode import BaseModeClass
 from tetr_cli.tetr_modules.modules.safe_curses import calculate_centered_menu
 
 OPTION_TO_ACTION: Dict[str, str] = {
@@ -17,28 +16,15 @@ OPTION_TO_ACTION: Dict[str, str] = {
 }
 
 
-class ModeClass:
+class ModeClass(BaseModeClass):
     """This will handle the solo mode menu."""
 
     def __init__(self) -> None:
         """This will initialize this class."""
+        super().__init__()
         self.__selected_option: int = 0
         self.__key_cooldown: int = 0
         self.__options: List[str] = ["Marathon", "Sprint", "Ultra", "Go_Back"]
-        self.__action: Dict[str, List[str]] = {}
-        self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
-
-    def pop_action(self) -> Dict[str, List[str]]:
-        """This will return the action and reset it."""
-        actions: Dict[str, List[str]] = deepcopy(self.__action)
-        self.__action = {}
-        return actions
-
-    def pop_sound_action(self) -> Dict[str, List[str]]:
-        """This will return the sound action and reset it."""
-        sound_action: Dict[str, List[str]] = deepcopy(self.__sound_action)
-        self.__sound_action["SFX"] = []
-        return sound_action
 
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
         """This will progress the menu based on the inputs."""
@@ -49,20 +35,20 @@ class ModeClass:
         elif "up" in pressed_keys:
             self.__selected_option = max(0, self.__selected_option - 1)
             self.__key_cooldown = 3
-            self.__sound_action["SFX"].append("select_move")
+            self.sound_action["SFX"].append("select_move")
         elif "down" in pressed_keys:
             self.__selected_option = min(
                 len(self.__options) - 1, self.__selected_option + 1
             )
             self.__key_cooldown = 3
-            self.__sound_action["SFX"].append("select_move")
+            self.sound_action["SFX"].append("select_move")
         elif "enter" in pressed_keys:
             transition_name: str = self.__options[self.__selected_option]
-            self.__action["transition"] = [OPTION_TO_ACTION.get(transition_name, "")]
+            self.action["transition"] = [OPTION_TO_ACTION.get(transition_name, "")]
             if transition_name == "Go_Back":
-                self.__sound_action["SFX"].append("select_back")
+                self.sound_action["SFX"].append("select_back")
             else:
-                self.__sound_action["SFX"].append("select_confirm")
+                self.sound_action["SFX"].append("select_confirm")
             return stdscr
 
         start_y, start_x, width = calculate_centered_menu(stdscr, self.__options)

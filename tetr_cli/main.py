@@ -70,7 +70,7 @@ async def main(
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
-    audio_check: bool = True if not no_music_mode else False
+    audio_check: bool = not no_music_mode
     try:
         mixer.init()
         mixer.music.set_volume(0.25)

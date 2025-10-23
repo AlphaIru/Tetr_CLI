@@ -16,6 +16,7 @@ except ImportError:
     NO_PYNPUT = True
 
 from tetr_cli.main import main
+from tetr_cli.tetr_modules.modules.database import initialize_database
 
 try:
     from tetr_cli.tetr_modules.keyboard_handlers.pynput_handler import (
@@ -24,10 +25,32 @@ try:
 except ImportError:
     pass
 
+help_dict: dict[str, str] = {
+    "--help, -h": "Display this help information.",
+    "--debug, -d": "Enable debug mode with additional logging.",
+    "--curses, --ncurses, --c": "Enable ncurses mode for terminal-based UI.",
+    "--no-music, --nm": "Disable music playback during the game.",
+    "--reset-db, --reset-database, --r": "Reset the game database to default settings.",
+}
+
 
 def parse_flag(flag_aliases: list[str]) -> bool:
     """Check if any of the given flag aliases are present in the command-line arguments."""
     return any(flag in argv for flag in flag_aliases)
+
+
+def print_help() -> None:
+    """Print help information for command-line flags."""
+    print("\n\n")
+    print("Tetr_CLI Help Information:")
+    print("-------------------------\n")
+    for flag, description in help_dict.items():
+        if flag == "":
+            print()
+            continue
+        print(f"{flag}:")
+        print(f"    {description}")
+        print()
 
 
 def starter() -> None:
@@ -36,6 +59,29 @@ def starter() -> None:
     debug_mode: bool = parse_flag(["--debug", "-d"])
     ncurses_mode: bool = parse_flag(["--curses", "--ncurses", "--c"])
     no_music_mode: bool = parse_flag(["--no-music", "--nm"])
+    reset_database: bool = parse_flag(["--reset-db", "--reset-database", "--r"])
+    print_help_call: bool = parse_flag(["--help", "-h"])
+
+    if print_help_call:
+        print_help()
+        return
+
+    if reset_database:
+        print("\n\n")
+        input_key: str = ""
+        while input_key.lower() not in ("y", "n", "yes", "no"):
+            input_key = input(
+                "Are you sure you want to reset the settings and data?"
+                " This action cannot be undone! (y/n): "
+            )
+        if input_key.lower() in ("y", "yes"):
+            initialize_database(reset=True)
+            print("Data has been reset!")
+            return
+        print("Data reset has been canceled.")
+        return
+
+    initialize_database()
 
     if NO_PYNPUT:
         ncurses_mode = True

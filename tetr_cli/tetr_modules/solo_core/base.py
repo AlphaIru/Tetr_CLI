@@ -1,11 +1,11 @@
 """This holds the base attributes and methods for all modes."""
-
 # coding: utf-8
 
-from copy import copy, deepcopy
+from copy import copy
 from random import shuffle, seed, randint
-from typing import Optional, Dict, Set, List, Tuple
+from typing import Optional, Set, List, Tuple
 
+from tetr_cli.tetr_modules.modules.base_mode import BaseModeClass
 from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
@@ -20,11 +20,13 @@ from tetr_cli.tetr_modules.modules.score import (
 )
 
 
-class SoloBaseMode:
+class SoloBaseMode(BaseModeClass):
     """This is the base class for all modes."""
 
     def __init__(self) -> None:
         """This will initialize this class."""
+        super().__init__()
+
         # Game stats
         self.level: int = 1
         self.back_to_back: bool = False
@@ -68,22 +70,8 @@ class SoloBaseMode:
         self._last_ghost_result: Tuple[int, int] = (-1, -1)
 
         # Actions
-        self.action: Dict[str, List[str]] = {}
-        self.sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
         self.offset: Tuple[int, int] = (0, 0)  # (offset_y, offset_x)
         self.max_yx: Tuple[int, int] = (0, 0)  # (max_y, max_x)
-
-    def pop_action(self) -> Dict[str, List[str]]:
-        """This will return the action and reset it."""
-        actions: Dict[str, List[str]] = deepcopy(self.action)
-        self.action = {}
-        return actions
-
-    def pop_sound_action(self) -> Dict[str, List[str]]:
-        """This will return the sound action and reset it."""
-        sound_action: Dict[str, List[str]] = deepcopy(self.sound_action)
-        self.sound_action["SFX"] = []
-        return sound_action
 
     def mino_list_generator(self, initial: bool = False, input_seed: int = 0) -> None:
         """This will generate the next mino."""
@@ -265,7 +253,7 @@ class SoloBaseMode:
         else:
             if lines_clear_detected == 1:
                 self.sound_action["SFX"].append("single")
-            elif lines_clear_detected == 2 or lines_clear_detected == 3:
+            elif lines_clear_detected in (2, 3):
                 self.sound_action["SFX"].append("double")
             elif lines_clear_detected == 4:
                 self.sound_action["SFX"].append("quad")
