@@ -1,4 +1,7 @@
 # Tetr_CLI
+
+[![Flake8](https://github.com/AlphaIru/Tetr_CLI/actions/workflows/flake8.yml/badge.svg)]([https://](https://github.com/AlphaIru/Tetr_CLI/actions/workflows/flake8.yml))
+
 A game inspired by a famous block game written on CLI. Written in Python.
 
 

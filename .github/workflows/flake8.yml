@@ -1,4 +1,4 @@
-name: Linting with Flake8
+name: Flake8 Linting
 
 on:
   push:
