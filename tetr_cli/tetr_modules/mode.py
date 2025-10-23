@@ -20,7 +20,7 @@ class GameMode:
         """This will get the current mode name."""
         return self.__mode_name
 
-    def get_mode_action(self) -> str:
+    def get_mode_action(self) -> Dict[str, List[str]]:
         """This will return the current mode action."""
         if self.__mode_instance is None:
             raise RuntimeError("Mode not loaded.")

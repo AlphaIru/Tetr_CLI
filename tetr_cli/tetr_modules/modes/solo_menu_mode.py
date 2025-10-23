@@ -23,14 +23,14 @@ class ModeClass:
         self.__selected_option: int = 0
         self.__key_cooldown: int = 0
         self.__options: List[str] = ["Marathon", "Sprint", "Ultra", "Go_Back"]
-        self.__action: str = ""
+        self.__action: Dict[str, List[str]] = {}
         self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
 
-    def pop_action(self) -> str:
+    def pop_action(self) -> Dict[str, List[str]]:
         """This will return the action and reset it."""
-        action: str = deepcopy(self.__action)
-        self.__action = ""
-        return action
+        actions: Dict[str, List[str]] = deepcopy(self.__action)
+        self.__action = {}
+        return actions
 
     def pop_sound_action(self) -> Dict[str, List[str]]:
         """This will return the sound action and reset it."""
@@ -55,8 +55,9 @@ class ModeClass:
             self.__key_cooldown = 3
             self.__sound_action["SFX"].append("select_move")
         elif "enter" in pressed_keys:
-            self.__action = OPTION_TO_ACTION.get(self.__options[self.__selected_option], "")
-            if self.__options[self.__selected_option] == "Go_Back":
+            transition_name: str = self.__options[self.__selected_option]
+            self.__action["transition"] = [OPTION_TO_ACTION.get(transition_name, "")]
+            if transition_name == "Go_Back":
                 self.__sound_action["SFX"].append("select_back")
             else:
                 self.__sound_action["SFX"].append("select_confirm")

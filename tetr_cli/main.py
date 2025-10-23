@@ -50,13 +50,13 @@ FRAME_DURATION: float = 1 / TARGET_FPS
 # O, I, T, L, J, S, Z
 
 
-async def run_action(action: str, current_mode: GameMode) -> GameMode:
+async def run_transition(transition: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
-    if action == "Solo_Menu":
+    if transition == "Solo_Menu":
         current_mode.change_mode("solo_menu")
-    elif action == "Main_Menu":
+    elif transition == "Main_Menu":
         current_mode.change_mode("main_menu")
-    elif action == "Marathon":
+    elif transition == "Marathon":
         current_mode.change_mode("marathon")
     return current_mode
 
@@ -65,11 +65,12 @@ async def main(
     pressed_keys: Set[str],
     debug_mode: bool,
     ncurses_mode: bool = True,
+    no_music_mode: bool = False,
 ) -> None:
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
-    audio_check: bool = True
+    audio_check: bool = True if not no_music_mode else False
     try:
         mixer.init()
         mixer.music.set_volume(0.25)
@@ -141,19 +142,18 @@ async def main(
                 debug_stats.update_current_mode(
                     new_mode=current_mode.get_current_mode_name()
                 )
-                stdscr = debug_stats.update_debug(stdscr=stdscr)
+                debug_stats.update_debug(stdscr=stdscr)
 
             current_mode.increment_frame(stdscr=stdscr, pressed_keys=pressed_keys)
             doupdate()
 
             if await screen_dimension_check(stdscr=stdscr) is False:
                 stdscr.clear()
-                stdscr = await screen_dimension_warning(stdscr=stdscr)
-                stdscr = debug_stats.update_debug(stdscr=stdscr)
+                await screen_dimension_warning(stdscr=stdscr)
+                if debug_mode:
+                    debug_stats.update_debug(stdscr=stdscr)
                 doupdate()
                 continue
-
-            # stdscr.refresh()
 
             if audio_check:
                 sound_action: Dict[str, List[str]] = current_mode.get_sound_action()
@@ -163,15 +163,20 @@ async def main(
                     sound_effect_dict=sound_effect_dict,
                 )
 
-            action: str = current_mode.get_mode_action()
-            if action == "Quit":
-                break
-            if action:
+            actions: Dict[str, List[str]] = current_mode.get_mode_action()
+            if "transition" in actions:
+                if "Quit" in actions["transition"]:
+                    break
+                transition_value: str = actions["transition"][0]
+                current_mode = await run_transition(
+                    transition=transition_value, current_mode=current_mode
+                )
                 stdscr.clear()
-                current_mode = await run_action(action=action, current_mode=current_mode)
+                if pressed_keys is not None:
+                    pressed_keys.clear()
 
-            if action and pressed_keys is not None:
-                pressed_keys.clear()
+            # if actions and pressed_keys is not None:
+            #     pressed_keys.clear()
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass

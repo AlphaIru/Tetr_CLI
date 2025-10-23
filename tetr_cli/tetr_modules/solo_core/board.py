@@ -19,7 +19,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     MINO_DRAW_LOCATION,
     T_SPIN_CORNER_CHECKS,
 )
-
+from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 from tetr_cli.tetr_modules.solo_core.mino import Mino
 
 
@@ -132,14 +132,25 @@ class Board:
 
     # Drawing functions
 
+    def add_title(self, stdscr: window, offset: Tuple[int, int], title: str) -> None:
+        """This will add a title to the action."""
+        safe_addstr(
+            stdscr,
+            offset[0] + 10,  # Center of board height
+            offset[1] - 12,  # Left of board
+            title,
+            A_BOLD,
+        )
+
     def draw_blank_board(
         self,
         stdscr: window,
         offset: Tuple[int, int],  # (offset_y, offset_x)
-    ) -> window:
+    ) -> None:
         """Draw the Game board centered on the screen."""
         # Draw top border
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             offset[0] - 1,
             offset[1] - 1,
             "+" + "- " * (DRAW_BOARD_WIDTH // 2) + "+",
@@ -147,21 +158,21 @@ class Board:
         # Draw Side Borders
         middle_line: str = "|" + " " * DRAW_BOARD_WIDTH + "|"
         for row in range(DRAW_BOARD_HEIGHT):
-            stdscr.addstr(
+            safe_addstr(
+                stdscr,
                 offset[0] + row,
                 offset[1] - 1,
                 middle_line,
                 A_BOLD,
             )
         # Draw bottom border
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             offset[0] + DRAW_BOARD_HEIGHT,
             offset[1] - 1,
             "+" + "-" * DRAW_BOARD_WIDTH + "+",
             A_BOLD,
         )
-
-        return stdscr
 
     def draw_minos_on_board(
         self,
@@ -170,7 +181,7 @@ class Board:
         max_yx: Tuple[int, int],  # (max_y, max_x)
         current_mino: Optional["Mino"] = None,  # type: ignore
         ghost_position: Tuple[int, int] = (-1, -1),
-    ) -> window:
+    ) -> None:
         """Draw the minos on the board."""
 
         draw_board: List[List[int]] = deepcopy(self.__board)
@@ -223,13 +234,13 @@ class Board:
                 x: int = offset[1] + x_counter * 2
                 color: int = abs(cell)
                 if 0 <= y < max_yx[0] and 0 <= x < max_yx[1] - 1:
-                    stdscr.addstr(
+                    safe_addstr(
+                        stdscr,
                         y,
                         x,
                         char,
                         color_pair(color) if cell else A_BOLD,
                     )
-        return stdscr
 
     def draw_queue(
         self,
@@ -237,7 +248,7 @@ class Board:
         offset: Tuple[int, int],  # (offset_y, offset_x)
         max_yx: Tuple[int, int],  # (max_y, max_x)
         queue_list: List[str],
-    ) -> window:
+    ) -> None:
         """Draw the next mino queue."""
 
         queue_offset: Tuple[int, int] = (offset[0], offset[1] + DRAW_BOARD_WIDTH + 1)
@@ -246,18 +257,27 @@ class Board:
         vertical_length: int = 17
 
         # Draw the box and text
-        stdscr.addstr(queue_offset[0] - 1, queue_offset[1], horizontal_line, A_BOLD)
-        stdscr.addstr(queue_offset[0], queue_offset[1] + 2, "Next", A_BOLD)
-        stdscr.addstr(queue_offset[0] + 1, queue_offset[1], horizontal_line, A_BOLD)
+        safe_addstr(
+            stdscr, queue_offset[0] - 1, queue_offset[1], horizontal_line, A_BOLD
+        )
+        safe_addstr(stdscr, queue_offset[0], queue_offset[1] + 2, "Next", A_BOLD)
+        safe_addstr(
+            stdscr, queue_offset[0] + 1, queue_offset[1], horizontal_line, A_BOLD
+        )
         for counter in range(vertical_length):
-            stdscr.addstr(
+            safe_addstr(
+                stdscr,
                 queue_offset[0] + counter,
                 queue_offset[1] + horizontal_length,
                 "|",
                 A_BOLD,
             )
-        stdscr.addstr(
-            queue_offset[0] + vertical_length, queue_offset[1], horizontal_line, A_BOLD
+        safe_addstr(
+            stdscr,
+            queue_offset[0] + vertical_length,
+            queue_offset[1],
+            horizontal_line,
+            A_BOLD,
         )
 
         mino_offset: Tuple[int, int] = (0, 0)
@@ -275,7 +295,7 @@ class Board:
                 for x_offset in range(mino_width * 2 + 2):
                     pos = (mino_offset[0] + y_offset, mino_offset[1] + x_offset)
                     if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
-                        stdscr.addstr(pos[0], pos[1], "  ", A_BOLD)
+                        safe_addstr(stdscr, pos[0], pos[1], "  ", A_BOLD)
 
         # Draw the next minos using block positions
         for queue_counter in range(queue_length):
@@ -295,13 +315,13 @@ class Board:
                         mino_offset[1] + x_offset * 2,
                     )
                     if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
-                        stdscr.addstr(
+                        safe_addstr(
+                            stdscr,
                             pos[0],
                             pos[1],
                             "██",
                             color_pair(MINO_COLOR.get(mino, 0)),
                         )
-        return stdscr
 
     def draw_hold(
         self,
@@ -310,7 +330,7 @@ class Board:
         max_yx: Tuple[int, int],  # (max_y, max_x)
         hold_used: bool,
         hold_mino: Optional["Mino"] = None,  # type: ignore
-    ) -> window:
+    ) -> None:
         """Draw the hold mino box."""
 
         horizontal_length: int = 12
@@ -319,19 +339,22 @@ class Board:
         horizontal_line: str = "+" + "-" * horizontal_length
 
         # Draw top
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             hold_offset[0] - 1,
             hold_offset[1],
             horizontal_line,
             A_BOLD,
         )
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             hold_offset[0],
             hold_offset[1] + 2,
             "Hold",
             A_BOLD,
         )
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             hold_offset[0] + 1,
             hold_offset[1],
             horizontal_line,
@@ -339,14 +362,16 @@ class Board:
         )
         # Draw side
         for counter in range(vertical_length):
-            stdscr.addstr(
+            safe_addstr(
+                stdscr,
                 hold_offset[0] + counter,
                 hold_offset[1],
                 "|",
                 A_BOLD,
             )
         # Draw bottom
-        stdscr.addstr(
+        safe_addstr(
+            stdscr,
             hold_offset[0] + vertical_length,
             hold_offset[1],
             horizontal_line,
@@ -354,11 +379,11 @@ class Board:
         )
 
         if not hold_mino:
-            return stdscr
+            return
 
         mino_type: str = hold_mino.type
         if mino_type not in MINO_DRAW_LOCATION:
-            return stdscr
+            return
         mino_char: str = "██"
         if hold_used:
             mino_char = "▒▒"
@@ -373,7 +398,7 @@ class Board:
                 clear_y = mino_offset[0] + y
                 clear_x = mino_offset[1] + x
                 if 0 <= clear_y < max_yx[0] and 0 <= clear_x < max_yx[1] - 1:
-                    stdscr.addstr(clear_y, clear_x, " ", A_BOLD)
+                    safe_addstr(stdscr, clear_y, clear_x, " ", A_BOLD)
 
         # Draw the hold mino using block positions
         mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][orientation]
@@ -383,14 +408,13 @@ class Board:
                 mino_offset[1] + x_offset * 2,
             )
             if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
-                stdscr.addstr(
+                safe_addstr(
+                    stdscr,
                     pos[0],
                     pos[1],
                     mino_char,
                     color_pair(MINO_COLOR.get(mino_type, 0)),
                 )
-
-        return stdscr
 
 
 if __name__ == "__main__":

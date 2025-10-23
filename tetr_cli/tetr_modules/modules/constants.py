@@ -4,19 +4,6 @@
 
 from typing import Set, Dict, List, Tuple
 
-POINTS_TABLE: Dict[str, int] = {
-    "Single": 100,
-    "Double": 300,
-    "Triple": 500,
-    "Tetris": 800,
-    "Mini_Tspin": 100,
-    "Mini_Tspin_Single": 200,
-    "Tspin": 400,
-    "Tspin_Single": 800,
-    "Tspin_Double": 1200,
-    "Tspin_Triple": 1600,
-}
-
 MIN_X: int = 80
 MIN_Y: int = 24
 
@@ -115,6 +102,25 @@ SCORE_TABLE: Dict[str, Dict[int, int]] = {
         3: 1600,
         4: 2000,
         5: 3200,  # Back-to-back all clear
+    },
+}
+
+SCORE_NAME: Dict[str, Dict[int, str]] = {
+    "regular": {
+        1: "Single",
+        2: "Double",
+        3: "Triple",
+        4: "Quad",
+    },
+    "t_spin": {
+        0: "Tspin",
+        1: "Tspin Single",
+        2: "Tspin Double",
+        3: "Tspin Triple",
+    },
+    "mini_t_spin": {
+        0: "Mini Tspin",
+        1: "Mini Tspin Single",
     },
 }
 

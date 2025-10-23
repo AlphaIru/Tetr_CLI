@@ -35,6 +35,8 @@ def starter() -> None:
 
     debug_mode: bool = parse_flag(["--debug", "-d"])
     ncurses_mode: bool = parse_flag(["--curses", "--ncurses", "--c"])
+    no_music_mode: bool = parse_flag(["--no-music", "--nm"])
+
     if NO_PYNPUT:
         ncurses_mode = True
 
@@ -46,7 +48,14 @@ def starter() -> None:
         listener.start()
 
     try:
-        run(main(pressed_keys, debug_mode=debug_mode, ncurses_mode=ncurses_mode))
+        run(
+            main(
+                pressed_keys,
+                debug_mode=debug_mode,
+                ncurses_mode=ncurses_mode,
+                no_music_mode=no_music_mode,
+            )
+        )
         print("\n\n")
         endwin()
         print("Thank you for playing!")

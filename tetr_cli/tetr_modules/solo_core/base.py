@@ -14,7 +14,7 @@ from tetr_cli.tetr_modules.modules.constants import (
 )
 from tetr_cli.tetr_modules.solo_core.board import Board
 from tetr_cli.tetr_modules.solo_core.mino import Mino
-from tetr_cli.tetr_modules.solo_core.score import (
+from tetr_cli.tetr_modules.modules.score import (
     calculate_drop_score,
     calculate_line_score,
 )
@@ -68,16 +68,16 @@ class SoloBaseMode:
         self._last_ghost_result: Tuple[int, int] = (-1, -1)
 
         # Actions
-        self.action: str = ""
+        self.action: Dict[str, List[str]] = {}
         self.sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
         self.offset: Tuple[int, int] = (0, 0)  # (offset_y, offset_x)
         self.max_yx: Tuple[int, int] = (0, 0)  # (max_y, max_x)
 
-    def pop_action(self) -> str:
+    def pop_action(self) -> Dict[str, List[str]]:
         """This will return the action and reset it."""
-        action: str = deepcopy(self.action)
-        self.action = ""
-        return action
+        actions: Dict[str, List[str]] = deepcopy(self.action)
+        self.action = {}
+        return actions
 
     def pop_sound_action(self) -> Dict[str, List[str]]:
         """This will return the sound action and reset it."""
@@ -203,6 +203,8 @@ class SoloBaseMode:
         current_mino: Mino,
     ) -> Tuple[int, int]:
         """This will return the ghost mino position."""
+        if current_mino is None:
+            return (-1, -1)
         key: Tuple[Tuple[int, int], str, str] = (
             current_mino.position,
             current_mino.orientation,
@@ -238,7 +240,8 @@ class SoloBaseMode:
             self.combo_count = 0
 
         self.board.clear_lines()
-        current_score, back_to_back = calculate_line_score(
+        action_text: List[str] = []
+        current_score, back_to_back, action_text = calculate_line_score(
             lines_cleared=lines_clear_detected,
             level=self.level,
             t_spin=t_spin_detected,
@@ -249,6 +252,8 @@ class SoloBaseMode:
         self.score += current_score
         self.back_to_back = back_to_back
         self.lines_cleared += lines_clear_detected
+        if action_text:
+            self.action["action_text"] = action_text
 
         if t_spin_detected:
             if lines_clear_detected <= 1:
@@ -265,8 +270,8 @@ class SoloBaseMode:
             elif lines_clear_detected == 4:
                 self.sound_action["SFX"].append("quad")
 
-        if self.lines_cleared // 10 + 1 > self.level:
-            self.level = self.lines_cleared // 10 + 1
+        # Level up for every 10 lines cleared
+        self.level = max(self.level, (self.lines_cleared // 10) + 1)
 
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""
