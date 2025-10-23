@@ -4,4 +4,4 @@ keyboard>=0.13.3
 pygame>=2.1.2
 wcwidth>=0.1.7
 windows-curses>=2.2.0; platform_system == "Windows"
-types_setuptools>=80.9.0
+types_setuptools>=57.0.0
