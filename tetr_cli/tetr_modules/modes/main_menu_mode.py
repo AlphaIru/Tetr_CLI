@@ -3,67 +3,32 @@
 
 from typing import Dict, List, Set
 
-from curses import A_BOLD, A_REVERSE, window
+from curses import window
 
-from tetr_cli.tetr_modules.modules.base_mode import BaseModeClass
-from tetr_cli.tetr_modules.modules.safe_curses import calculate_centered_menu
+from tetr_cli.tetr_modules.menu_core.menu_mode import MenuModeClass
 
-OPTION_TO_ACTION: Dict[str, str] = {
-    "Solo": "Solo_Menu",
-    "Multiplayer": "Multi_Menu",
-    "Quit": "Quit",
+
+OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
+    "Solo": {"action": "Solo_Menu", "sound": "select_confirm"},
+    "Multiplayer": {"action": "Multi_Menu", "sound": "select_confirm"},
+    "Quit": {"action": "Quit", "sound": "select_back"},
+    "Go_Back": {"action": "Quit", "sound": "select_back"},
 }
 
+OPTION_LIST: List[str] = ["Solo", "Multiplayer", "Quit"]
 
-class ModeClass(BaseModeClass):
+
+class ModeClass(MenuModeClass):
     """This will handle main_menu."""
 
     def __init__(self) -> None:
         """This will initialize this class."""
-        super().__init__()
-        self.__selected_option: int = 0
-        self.__key_cooldown: int = 0
-        self.__options: List[str] = ["Solo", "Multiplayer", "Quit"]
+        super().__init__(OPTION_LIST, OPTION_TO_ACTION)
 
-    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> window:
+    def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will progress the menu based on the inputs."""
-        if self.__key_cooldown > 0:
-            self.__key_cooldown -= 1
-        elif self.get_user_keybind("menu_up", menu_mode=True) & pressed_keys:
-            self.__selected_option = max(0, self.__selected_option - 1)
-            self.__key_cooldown = 3
-            self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_down", menu_mode=True) & pressed_keys:
-            self.__selected_option = min(
-                len(self.__options) - 1, self.__selected_option + 1
-            )
-            self.__key_cooldown = 3
-            self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
-            transition_name: str = self.__options[self.__selected_option]
-            self.action["transition"] = [OPTION_TO_ACTION.get(transition_name, "")]
-            self.sound_action["SFX"].append("select_confirm")
-            return stdscr
-        elif self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
-            self.action["transition"] = ["Quit"]
-            self.sound_action["SFX"].append("select_back")
-            return stdscr
-
-        start_y, start_x, width = calculate_centered_menu(stdscr, self.__options)
-
-        title = "Main Menu"
-        stdscr.addstr(start_y - 2, (width - len(title)) // 2, title, A_BOLD)
-
-        for list_index, option in enumerate(self.__options):
-            prefix: str = "  "
-            attr: int = 0
-            if list_index == self.__selected_option:
-                prefix = "> "
-                attr = A_REVERSE
-            line = f"{prefix}{option}"
-            stdscr.addstr(start_y + list_index, start_x, line, attr)
-
-        return stdscr
+        self.menu_control(pressed_keys)
+        self.display_menu(stdscr, "Main Menu")
 
 
 if __name__ == "__main__":

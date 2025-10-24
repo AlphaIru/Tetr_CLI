@@ -6,7 +6,7 @@ from copy import copy
 from random import shuffle, seed, randint
 from typing import Optional, Set, List, Tuple
 
-from tetr_cli.tetr_modules.modules.base_mode import BaseModeClass
+from tetr_cli.tetr_modules.menu_core.base_mode import BaseModeClass
 from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
