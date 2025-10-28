@@ -3,7 +3,7 @@
 # coding: utf-8
 
 from importlib import import_module
-from typing import Set, Dict, List
+from typing import Dict, List, Set
 
 from curses import window
 
@@ -13,7 +13,6 @@ class GameMode:
 
     def __init__(self) -> None:
         self.__mode_instance = None
-        self.__mode_list: List[str] = ["main_menu", "solo_menu", "marathon"]
         self.__mode_name: str = "main_menu"
 
     def get_current_mode_name(self) -> str:
@@ -44,11 +43,12 @@ class GameMode:
 
     def change_mode(self, new_mode_name: str) -> None:
         """This will transition to new mode."""
-        if new_mode_name not in self.__mode_list:
-            raise ValueError(f'"{new_mode_name}" mode is not accessible!')
         self.__mode_name = new_mode_name
-        module = import_module(f"tetr_cli.tetr_modules.modes.{self.__mode_name}_mode")
-        self.__mode_instance = module.ModeClass()
+        try:
+            module = import_module(f"tetr_cli.tetr_modules.modes.{self.__mode_name}_mode")
+            self.__mode_instance = module.ModeClass()
+        except ModuleNotFoundError as exc:
+            raise ValueError(f'"{self.__mode_name}" mode is not accessible!') from exc
 
 
 if __name__ == "__main__":

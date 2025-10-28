@@ -21,7 +21,7 @@ DEFAULT_KEYBINDS: List[Tuple[str, bool, str, Optional[str]]] = [
     ("hold_piece", False, "c", None),
     ("restart", False, "r", None),
     ("menu_confirm", True, "enter", None),
-    ("menu_back", True, "backspace", "esc"),
+    ("menu_back", True, "backspace", "q"),
     ("menu_up", True, "up", None),
     ("menu_down", True, "down", None),
     ("menu_left", True, "left", None),
@@ -36,12 +36,22 @@ DEFAULT_SETTINGS: List[Tuple[str, str]] = [
 ]
 
 
-DEFAULT_SCORES: List[Tuple[str, int, str]] = [
-    ("RedWhite", 500000, "2025-10-25"),
-    ("Lighting", 400000, "2025-10-25"),
-    ("Bunny", 300000, "2025-10-25"),
-    ("RagingTree", 200000, "2025-10-25"),
-    ("Onkai", 100000, "2025-10-25"),
+DEFAULT_SCORES: List[Tuple[str, int, str, str]] = [
+    ("RedWhite", 500000, "Marathon", "2025-10-25"),
+    ("Lighting", 400000, "Marathon", "2025-10-25"),
+    ("Bunny", 300000, "Marathon", "2025-10-25"),
+    ("RagingTree", 200000, "Marathon", "2025-10-25"),
+    ("Onkai", 100000, "Marathon", "2025-10-25"),
+    ("RedWhite", 5000, "Sprint", "2025-10-25"),
+    ("Lighting", 6000, "Sprint", "2025-10-25"),
+    ("Bunny", 7000, "Sprint", "2025-10-25"),
+    ("RagingTree", 8000, "Sprint", "2025-10-25"),
+    ("Onkai", 9000, "Sprint", "2025-10-25"),
+    ("RedWhite", 100000, "Ultra", "2025-10-25"),
+    ("Lighting", 90000, "Ultra", "2025-10-25"),
+    ("Bunny", 80000, "Ultra", "2025-10-25"),
+    ("RagingTree", 70000, "Ultra", "2025-10-25"),
+    ("Onkai", 60000, "Ultra", "2025-10-25"),
 ]
 
 
@@ -59,6 +69,7 @@ def create_scores_table(cursor: Cursor) -> None:
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         player_name TEXT NOT NULL,
         score INTEGER NOT NULL,
+        score_type TEXT DEFAULT 'Marathon',
         date_played TEXT NOT NULL
     )
     """
@@ -69,7 +80,7 @@ def insert_default_scores(cursor: Cursor) -> None:
     """Insert default score into the score table."""
     cursor.executemany(
         """
-        INSERT INTO scores (player_name, score, date_played) VALUES (?, ?, ?)
+        INSERT INTO scores (player_name, score, score_type, date_played) VALUES (?, ?, ?, ?)
         """,
         DEFAULT_SCORES,
     )
@@ -116,10 +127,10 @@ def create_keybinds_table(cursor: Cursor) -> None:
         """
     CREATE TABLE IF NOT EXISTS keybinds (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key_name TEXT NOT NULL,
+        input_name TEXT NOT NULL,
         is_menu_keybind BOOLEAN DEFAULT 0,
-        key_value1 TEXT NOT NULL,
-        key_value2 TEXT DEFAULT NULL
+        key_name1 TEXT NOT NULL,
+        key_name2 TEXT DEFAULT NULL
     )
     """
     )
@@ -130,11 +141,32 @@ def insert_default_keybinds(cursor: Cursor) -> None:
 
     cursor.executemany(
         """
-    INSERT INTO keybinds (key_name, is_menu_keybind, key_value1, key_value2) VALUES (?, ?, ?, ?)
+    INSERT INTO keybinds (input_name, is_menu_keybind, key_name1, key_name2) VALUES (?, ?, ?, ?)
     """,
         DEFAULT_KEYBINDS,
     )
 
+
+# Temporary Table Functions
+def drop_temp_table(cursor: Cursor) -> None:
+    """Drop the temporary table if it exists."""
+    cursor.execute("DROP TABLE IF EXISTS temps")
+
+
+def create_temp_table(cursor: Cursor) -> None:
+    """Create the temporary table."""
+    cursor.execute(
+        """
+    CREATE TABLE IF NOT EXISTS temps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        temp_name TEXT NOT NULL,
+        temp_value TEXT NOT NULL
+    )
+    """
+    )
+
+
+# Reset All Tables
 
 def reset_all(cursor: Cursor) -> None:
     """Reset all tables in the database."""
@@ -149,6 +181,28 @@ def reset_all(cursor: Cursor) -> None:
     drop_settings(cursor)
     create_settings_table(cursor)
     insert_default_settings(cursor)
+
+    drop_temp_table(cursor)
+    create_temp_table(cursor)
+
+
+# def check_table_exists(cursor: Cursor, table_type: str) -> None:
+#     """Check if the scores table exists. If not create it."""
+#     cursor.execute(
+#         """
+#         SELECT name FROM sqlite_master WHERE type='table' AND name=?;
+#         """,
+#         (table_type,),
+#     )
+#     if not cursor.fetchone():
+#         if table_type == "scores":
+#             create_scores_table(cursor)
+#         elif table_type == "keybinds":
+#             create_keybinds_table(cursor)
+#         elif table_type == "settings":
+#             create_settings_table(cursor)
+#         elif table_type == "temps":
+#             create_temp_table(cursor)
 
 
 def initialize_database(reset: bool = False) -> None:
@@ -167,6 +221,7 @@ def initialize_database(reset: bool = False) -> None:
         create_scores_table(cursor)
         create_keybinds_table(cursor)
         create_settings_table(cursor)
+        create_temp_table(cursor)
 
         cursor.execute("SELECT COUNT(*) FROM scores")
         if cursor.fetchone()[0] == 0:
@@ -210,26 +265,26 @@ def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
     rows: List[Tuple[str, bool, str, Optional[str]]] = []
     with connect(DB_FILE) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT key_name, is_menu_keybind, key_value1, key_value2 FROM keybinds")
+        cursor.execute("SELECT input_name, is_menu_keybind, key_name1, key_name2 FROM keybinds")
         rows = cursor.fetchall()
 
     user_keybinds: Dict[str, Dict[str, Set[str]]] = {}
     menu_keybinds: Dict[str, Set[str]] = {}
     game_keybinds: Dict[str, Set[str]] = {}
 
-    for key_name, is_menu_keybind, key_value1, key_value2 in rows:
+    for input_name, is_menu_keybind, key_name1, key_name2 in rows:
         if is_menu_keybind:
-            if key_name not in menu_keybinds:
-                menu_keybinds[key_name] = set()
-            menu_keybinds[key_name].add(key_value1)
-            if key_value2 is not None:
-                menu_keybinds[key_name].add(key_value2)
+            if input_name not in menu_keybinds:
+                menu_keybinds[input_name] = set()
+            menu_keybinds[input_name].add(key_name1)
+            if key_name2 is not None:
+                menu_keybinds[input_name].add(key_name2)
         else:
-            if key_name not in game_keybinds:
-                game_keybinds[key_name] = set()
-            game_keybinds[key_name].add(key_value1)
-            if key_value2 is not None:
-                game_keybinds[key_name].add(key_value2)
+            if input_name not in game_keybinds:
+                game_keybinds[input_name] = set()
+            game_keybinds[input_name].add(key_name1)
+            if key_name2 is not None:
+                game_keybinds[input_name].add(key_name2)
 
     if (
         not validate_keybinds(menu_keybinds)
@@ -272,6 +327,71 @@ def update_keybind(
 
     conn.commit()
     conn.close()
+
+
+def get_scores(score_type: str) -> List[Tuple[str, int, str, str]]:
+    """Retrieve scores from the database based on score type."""
+    conn: Connection = connect(DB_FILE)
+    cursor: Cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT player_name, score, score_type, date_played
+        FROM scores
+        WHERE score_type = ?
+        ORDER BY score DESC
+        """,
+        (score_type,),
+    )
+
+    scores: List[Tuple[str, int, str, str]] = cursor.fetchall()
+    conn.close()
+    return scores
+
+
+def set_temp(key: str, value: str) -> None:
+    """Set a temporary value in the temps table."""
+    conn: Connection = connect(DB_FILE)
+    cursor: Cursor = conn.cursor()
+
+    check_query = "SELECT COUNT(*) FROM temps WHERE temp_name = ?"
+    cursor.execute(check_query, (key,))
+    if cursor.fetchone()[0] == 0:
+        cursor.execute(
+            """
+            INSERT INTO temps (temp_name, temp_value) VALUES (?, ?)
+            """,
+            (key, value),
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE temps SET temp_value = ? WHERE temp_name = ?
+            """,
+            (value, key),
+        )
+
+    conn.commit()
+    conn.close()
+
+
+def get_temp(key: str) -> str:
+    """Get a temporary value from the temps table."""
+    conn: Connection = connect(DB_FILE)
+    cursor: Cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT temp_value FROM temps WHERE temp_name = ?
+        """,
+        (key,),
+    )
+    result = cursor.fetchone()
+
+    cursor.execute("DELETE FROM temps WHERE temp_name = ?", (key,))
+    conn.close()
+
+    return result[0] if result else ""
 
 
 if __name__ == "__main__":

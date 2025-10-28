@@ -55,8 +55,12 @@ async def run_transition(transition: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
     if transition == "Solo_Menu":
         current_mode.change_mode("solo_menu")
+    elif transition == "Option_Menu":
+        current_mode.change_mode("option")
     elif transition == "Main_Menu":
         current_mode.change_mode("main_menu")
+    elif transition == "Score_Screen":
+        current_mode.change_mode("score_screen")
     elif transition == "Marathon":
         current_mode.change_mode("marathon")
     return current_mode
@@ -155,6 +159,7 @@ async def main(
                 if debug_mode:
                     debug_stats.update_debug(stdscr=stdscr)
                 doupdate()
+                elapsed_time = perf_counter() - start_time
                 continue
 
             if audio_check:
@@ -177,8 +182,10 @@ async def main(
                 if pressed_keys is not None:
                     pressed_keys.clear()
 
-            # if actions and pressed_keys is not None:
-            #     pressed_keys.clear()
+            if "score" in actions and "score_type" in actions:
+                pass
+                # current_mode.score = int(actions["score"][0])
+                # current_mode.score_type = actions["score_type"][0]
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass

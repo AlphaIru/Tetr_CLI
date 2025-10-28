@@ -5,20 +5,21 @@ from typing import Dict, List, Set
 
 from curses import window
 
-from tetr_cli.tetr_modules.menu_core.menu_mode import MenuModeClass
+from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 
 
 OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
     "Solo": {"action": "Solo_Menu", "sound": "select_confirm"},
     "Multiplayer": {"action": "Multi_Menu", "sound": "select_confirm"},
+    "Options": {"action": "Option_Menu", "sound": "select_confirm"},
     "Quit": {"action": "Quit", "sound": "select_back"},
     "Go_Back": {"action": "Quit", "sound": "select_back"},
 }
 
-OPTION_LIST: List[str] = ["Solo", "Multiplayer", "Quit"]
+OPTION_LIST: List[str] = ["Solo", "Multiplayer", "Options", "Quit"]
 
 
-class ModeClass(MenuModeClass):
+class ModeClass(VerticalMenuModeClass):
     """This will handle main_menu."""
 
     def __init__(self) -> None:

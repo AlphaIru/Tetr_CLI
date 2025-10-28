@@ -14,6 +14,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_WIDTH,
     TARGET_FPS,
 )
+from tetr_cli.tetr_modules.modules.database import set_temp
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
@@ -97,6 +98,49 @@ class ModeClass(SoloBaseMode):
         if self.counter == 0:
             self.clear_action_text(stdscr)
 
+    def check_game_over(self) -> bool:
+        """This will check if the game is over."""
+        if self.current_mino and not self.is_position_valid(
+            self.current_mino.get_block_positions()
+        ):
+            return True
+        return False
+
+    def display_game_over(self, stdscr: window) -> None:
+        """This will display game over text."""
+        center_y: int = self.max_yx[0] // 2
+        center_x: int = self.max_yx[1] // 2
+        self.board.draw_minos_on_board(
+            stdscr=stdscr,
+            offset=self.offset,
+            max_yx=self.max_yx,
+            current_mino=self.current_mino,
+            ghost_position=(
+                self.current_mino.position if self.current_mino else (-1, -1)
+            ),
+        )
+        safe_addstr(
+            stdscr,
+            center_y - 1,
+            center_x - 5,
+            "GAME OVER!",
+            A_BOLD,
+        )
+        confirm_keys: Set[str] = self.get_user_keybind("menu_confirm", menu_mode=True)
+        confirm_string: str = (
+            "/".join(sorted(confirm_keys))
+            if len(confirm_keys) > 1
+            else next(iter(confirm_keys))
+        )
+        string_len: int = len(f"Press {confirm_string} to Continue")
+        safe_addstr(
+            stdscr,
+            center_y + 1,
+            center_x - (string_len // 2),
+            f"Press {confirm_string} to Continue",
+            A_BOLD,
+        )
+
     def play_mode(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will play the mode."""
         if len(self.mino_list) <= 14:
@@ -104,6 +148,11 @@ class ModeClass(SoloBaseMode):
         if not self.current_mino:
             new_mino_type: str = self.mino_list.pop(0)
             self.current_mino = Mino(mino_type=new_mino_type, level=self.level)
+            if self.check_game_over():
+                self.mode = "game_over"
+                self.display_game_over(stdscr)
+                self.sound_action["BGM"] = ["stop"]
+                return
 
         self.check_keyinput_pressed(pressed_keys=pressed_keys)
         if not self.current_mino:
@@ -197,6 +246,16 @@ class ModeClass(SoloBaseMode):
             self.invalidate_draw_cache()
 
         if check_max_yx[0] < MIN_Y or check_max_yx[1] < MIN_X:
+            return
+
+        if self.mode == "game_over":
+            if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+                self.action["transition"] = ["Score_Screen"]
+                set_temp("score", str(self.score))
+                set_temp("score_type", "Marathon")
+                self.sound_action["SFX"].append("select_confirm")
+                return
+            self.display_game_over(stdscr)
             return
 
         queue_to_draw: List[str] = self.mino_list[0:5]

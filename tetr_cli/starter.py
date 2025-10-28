@@ -57,9 +57,9 @@ def starter() -> None:
     """The true starter of the code."""
 
     debug_mode: bool = parse_flag(["--debug", "-d"])
-    ncurses_mode: bool = parse_flag(["--curses", "--ncurses", "--c"])
-    no_music_mode: bool = parse_flag(["--no-music", "--nm"])
-    reset_database: bool = parse_flag(["--reset-db", "--reset-database", "--r"])
+    ncurses_mode: bool = parse_flag(["--curses", "--ncurses", "-c"])
+    no_music_mode: bool = parse_flag(["--no-music", "-nm"])
+    reset_database: bool = parse_flag(["--reset-db", "--reset-database", "-r"])
     print_help_call: bool = parse_flag(["--help", "-h"])
 
     if print_help_call:
