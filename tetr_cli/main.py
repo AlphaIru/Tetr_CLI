@@ -23,6 +23,7 @@ from curses import (
     initscr,
     init_pair,
     endwin,
+    nocbreak,
     noecho,
     start_color,
     resize_term,
@@ -54,8 +55,12 @@ async def run_transition(transition: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
     if transition == "Solo_Menu":
         current_mode.change_mode("solo_menu")
+    elif transition == "Option_Menu":
+        current_mode.change_mode("option")
     elif transition == "Main_Menu":
         current_mode.change_mode("main_menu")
+    elif transition == "Score_Screen":
+        current_mode.change_mode("score_screen")
     elif transition == "Marathon":
         current_mode.change_mode("marathon")
     return current_mode
@@ -70,7 +75,7 @@ async def main(
     """The true main code or base of everything."""
     debug_stats: DebugClass = DebugClass()
 
-    audio_check: bool = True if not no_music_mode else False
+    audio_check: bool = not no_music_mode
     try:
         mixer.init()
         mixer.music.set_volume(0.25)
@@ -82,6 +87,7 @@ async def main(
     start_color()
     cbreak()
     noecho()
+    nocbreak()
     curs_set(False)
     stdscr.keypad(True)
 
@@ -153,6 +159,7 @@ async def main(
                 if debug_mode:
                     debug_stats.update_debug(stdscr=stdscr)
                 doupdate()
+                elapsed_time = perf_counter() - start_time
                 continue
 
             if audio_check:
@@ -175,8 +182,9 @@ async def main(
                 if pressed_keys is not None:
                     pressed_keys.clear()
 
-            # if actions and pressed_keys is not None:
-            #     pressed_keys.clear()
+            if "clear" in actions:
+                stdscr.clear()
+                stdscr.refresh()
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass

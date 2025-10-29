@@ -62,7 +62,7 @@ class Board:
         for row in self.__board:
             # In order to be all clear all cells in each row must be the same:
             # (zero) or (non-zero)
-            filled_check: bool = True if row[0] != 0 else False
+            filled_check: bool = row[0] != 0
             for cell in row:
                 if (cell != 0) != filled_check:
                     return False

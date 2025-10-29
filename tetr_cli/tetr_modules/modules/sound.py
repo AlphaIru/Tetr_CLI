@@ -7,6 +7,7 @@ from typing import Dict, List
 from pygame import mixer
 from pygame.mixer import Sound
 
+
 current_path: Path = Path(__file__).parent.parent.resolve()
 sound_path: Path = current_path / "sounds"
 

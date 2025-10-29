@@ -1,7 +1,7 @@
 """This will handle score related functions."""
 # coding: utf-8
 
-from typing import List
+from typing import List, Tuple
 from tetr_cli.tetr_modules.modules.constants import SCORE_TABLE, SCORE_NAME
 
 
@@ -12,7 +12,7 @@ def calculate_line_score(
     all_clear: bool = False,
     combo: int = 0,
     back_to_back: bool = False,
-) -> tuple[int, bool, List[str]]:
+) -> Tuple[int, bool, List[str]]:
     """This will calculate the score based on the given parameters."""
     base_score: int = 0
     action_text: List[str] = []

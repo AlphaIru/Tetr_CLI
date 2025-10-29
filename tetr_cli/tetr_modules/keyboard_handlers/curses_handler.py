@@ -1,12 +1,12 @@
 """This is a handler for keyboard input using curses."""
 # coding: utf-8
 
-from typing import Set
+from typing import Dict, Set
 
 from curses import keyname
 
 
-KEY_NAME_CONVERTER: dict[str, str] = {
+KEY_NAME_CONVERTER: Dict[str, str] = {
     " ": "space",
     "KEY_UP": "up",
     "KEY_DOWN": "down",

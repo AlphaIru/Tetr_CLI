@@ -2,10 +2,11 @@
 
 # coding: utf-8
 
-from copy import copy, deepcopy
+from copy import copy
 from random import shuffle, seed, randint
-from typing import Optional, Dict, Set, List, Tuple
+from typing import Optional, Set, List, Tuple
 
+from tetr_cli.tetr_modules.menu_core.base_mode import BaseModeClass
 from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
@@ -20,11 +21,13 @@ from tetr_cli.tetr_modules.modules.score import (
 )
 
 
-class SoloBaseMode:
+class SoloBaseMode(BaseModeClass):
     """This is the base class for all modes."""
 
     def __init__(self) -> None:
         """This will initialize this class."""
+        super().__init__()
+
         # Game stats
         self.level: int = 1
         self.back_to_back: bool = False
@@ -68,22 +71,8 @@ class SoloBaseMode:
         self._last_ghost_result: Tuple[int, int] = (-1, -1)
 
         # Actions
-        self.action: Dict[str, List[str]] = {}
-        self.sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
         self.offset: Tuple[int, int] = (0, 0)  # (offset_y, offset_x)
         self.max_yx: Tuple[int, int] = (0, 0)  # (max_y, max_x)
-
-    def pop_action(self) -> Dict[str, List[str]]:
-        """This will return the action and reset it."""
-        actions: Dict[str, List[str]] = deepcopy(self.action)
-        self.action = {}
-        return actions
-
-    def pop_sound_action(self) -> Dict[str, List[str]]:
-        """This will return the sound action and reset it."""
-        sound_action: Dict[str, List[str]] = deepcopy(self.sound_action)
-        self.sound_action["SFX"] = []
-        return sound_action
 
     def mino_list_generator(self, initial: bool = False, input_seed: int = 0) -> None:
         """This will generate the next mino."""
@@ -265,7 +254,7 @@ class SoloBaseMode:
         else:
             if lines_clear_detected == 1:
                 self.sound_action["SFX"].append("single")
-            elif lines_clear_detected == 2 or lines_clear_detected == 3:
+            elif lines_clear_detected in (2, 3):
                 self.sound_action["SFX"].append("double")
             elif lines_clear_detected == 4:
                 self.sound_action["SFX"].append("quad")
@@ -276,27 +265,37 @@ class SoloBaseMode:
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""
 
-        if not pressed_keys & {"z", "Z", "ctrl"}:
+        if not pressed_keys & self.get_user_keybind("rotate_ccw"):
             self.keyinput_cooldown.discard("ccw")
-        if not pressed_keys & {"x", "X", "up"}:
+        if not pressed_keys & self.get_user_keybind("rotate_cw"):
             self.keyinput_cooldown.discard("cw")
-        if not pressed_keys & {"space"}:
-            self.keyinput_cooldown.discard("space")
+        if not pressed_keys & self.get_user_keybind("hard_drop"):
+            self.keyinput_cooldown.discard("hard_drop")
 
         if not self.current_mino:
             return
 
-        if pressed_keys & {"z", "Z", "ctrl"} and "ccw" not in self.keyinput_cooldown:
+        if (
+            pressed_keys & self.get_user_keybind("rotate_ccw")
+            and "ccw" not in self.keyinput_cooldown
+        ):
             self.current_mino.rotate("left", self.is_position_valid)
             self.keyinput_cooldown.add("ccw")
-        if pressed_keys & {"x", "X", "up"} and "cw" not in self.keyinput_cooldown:
+        if (
+            pressed_keys & self.get_user_keybind("rotate_cw")
+            and "cw" not in self.keyinput_cooldown
+        ):
             self.current_mino.rotate("right", self.is_position_valid)
             self.keyinput_cooldown.add("cw")
-        if pressed_keys & {"left", "right"}:
+        if pressed_keys & (
+            (self.get_user_keybind("move_left")).union(
+                self.get_user_keybind("move_right")
+            )
+        ):
             self.current_mino.handle_sideways_auto_repeat(
                 pressed_keys, self.mino_touching_side
             )
-        if pressed_keys & {"down"}:
+        if pressed_keys & self.get_user_keybind("soft_drop"):
             if not self.mino_touching_bottom(self.current_mino):
                 self.current_mino.soft_drop(
                     level=self.level, is_position_valid=self.is_position_valid
@@ -306,7 +305,10 @@ class SoloBaseMode:
                     soft_drop_distance=1,
                     hard_drop_distance=0,
                 )
-        if pressed_keys & {"space"} and "space" not in self.keyinput_cooldown:
+        if (
+            pressed_keys & self.get_user_keybind("hard_drop")
+            and "hard_drop" not in self.keyinput_cooldown
+        ):
             rows_dropped = self.current_mino.hard_drop(
                 mino_touching_bottom_func=self.mino_touching_bottom,
                 is_position_valid=self.is_position_valid,
@@ -320,10 +322,10 @@ class SoloBaseMode:
             self.calculate_score(rows_dropped)
 
             self.reset_mino()
-            self.keyinput_cooldown.add("space")
+            self.keyinput_cooldown.add("hard_drop")
         if (
-            pressed_keys & {"c", "C", "shift"}
-            and {"space"} not in pressed_keys
+            pressed_keys & self.get_user_keybind("hold_piece")
+            and not pressed_keys & self.get_user_keybind("hard_drop")
             and not self.hold_used
         ):
             if self.current_hold:

@@ -124,5 +124,9 @@ SCORE_NAME: Dict[str, Dict[int, str]] = {
     },
 }
 
+VALID_CHARS: frozenset[str] = frozenset(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 _-"
+)
+
 if __name__ == "__main__":
     print("This is a constants module for modes.")

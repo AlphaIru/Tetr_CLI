@@ -174,7 +174,7 @@ class Mino:
         if direction == "left":
             self.__position = (self.__position[0], self.__position[1] - 1)
             return
-        elif direction == "right":
+        if direction == "right":
             self.__position = (self.__position[0], self.__position[1] + 1)
             return
 
