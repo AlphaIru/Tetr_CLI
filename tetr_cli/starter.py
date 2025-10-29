@@ -6,7 +6,7 @@ from asyncio import run, CancelledError
 from curses import endwin
 from sys import argv, exit as sys_exit
 from threading import Lock
-from typing import Set
+from typing import Dict, List, Set
 
 try:
     from pynput import keyboard  # type: ignore
@@ -25,7 +25,7 @@ try:
 except ImportError:
     pass
 
-help_dict: dict[str, str] = {
+help_dict: Dict[str, str] = {
     "--help, -h": "Display this help information.",
     "--debug, -d": "Enable debug mode with additional logging.",
     "--curses, --ncurses, --c": "Enable ncurses mode for terminal-based UI.",
@@ -34,7 +34,7 @@ help_dict: dict[str, str] = {
 }
 
 
-def parse_flag(flag_aliases: list[str]) -> bool:
+def parse_flag(flag_aliases: List[str]) -> bool:
     """Check if any of the given flag aliases are present in the command-line arguments."""
     return any(flag in argv for flag in flag_aliases)
 

@@ -182,10 +182,9 @@ async def main(
                 if pressed_keys is not None:
                     pressed_keys.clear()
 
-            if "score" in actions and "score_type" in actions:
-                pass
-                # current_mode.score = int(actions["score"][0])
-                # current_mode.score_type = actions["score_type"][0]
+            if "clear" in actions:
+                stdscr.clear()
+                stdscr.refresh()
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass

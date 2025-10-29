@@ -4,7 +4,7 @@
 
 from typing import Dict, Set, List, Optional, Tuple
 from pathlib import Path
-from sqlite3 import Connection, Cursor, Error as SQLiteError, connect
+from sqlite3 import Cursor, Error as SQLiteError, connect
 
 
 DATABASE_PATH: Path = Path(__file__).parent.parent.resolve()
@@ -21,7 +21,7 @@ DEFAULT_KEYBINDS: List[Tuple[str, bool, str, Optional[str]]] = [
     ("hold_piece", False, "c", None),
     ("restart", False, "r", None),
     ("menu_confirm", True, "enter", None),
-    ("menu_back", True, "backspace", "q"),
+    ("menu_back", True, "q", None),
     ("menu_up", True, "up", None),
     ("menu_down", True, "down", None),
     ("menu_left", True, "left", None),
@@ -37,11 +37,11 @@ DEFAULT_SETTINGS: List[Tuple[str, str]] = [
 
 
 DEFAULT_SCORES: List[Tuple[str, int, str, str]] = [
-    ("RedWhite", 500000, "Marathon", "2025-10-25"),
-    ("Lighting", 400000, "Marathon", "2025-10-25"),
-    ("Bunny", 300000, "Marathon", "2025-10-25"),
-    ("RagingTree", 200000, "Marathon", "2025-10-25"),
-    ("Onkai", 100000, "Marathon", "2025-10-25"),
+    ("RedWhite", 5000, "Marathon", "2025-10-25"),
+    ("Lighting", 4000, "Marathon", "2025-10-25"),
+    ("Bunny", 3000, "Marathon", "2025-10-25"),
+    ("RagingTree", 2000, "Marathon", "2025-10-25"),
+    ("Onkai", 1000, "Marathon", "2025-10-25"),
     ("RedWhite", 5000, "Sprint", "2025-10-25"),
     ("Lighting", 6000, "Sprint", "2025-10-25"),
     ("Bunny", 7000, "Sprint", "2025-10-25"),
@@ -209,41 +209,36 @@ def initialize_database(reset: bool = False) -> None:
     """This will connect to the database and create the tables if they do not exist."""
 
     try:
-        conn: Connection = connect(DB_FILE)
-        cursor: Cursor = conn.cursor()
+        with connect(DB_FILE) as conn:
+            cursor: Cursor = conn.cursor()
 
-        if reset:
-            reset_all(cursor)
+            if reset:
+                reset_all(cursor)
+                conn.commit()
+                return
+
+            create_scores_table(cursor)
+            create_keybinds_table(cursor)
+            create_settings_table(cursor)
+            create_temp_table(cursor)
+
+            cursor.execute("SELECT COUNT(*) FROM scores")
+            if cursor.fetchone()[0] == 0:
+                insert_default_scores(cursor)
+
+            cursor.execute("SELECT COUNT(*) FROM keybinds")
+            if cursor.fetchone()[0] == 0:
+                insert_default_keybinds(cursor)
+
+            cursor.execute("SELECT COUNT(*) FROM settings")
+            if cursor.fetchone()[0] == 0:
+                insert_default_settings(cursor)
             conn.commit()
-            conn.close()
-            return
 
-        create_scores_table(cursor)
-        create_keybinds_table(cursor)
-        create_settings_table(cursor)
-        create_temp_table(cursor)
-
-        cursor.execute("SELECT COUNT(*) FROM scores")
-        if cursor.fetchone()[0] == 0:
-            insert_default_scores(cursor)
-
-        cursor.execute("SELECT COUNT(*) FROM keybinds")
-        if cursor.fetchone()[0] == 0:
-            insert_default_keybinds(cursor)
-
-        cursor.execute("SELECT COUNT(*) FROM settings")
-        if cursor.fetchone()[0] == 0:
-            insert_default_settings(cursor)
-
-        conn.commit()
     except SQLiteError as e:
         print(f"Database error: {e}")
-        conn.close()
     except Exception as e:
         print(f"Unexpected error: {e}")
-        conn.close()
-
-    conn.close()
 
 
 def validate_keybinds(
@@ -307,89 +302,113 @@ def update_keybind(
     key_name: str, key_value1: str, key_value2: Optional[str] = None
 ) -> None:
     """Update keybind in the database."""
-    conn: Connection = connect(DB_FILE)
-    cursor: Cursor = conn.cursor()
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
 
-    if key_value2 is not None:
-        cursor.execute(
-            """
-        UPDATE keybind SET key_value1 = ?, key_value2 = ? WHERE key_name = ?
-        """,
-            (key_value1, key_value2, key_name),
-        )
-    else:
-        cursor.execute(
-            """
-        UPDATE keybind SET key_value1 = ? WHERE key_name = ?
-        """,
-            (key_value1, key_name),
-        )
+        if key_value2 is not None:
+            cursor.execute(
+                """
+            UPDATE keybind SET key_value1 = ?, key_value2 = ? WHERE key_name = ?
+            """,
+                (key_value1, key_value2, key_name),
+            )
+        else:
+            cursor.execute(
+                """
+            UPDATE keybind SET key_value1 = ? WHERE key_name = ?
+            """,
+                (key_value1, key_name),
+            )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
 
 def get_scores(score_type: str) -> List[Tuple[str, int, str, str]]:
     """Retrieve scores from the database based on score type."""
-    conn: Connection = connect(DB_FILE)
-    cursor: Cursor = conn.cursor()
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT player_name, score, score_type, date_played
-        FROM scores
-        WHERE score_type = ?
-        ORDER BY score DESC
-        """,
-        (score_type,),
-    )
+        cursor.execute(
+            """
+            SELECT player_name, score, score_type, date_played
+            FROM scores
+            WHERE score_type = ?
+            ORDER BY score DESC
+            """,
+            (score_type,),
+        )
 
-    scores: List[Tuple[str, int, str, str]] = cursor.fetchall()
-    conn.close()
+        scores: List[Tuple[str, int, str, str]] = cursor.fetchall()
     return scores
+
+
+def set_scores(
+    score_list: List[Tuple[str, int, str]],
+    game_type: str,
+):
+    """Set a score in the scores table."""
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM scores WHERE score_type = ?
+            """,
+            (game_type,),
+        )
+
+        for score in score_list:
+            player_name, score_value, date_played = score
+            cursor.execute(
+                """
+                INSERT INTO scores (player_name, score, score_type, date_played)
+                VALUES (?, ?, ?, ?)
+                """,
+                (player_name, score_value, game_type, date_played),
+            )
+
+        conn.commit()
 
 
 def set_temp(key: str, value: str) -> None:
     """Set a temporary value in the temps table."""
-    conn: Connection = connect(DB_FILE)
-    cursor: Cursor = conn.cursor()
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
 
-    check_query = "SELECT COUNT(*) FROM temps WHERE temp_name = ?"
-    cursor.execute(check_query, (key,))
-    if cursor.fetchone()[0] == 0:
-        cursor.execute(
-            """
-            INSERT INTO temps (temp_name, temp_value) VALUES (?, ?)
-            """,
-            (key, value),
-        )
-    else:
-        cursor.execute(
-            """
-            UPDATE temps SET temp_value = ? WHERE temp_name = ?
-            """,
-            (value, key),
-        )
+        check_query = "SELECT COUNT(*) FROM temps WHERE temp_name = ?"
+        cursor.execute(check_query, (key,))
+        if cursor.fetchone()[0] == 0:
+            cursor.execute(
+                """
+                INSERT INTO temps (temp_name, temp_value) VALUES (?, ?)
+                """,
+                (key, value),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE temps SET temp_value = ? WHERE temp_name = ?
+                """,
+                (value, key),
+            )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
 
 def get_temp(key: str) -> str:
     """Get a temporary value from the temps table."""
-    conn: Connection = connect(DB_FILE)
-    cursor: Cursor = conn.cursor()
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT temp_value FROM temps WHERE temp_name = ?
-        """,
-        (key,),
-    )
-    result = cursor.fetchone()
+        cursor.execute(
+            """
+            SELECT temp_value FROM temps WHERE temp_name = ?
+            """,
+            (key,),
+        )
+        result = cursor.fetchone()
 
-    cursor.execute("DELETE FROM temps WHERE temp_name = ?", (key,))
-    conn.close()
+        cursor.execute("DELETE FROM temps WHERE temp_name = ?", (key,))
 
     return result[0] if result else ""
 
