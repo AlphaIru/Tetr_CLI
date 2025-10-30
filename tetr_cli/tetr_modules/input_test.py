@@ -1,5 +1,6 @@
 """This will execute the input_test mode."""
 
+from asyncio import sleep
 from curses import (
     cbreak,
     curs_set,
@@ -10,13 +11,13 @@ from curses import (
     start_color,
     window,
 )
-from typing import Set
+from typing import Dict, Set
 
-# from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
+from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
-def run_input_test_mode(
+async def run_input_test_mode(
     pressed_keys: Set[str],
     ncurses_mode: bool = True,
 ) -> None:
@@ -43,7 +44,11 @@ def run_input_test_mode(
                 if key != -1:
                     pressed_keys.clear()
                     pressed_keys.add(f"{key}")
-                    # pressed_keys.update(curses_key_name(key))
+                    pressed_keys.update(curses_key_name(key))
+                    # if key in SPECIAL_KEYS:
+                    #     pressed_keys.add(f"{SPECIAL_KEYS[key]}")
+                    # else:
+                    #     pressed_keys.update(curses_key_name(key))
 
             stdscr.move(1, 0)
             stdscr.clrtoeol()
@@ -55,6 +60,7 @@ def run_input_test_mode(
                 f"Pressed Keys: {', '.join(sorted(pressed_keys))}",
             )
             stdscr.refresh()
+            await sleep(0.1)
 
     except KeyboardInterrupt:
         pass

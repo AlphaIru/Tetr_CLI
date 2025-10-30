@@ -97,7 +97,10 @@ def starter() -> None:
         listener.start()
 
     if input_test:
-        run_input_test_mode(pressed_keys, ncurses_mode)
+        try:
+            run(run_input_test_mode(pressed_keys, ncurses_mode))
+        except (CancelledError, KeyboardInterrupt):
+            print("Input test mode exited.")
         return
 
     try:
