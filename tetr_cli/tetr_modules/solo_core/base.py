@@ -11,7 +11,6 @@ from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
     BOARD_HEIGHT,
     MINO_TYPES,
-    TARGET_FPS,
 )
 from tetr_cli.tetr_modules.solo_core.board import Board
 from tetr_cli.tetr_modules.solo_core.mino import Mino
@@ -300,7 +299,7 @@ class SoloBaseMode(BaseModeClass):
                 self.current_mino.soft_drop(
                     level=self.level, is_position_valid=self.is_position_valid
                 )
-                self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+                self.current_mino.lock_info["lock_delay"] = int(0.5 * self.fps_limit)
                 self.score += calculate_drop_score(
                     soft_drop_distance=1,
                     hard_drop_distance=0,
@@ -338,7 +337,7 @@ class SoloBaseMode(BaseModeClass):
                     level=self.level
                 )
                 self.current_mino.lock_info = {
-                    "lock_delay": int(0.5 * TARGET_FPS),
+                    "lock_delay": int(0.5 * self.fps_limit),
                     "lock_count": 15,
                     "lock_height": 21,
                 }

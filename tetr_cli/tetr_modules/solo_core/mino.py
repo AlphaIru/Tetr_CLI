@@ -7,11 +7,8 @@ from typing import Callable, Optional, Set, Dict, List, Tuple
 
 from tetr_cli.tetr_modules.modules.constants import (
     BOARD_WIDTH,
-    DAS,
-    ARR,
     MINO_DRAW_LOCATION,
     MINO_ORIENTATIONS,
-    TARGET_FPS,
 )
 from tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 
@@ -19,7 +16,7 @@ from tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 class Mino:
     """This will handle the mino."""
 
-    def __init__(self, mino_type: str, level: int) -> None:
+    def __init__(self, mino_type: str, level: int, fps_limit: int) -> None:
         """This will initialize this class."""
         self.__type: str = mino_type
         self.__orientation: str = "N"
@@ -29,15 +26,16 @@ class Mino:
         self.__position: Tuple[int, int] = (21, BOARD_WIDTH // 2 - 1)  # (y, x)
         self.__soft_drop_counter: int = 0
 
-        self.__auto_repeat_delay: int = DAS
-        self.__last_sideways_direction: str = ""
-
+        self.__fps_limit: int = fps_limit
         self.__fall_delay: int = self.reset_fall_delay(level)
         self.__lock_info: Dict[str, int] = {
-            "lock_delay": int(0.5 * TARGET_FPS),
+            "lock_delay": int(0.5 * self.__fps_limit),
             "lock_count": 15,
             "lock_height": 21,
         }
+
+        self.__auto_repeat_delay: int = self.calculate_das()
+        self.__last_sideways_direction: str = ""
 
     @property
     def type(self) -> str:
@@ -74,6 +72,16 @@ class Mino:
     def kick_number(self, value: int) -> None:
         """This will set the kick number."""
         self.__kick_number = max(0, value)
+
+    @lru_cache(maxsize=4)
+    def calculate_das(self) -> int:
+        """This will return the delayed auto shift."""
+        return int(0.05 * self.__fps_limit)
+
+    @lru_cache(maxsize=4)
+    def calculate_arr(self) -> int:
+        """This will return the auto repeat rate."""
+        return int(0.01 * self.__fps_limit)
 
     @property
     def lock_info(self) -> Dict[str, int]:
@@ -194,17 +202,17 @@ class Mino:
 
         if direction == "":
             self.last_sideways_direction = ""
-            self.auto_repeat_delay = DAS
+            self.auto_repeat_delay = self.calculate_das()
             return
 
         if self.last_sideways_direction != direction:
-            self.auto_repeat_delay = DAS
+            self.auto_repeat_delay = self.calculate_das()
             self.last_sideways_direction = direction
             if not mino_touching_side_func(direction, self):
                 self.move_sideways(direction)
                 self.__kick_number = 0
             else:
-                self.auto_repeat_delay = DAS
+                self.auto_repeat_delay = self.calculate_das()
         else:
             if self.auto_repeat_delay > 0:
                 self.auto_repeat_delay -= 1
@@ -212,9 +220,9 @@ class Mino:
                 if not mino_touching_side_func(direction, self):
                     self.move_sideways(direction)
                     self.__kick_number = 0
-                    self.auto_repeat_delay = ARR
+                    self.auto_repeat_delay = self.calculate_arr()
                 else:
-                    self.auto_repeat_delay = DAS
+                    self.auto_repeat_delay = self.calculate_das()
 
     def handle_sideways_curses_input(
         self,
@@ -247,7 +255,7 @@ class Mino:
     def reset_fall_delay(self, level: int) -> int:
         """This will return the fall delay for the given level."""
         seconds: float = self.get_fall_seconds(level)
-        return max(0, int(seconds * TARGET_FPS))
+        return max(0, int(seconds * self.__fps_limit))
 
     @property
     def fall_delay(self) -> int:
@@ -264,7 +272,7 @@ class Mino:
         """This will return the soft drop delay for the given level."""
         seconds: float = self.get_fall_seconds(level)
         soft_drop_seconds: float = seconds / 20  # Soft drop is 20 times faster
-        return max(0, int(soft_drop_seconds * TARGET_FPS))
+        return max(0, int(soft_drop_seconds * self.__fps_limit))
 
     def soft_drop(
         self,

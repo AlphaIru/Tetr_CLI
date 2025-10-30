@@ -4,16 +4,13 @@
 
 from typing import Set, Dict, List, Tuple
 
+
 MIN_X: int = 80
 MIN_Y: int = 24
-
-TARGET_FPS: int = 30
 
 BOARD_WIDTH: int = 10
 BOARD_HEIGHT: int = 40
 
-DAS: int = int(0.05 * TARGET_FPS)
-ARR: int = int(0.01 * TARGET_FPS)
 
 # (y, x), A B C D
 T_SPIN_CORNER_CHECKS: Dict[str, List[Tuple[int, int]]] = {

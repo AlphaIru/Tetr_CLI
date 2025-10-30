@@ -41,12 +41,9 @@ from tetr_cli.tetr_modules.modules.checker import (
     screen_dimension_check,
     screen_dimension_warning,
 )
-from tetr_cli.tetr_modules.modules.constants import TARGET_FPS
 from tetr_cli.tetr_modules.modules.debug import DebugClass
+from tetr_cli.tetr_modules.modules.database import get_setting
 from tetr_cli.tetr_modules.modules.sound import load_sfx, play_sounds
-
-
-FRAME_DURATION: float = 1 / TARGET_FPS
 
 # O, I, T, L, J, S, Z
 
@@ -121,10 +118,13 @@ async def main(
     start_time: float = 0.0
     elapsed_time: float = 0.0
 
+    frame_limit: int = int(get_setting("FPS_limit"))
+    frame_duration: float = 1 / frame_limit
+
     try:
         while True:
-            if elapsed_time < FRAME_DURATION:
-                await sleep(FRAME_DURATION - elapsed_time)
+            if elapsed_time < frame_duration:
+                await sleep(frame_duration - elapsed_time)
             start_time = perf_counter()
 
             key_input = stdscr.getch()
@@ -185,6 +185,10 @@ async def main(
             if "clear" in actions:
                 stdscr.clear()
                 stdscr.refresh()
+
+            if "update_fps" in actions:
+                frame_limit = int(get_setting("FPS_limit"))
+                frame_duration = 1 / frame_limit
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass
