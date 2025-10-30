@@ -8,8 +8,8 @@
 # from tetr_cli.tetr_modules.menu_core.menu_mode import TwoDimmMenuModeClass
 
 
-OPTION_LIST: List[str] = [
-    "FPS_Limit",
-    "Ghost Piece",
-    "Go_Back",
-]
+# OPTION_LIST: List[str] = [
+#     "FPS_Limit",
+#     "Ghost Piece",
+#     "Go_Back",
+# ]
