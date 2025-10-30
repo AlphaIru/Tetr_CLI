@@ -46,7 +46,6 @@ async def run_input_test_mode(
                     pressed_keys.add(f"{key}")
                     pressed_keys.update(curses_key_name(key))
 
-
             stdscr.move(1, 0)
             stdscr.clrtoeol()
 
