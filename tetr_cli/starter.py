@@ -3,7 +3,7 @@
 # coding: utf-8
 
 from asyncio import run, CancelledError
-from curses import endwin
+from curses import endwin, isendwin
 from sys import argv, exit as sys_exit
 from threading import Lock
 from typing import Dict, List, Set
@@ -103,16 +103,16 @@ def starter() -> None:
             )
         )
         print("\n\n")
-        endwin()
         print("Thank you for playing!")
         print("Game made by Airun_Iru")
     except (CancelledError, KeyboardInterrupt):
-        endwin()
         print("Force quit detected!")
         if not ncurses_mode:
             listener.stop()
         sys_exit(-1)
     finally:
+        if not isendwin():
+            endwin()
         if not ncurses_mode:
             listener.stop()
 

@@ -22,7 +22,6 @@ from curses import (
     doupdate,
     initscr,
     init_pair,
-    endwin,
     nocbreak,
     noecho,
     start_color,
@@ -205,7 +204,6 @@ async def main(
     if mixer and audio_check:
         mixer.music.stop()
         mixer.quit()
-    endwin()
 
 
 if __name__ == "__main__":
