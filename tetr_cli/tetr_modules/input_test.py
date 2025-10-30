@@ -11,7 +11,7 @@ from curses import (
     start_color,
     window,
 )
-from typing import Dict, Set
+from typing import Set
 
 from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
@@ -45,10 +45,7 @@ async def run_input_test_mode(
                     pressed_keys.clear()
                     pressed_keys.add(f"{key}")
                     pressed_keys.update(curses_key_name(key))
-                    # if key in SPECIAL_KEYS:
-                    #     pressed_keys.add(f"{SPECIAL_KEYS[key]}")
-                    # else:
-                    #     pressed_keys.update(curses_key_name(key))
+
 
             stdscr.move(1, 0)
             stdscr.clrtoeol()
