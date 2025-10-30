@@ -49,11 +49,15 @@ async def run_input_test_mode(
                 stdscr.move(2, 0)
                 stdscr.clrtoeol()
 
-                safe_addstr(stdscr, 1, 0, f"Raw Key Code: {key}       ")
-                try:
-                    safe_addstr(stdscr, 3, 0, f"Key Name: {', '.join(curses_key_name(key))}       ")
-                except Exception as e:
-                    safe_addstr(stdscr, 3, 0, f"Error: {e}       ")
+                safe_addstr(stdscr, 1, 0, f"Raw Key Code: {key}")
+                safe_addstr(
+                    stdscr, 2, 0, f"Key Name: {', '.join(curses_key_name(key))}"
+                )
+                # try:
+                #
+                # except Exception as e:
+                #     safe_addstr(stdscr, 3, 0, f"Error: {e}       ")
+                return
 
             stdscr.move(1, 0)
             stdscr.clrtoeol()
