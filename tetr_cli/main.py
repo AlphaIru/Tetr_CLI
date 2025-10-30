@@ -204,6 +204,10 @@ async def main(
     if mixer and audio_check:
         mixer.music.stop()
         mixer.quit()
+    nocbreak()
+    noecho()
+    curs_set(True)
+    stdscr.keypad(False)
 
 
 if __name__ == "__main__":
