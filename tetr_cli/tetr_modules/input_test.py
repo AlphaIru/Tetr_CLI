@@ -26,7 +26,6 @@ async def run_input_test_mode(
     start_color()
     cbreak()
     noecho()
-    nocbreak()
     curs_set(False)
     stdscr.keypad(True)
 
