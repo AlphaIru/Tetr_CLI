@@ -42,7 +42,6 @@ async def run_input_test_mode(
                 key = stdscr.getch()
                 if key != -1:
                     pressed_keys.clear()
-                    pressed_keys.add(f"{key}")
                     pressed_keys.update(curses_key_name(key))
                 stdscr.move(1, 0)
                 stdscr.clrtoeol()
@@ -51,7 +50,7 @@ async def run_input_test_mode(
 
                 safe_addstr(stdscr, 1, 0, f"Raw Key Code: {key}")
                 safe_addstr(
-                    stdscr, 2, 0, f"Key Name: {', '.join(curses_key_name(key))}"
+                    stdscr, 2, 0, f"Key Name: {', '.join(sorted(pressed_keys))}"
                 )
                 # try:
                 #
