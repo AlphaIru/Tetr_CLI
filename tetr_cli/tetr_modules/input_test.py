@@ -42,6 +42,7 @@ def run_input_test_mode(
                 key = stdscr.getch()
                 if key != -1:
                     pressed_keys.clear()
+                    pressed_keys.add(f"{key}")
                     pressed_keys.update(curses_key_name(key))
 
             stdscr.move(1, 0)
