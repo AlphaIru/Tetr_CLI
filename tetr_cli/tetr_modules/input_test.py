@@ -56,7 +56,7 @@ async def run_input_test_mode(
                 #
                 # except Exception as e:
                 #     safe_addstr(stdscr, 3, 0, f"Error: {e}       ")
-                return
+                continue
 
             stdscr.move(1, 0)
             stdscr.clrtoeol()
