@@ -48,18 +48,27 @@ from tetr_cli.tetr_modules.modules.sound import load_sfx, play_sounds
 # O, I, T, L, J, S, Z
 
 
+TRANSITION_LIST: Dict[str, str] = {
+    "Main_Menu": "main_menu",
+    "Solo_Menu": "solo.solo_menu",
+
+    # Option Modes
+    "Option_Menu": "options.option",
+    "Audio_Options": "options.audio_options",
+    # "Gameplay_Options": "options.gameplay_options",
+
+    "Score_Screen": "score_screen",
+
+    # Solo Modes
+    "Marathon": "solo.marathon",
+}
+
+
 async def run_transition(transition: str, current_mode: GameMode) -> GameMode:
     """Run the action."""
-    if transition == "Solo_Menu":
-        current_mode.change_mode("solo_menu")
-    elif transition == "Option_Menu":
-        current_mode.change_mode("option")
-    elif transition == "Main_Menu":
-        current_mode.change_mode("main_menu")
-    elif transition == "Score_Screen":
-        current_mode.change_mode("score_screen")
-    elif transition == "Marathon":
-        current_mode.change_mode("marathon")
+    if transition in TRANSITION_LIST:
+        new_mode_name: str = TRANSITION_LIST[transition]
+        current_mode.change_mode(new_mode_name)
     return current_mode
 
 

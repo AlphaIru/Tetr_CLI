@@ -113,7 +113,6 @@ def starter() -> None:
             listener.stop()
         sys_exit(-1)
     finally:
-        endwin()
         if not ncurses_mode:
             listener.stop()
 
