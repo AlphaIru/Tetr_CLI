@@ -12,7 +12,7 @@ from curses import (
 )
 from typing import Set
 
-from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
+# from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
@@ -43,7 +43,7 @@ def run_input_test_mode(
                 if key != -1:
                     pressed_keys.clear()
                     pressed_keys.add(f"{key}")
-                    pressed_keys.update(curses_key_name(key))
+                    # pressed_keys.update(curses_key_name(key))
 
             stdscr.move(1, 0)
             stdscr.clrtoeol()
