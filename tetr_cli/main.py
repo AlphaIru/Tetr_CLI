@@ -92,7 +92,6 @@ async def main(
     start_color()
     cbreak()
     noecho()
-    nocbreak()
     curs_set(False)
     stdscr.keypad(True)
 
