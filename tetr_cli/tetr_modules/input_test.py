@@ -6,7 +6,7 @@ from curses import (
     curs_set,
     endwin,
     initscr,
-    # noecho,
+    noecho,
     nocbreak,
     start_color,
     window,
@@ -25,7 +25,7 @@ async def run_input_test_mode(
     stdscr: window = initscr()
     start_color()
     cbreak()
-    # noecho()
+    noecho()
     nocbreak()
     curs_set(False)
     stdscr.keypad(True)
@@ -45,6 +45,17 @@ async def run_input_test_mode(
                     pressed_keys.clear()
                     pressed_keys.add(f"{key}")
                     pressed_keys.update(curses_key_name(key))
+                stdscr.move(1, 0)
+                stdscr.clrtoeol()
+                stdscr.move(2, 0)
+                stdscr.clrtoeol()
+
+                safe_addstr(stdscr, 1, 0, f"Raw Key Code: {key}       ")
+                safe_addstr(
+                    stdscr, 2, 0, f"Key Name: {', '.join(curses_key_name(key))}       "
+                )
+
+                return
 
             stdscr.move(1, 0)
             stdscr.clrtoeol()
@@ -62,7 +73,7 @@ async def run_input_test_mode(
         pass
     finally:
         nocbreak()
-        # noecho()
+        noecho()
         stdscr.keypad(False)
         curs_set(True)
         endwin()
