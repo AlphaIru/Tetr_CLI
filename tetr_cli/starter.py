@@ -17,6 +17,7 @@ except ImportError:
 
 from tetr_cli.main import main
 from tetr_cli.tetr_modules.modules.database import initialize_database
+from tetr_cli.tetr_modules.input_test import run_input_test_mode
 
 try:
     from tetr_cli.tetr_modules.keyboard_handlers.pynput_handler import (
@@ -62,6 +63,8 @@ def starter() -> None:
     reset_database: bool = parse_flag(["--reset-db", "--reset-database", "-r"])
     print_help_call: bool = parse_flag(["--help", "-h"])
 
+    input_test: bool = parse_flag(["--input-test", "-it"])
+
     if print_help_call:
         print_help()
         return
@@ -92,6 +95,10 @@ def starter() -> None:
         lock: Lock = Lock()
         listener: keyboard.Listener = setup_pynput_listener(pressed_keys, lock)
         listener.start()
+
+    if input_test:
+        run_input_test_mode(pressed_keys, ncurses_mode)
+        return
 
     try:
         run(
