@@ -4,7 +4,7 @@
 from copy import deepcopy
 from typing import Dict, List, Set
 
-from tetr_cli.tetr_modules.modules.database import load_keybinds
+from tetr_cli.tetr_modules.modules.database import load_keybinds, get_setting
 
 
 class BaseModeClass:
@@ -12,10 +12,23 @@ class BaseModeClass:
 
     def __init__(self) -> None:
         """Initialize the base mode class."""
+        self.__fps: int = int(get_setting("FPS_limit"))
+        if self.__fps == 0:
+            self.__fps = 30
         self.__action: Dict[str, List[str]] = {}
         self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
         self.__user_keybinds: Dict[str, Dict[str, Set[str]]] = load_keybinds()
         # print(f"Loaded keybinds: {self.__user_keybinds}")
+
+    @property
+    def fps_limit(self) -> int:
+        """This will return the fps."""
+        return self.__fps
+
+    @fps_limit.setter
+    def fps_limit(self, value: int) -> None:
+        """This will set the fps."""
+        self.__fps = value
 
     @property
     def action(self) -> Dict[str, List[str]]:

@@ -37,11 +37,11 @@ DEFAULT_SETTINGS: List[Tuple[str, str]] = [
 
 
 DEFAULT_SCORES: List[Tuple[str, int, str, str]] = [
-    ("RedWhite", 5000, "Marathon", "2025-10-25"),
-    ("Lighting", 4000, "Marathon", "2025-10-25"),
-    ("Bunny", 3000, "Marathon", "2025-10-25"),
-    ("RagingTree", 2000, "Marathon", "2025-10-25"),
-    ("Onkai", 1000, "Marathon", "2025-10-25"),
+    ("RedWhite", 500000, "Marathon", "2025-10-25"),
+    ("Lighting", 400000, "Marathon", "2025-10-25"),
+    ("Bunny", 300000, "Marathon", "2025-10-25"),
+    ("RagingTree", 200000, "Marathon", "2025-10-25"),
+    ("Onkai", 100000, "Marathon", "2025-10-25"),
     ("RedWhite", 5000, "Sprint", "2025-10-25"),
     ("Lighting", 6000, "Sprint", "2025-10-25"),
     ("Bunny", 7000, "Sprint", "2025-10-25"),
@@ -168,6 +168,7 @@ def create_temp_table(cursor: Cursor) -> None:
 
 # Reset All Tables
 
+
 def reset_all(cursor: Cursor) -> None:
     """Reset all tables in the database."""
     drop_scores(cursor)
@@ -260,7 +261,9 @@ def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
     rows: List[Tuple[str, bool, str, Optional[str]]] = []
     with connect(DB_FILE) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT input_name, is_menu_keybind, key_name1, key_name2 FROM keybinds")
+        cursor.execute(
+            "SELECT input_name, is_menu_keybind, key_name1, key_name2 FROM keybinds"
+        )
         rows = cursor.fetchall()
 
     user_keybinds: Dict[str, Dict[str, Set[str]]] = {}
@@ -281,10 +284,7 @@ def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
             if key_name2 is not None:
                 game_keybinds[input_name].add(key_name2)
 
-    if (
-        not validate_keybinds(menu_keybinds)
-        or not validate_keybinds(game_keybinds)
-    ):
+    if not validate_keybinds(menu_keybinds) or not validate_keybinds(game_keybinds):
         with connect(DB_FILE) as conn:
             cursor = conn.cursor()
             drop_keybinds(cursor)
@@ -366,6 +366,37 @@ def set_scores(
                 """,
                 (player_name, score_value, game_type, date_played),
             )
+
+        conn.commit()
+
+
+def get_setting(setting_name: str) -> str:
+    """Get a setting value from the settings table."""
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT setting_value FROM settings WHERE setting_name = ?
+            """,
+            (setting_name,),
+        )
+        result = cursor.fetchone()
+
+    return result[0] if result else "0"
+
+
+def set_setting(setting_name: str, setting_value: str) -> None:
+    """Set a setting value in the settings table."""
+    with connect(DB_FILE) as conn:
+        cursor: Cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            UPDATE settings SET setting_value = ? WHERE setting_name = ?
+            """,
+            (setting_value, setting_name),
+        )
 
         conn.commit()
 

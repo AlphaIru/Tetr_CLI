@@ -8,7 +8,7 @@ from typing import List, Set, Tuple
 
 from tetr_cli.tetr_modules.menu_core.base_mode import BaseModeClass
 
-from tetr_cli.tetr_modules.modules.constants import TARGET_FPS, VALID_CHARS
+from tetr_cli.tetr_modules.modules.constants import VALID_CHARS
 from tetr_cli.tetr_modules.modules.database import get_scores, set_scores, get_temp
 from tetr_cli.tetr_modules.modules.safe_curses import (
     calculate_centered_menu,
@@ -70,22 +70,22 @@ class ModeClass(BaseModeClass):
             self.cursor_blink -= 1
             return
         self.cursor_visible = not self.cursor_visible
-        self.cursor_blink = TARGET_FPS // 2
+        self.cursor_blink = self.fps_limit // 2
 
     def handle_name_input(self, pressed_keys: Set[str]) -> None:
         """This will handle name input for high score."""
+        if self.key_cooldown > 0:
+            self.key_cooldown -= 1
+            return
+
         if not pressed_keys:
             return
 
         input_key: str = pressed_keys.pop()
 
-        if self.key_cooldown > 0:
-            self.key_cooldown -= 1
-            return
-
         if input_key == "backspace" and len(self.user_name) > 0:
             self.user_name = self.user_name[:-1]
-            self.key_cooldown = 3
+            self.key_cooldown = 2
             return
 
         if input_key == "enter":
@@ -93,16 +93,18 @@ class ModeClass(BaseModeClass):
             self.name_input_mode = False
             self.sound_action["SFX"].append("select_confirm")
             self.action["clear"] = []
-            self.key_cooldown = 3
+            self.key_cooldown = 20
             set_scores(self.score_list, self.score_type)
             return
 
         if len(self.user_name) < 10:
             if input_key == "space":
                 self.user_name += " "
+                self.key_cooldown = 2
                 return
             if input_key in VALID_CHARS:
                 self.user_name += input_key
+                self.key_cooldown = 2
 
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will progress the score screen based on the inputs."""
@@ -166,12 +168,7 @@ class ModeClass(BaseModeClass):
                 A_BOLD,
             )
 
-            if self.cursor_blink == 0:
-                self.cursor_visible = not self.cursor_visible
-                self.cursor_blink = TARGET_FPS // 2
-            else:
-                self.cursor_blink -= 1
-
+            self.handle_blink()
             self.handle_name_input(pressed_keys)
             self.score_list[self.user_place - 1] = (
                 self.user_name,

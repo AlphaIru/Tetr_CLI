@@ -12,7 +12,6 @@ from tetr_cli.tetr_modules.modules.constants import (
     MIN_Y,
     DRAW_BOARD_HEIGHT,
     DRAW_BOARD_WIDTH,
-    TARGET_FPS,
 )
 from tetr_cli.tetr_modules.modules.database import set_temp
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
@@ -27,7 +26,7 @@ class ModeClass(SoloBaseMode):
         # For countdown: 3 seconds countdown
         # For animation: 0.5 second animation
         self.mino_list_generator(initial=True)
-        self.counter: int = TARGET_FPS * 3  # Formally countdown
+        self.counter: int = self.fps_limit * 3  # Formally countdown
         self.mode: str = "countdown"
 
     def show_stats(self, stdscr: window) -> None:
@@ -80,7 +79,7 @@ class ModeClass(SoloBaseMode):
         # Display action text if available
         if "action_text" in self.action:
             self.clear_action_text(stdscr)
-            self.counter = 2 * TARGET_FPS
+            self.counter = 2 * self.fps_limit
             _y_offset: int = self.offset[0] + 12
             for _line_num in range(len(self.action["action_text"])):
                 safe_addstr(
@@ -147,7 +146,9 @@ class ModeClass(SoloBaseMode):
             self.mino_list_generator()
         if not self.current_mino:
             new_mino_type: str = self.mino_list.pop(0)
-            self.current_mino = Mino(mino_type=new_mino_type, level=self.level)
+            self.current_mino = Mino(
+                mino_type=new_mino_type, level=self.level, fps_limit=self.fps_limit
+            )
             if self.check_game_over():
                 self.mode = "game_over"
                 self.display_game_over(stdscr)
@@ -180,7 +181,7 @@ class ModeClass(SoloBaseMode):
                 and self.current_mino.lock_info["lock_count"] > 0
             ):
                 self.current_mino.lock_info["lock_count"] -= 1
-                self.current_mino.lock_info["lock_delay"] = int(0.5 * TARGET_FPS)
+                self.current_mino.lock_info["lock_delay"] = int(0.5 * self.fps_limit)
             elif self.current_mino.lock_info["lock_delay"] > 0:
                 self.current_mino.lock_info["lock_delay"] -= 1
             else:
@@ -219,11 +220,11 @@ class ModeClass(SoloBaseMode):
                 stdscr,
                 self.max_yx[0] // 2,
                 self.max_yx[1] // 2,
-                str((self.counter // TARGET_FPS) + 1),
+                str((self.counter // self.fps_limit) + 1),
                 A_BOLD,
             )
 
-        if self.counter % TARGET_FPS == 0:
+        if self.counter % self.fps_limit == 0:
             if self.counter > 0:
                 self.sound_action["SFX"].append("countdown")
 
@@ -232,7 +233,7 @@ class ModeClass(SoloBaseMode):
             self.mode = "play_music_wait"
             self.sound_action["SFX"].append("go")
             safe_addstr(stdscr, self.max_yx[0] // 2, self.max_yx[1] // 2, "Go", A_BOLD)
-            self.counter = TARGET_FPS // 2
+            self.counter = self.fps_limit // 2
 
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will increment the frame."""
