@@ -333,9 +333,7 @@ class SoloBaseMode(BaseModeClass):
                 self.current_mino = temp
                 self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
                 self.current_mino.orientation = "N"
-                self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                    level=self.level
-                )
+                self.current_mino.reset_fall_delay()
                 self.current_mino.lock_info = {
                     "lock_delay": int(0.5 * self.fps_limit),
                     "lock_count": 15,

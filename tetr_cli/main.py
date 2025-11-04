@@ -51,11 +51,12 @@ TRANSITION_LIST: Dict[str, str] = {
     "Main_Menu": "main_menu",
     "Solo_Menu": "solo.solo_menu",
 
-    # Option Modes
-    "Option_Menu": "options.option",
-    "Audio_Options": "options.audio_options",
+    # Option Modes Not sure if I am going to implement these
+    # "Option_Menu": "options.option",
+    # "Audio_Options": "options.audio_options",
     # "Gameplay_Options": "options.gameplay_options",
 
+    # TBD
     "Score_Screen": "score_screen",
 
     # Solo Modes
@@ -104,13 +105,13 @@ async def main(
     use_default_colors()
 
     if curses.COLORS >= 256:
-        init_pair(1, COLOR_YELLOW, -1)  # O
-        init_pair(2, COLOR_CYAN, -1)  # I
-        init_pair(3, COLOR_MAGENTA, -1)  # T
+        init_pair(1, 214, -1)  # O
+        init_pair(2, 51, -1)  # I
+        init_pair(3, 201, -1)  # T
         init_pair(4, 208, -1)  # L
-        init_pair(5, COLOR_BLUE, -1)  # J
-        init_pair(6, COLOR_GREEN, -1)  # S
-        init_pair(7, COLOR_RED, -1)  # Z
+        init_pair(5, 27, -1)  # J
+        init_pair(6, 46, -1)  # S
+        init_pair(7, 196, -1)  # Z
         init_pair(8, 244, -1)  # Garbage
     else:
         init_pair(1, COLOR_YELLOW, -1)  # O

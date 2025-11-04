@@ -23,6 +23,40 @@ T_SPIN_CORNER_CHECKS: Dict[str, List[Tuple[int, int]]] = {
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
 DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
 
+# For master mode
+FALL_DELAY_TABLE = {
+    1: 29.5,
+    2: 29.5,
+    3: 29.5,
+    4: 29.5,
+    5: 29.5,
+    6: 29.5,
+    7: 29.5,
+    8: 29.5,
+    9: 29.5,
+    10: 29.5,
+    11: 27.6,
+    12: 25.2,
+    13: 22.8,
+    14: 20.4,
+    15: 17.5,
+    16: 16.8,
+    17: 15.6,
+    18: 15.0,
+    19: 13.2,
+    20: 11.5,
+    21: 11.4,
+    22: 10.8,
+    23: 10.2,
+    24: 9.6,
+    25: 8.5,
+    26: 8.4,
+    27: 7.8,
+    28: 7.2,
+    29: 6.6,
+    30: 5.5,
+}
+
 MINO_TYPES: Set[str] = {"O", "I", "T", "L", "J", "S", "Z"}
 MINO_COLOR: Dict[str, int] = {"O": 1, "I": 2, "T": 3, "L": 4, "J": 5, "S": 6, "Z": 7}
 MINO_ORIENTATIONS: List[str] = ["N", "E", "S", "W"]

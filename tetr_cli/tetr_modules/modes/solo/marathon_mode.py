@@ -56,9 +56,14 @@ class ModeClass(SoloBaseMode):
         #     stdscr,
         #     self.offset[0] + DRAW_BOARD_HEIGHT + 1,
         #     self.offset[1] + DRAW_BOARD_WIDTH + 2,
-        #     f"Combo: {self.combo_count}",
+        #     f"Soft drop: {self.current_mino.soft_drop_counter if self.current_mino else 0:<2}",
         # )
-        # return
+        # safe_addstr(
+        #     stdscr,
+        #     self.offset[0] + DRAW_BOARD_HEIGHT + 2,
+        #     self.offset[1] + DRAW_BOARD_WIDTH + 2,
+        #     f"Fall Counter: {self.current_mino.fall_counter if self.current_mino else 0:<2}",
+        # )
 
     def clear_action_text(self, stdscr: window) -> None:
         """Clears the action text."""
@@ -174,14 +179,14 @@ class ModeClass(SoloBaseMode):
                 self.current_mino.lock_info["lock_height"] = self.current_mino.position[
                     0
                 ]
-                self.current_mino.lock_info["lock_count"] = 15
+                self.current_mino.reset_lock_count(level=self.level)
             elif (
                 pressed_keys
                 and not pressed_keys & {"down", "space"}
                 and self.current_mino.lock_info["lock_count"] > 0
             ):
                 self.current_mino.lock_info["lock_count"] -= 1
-                self.current_mino.lock_info["lock_delay"] = int(0.5 * self.fps_limit)
+                self.current_mino.reset_lock_delay(level=self.level)
             elif self.current_mino.lock_info["lock_delay"] > 0:
                 self.current_mino.lock_info["lock_delay"] -= 1
             else:
@@ -194,14 +199,14 @@ class ModeClass(SoloBaseMode):
                 self.reset_mino()
 
         if self.current_mino:
-            if self.current_mino.fall_delay > 0:
-                self.current_mino.fall_delay -= 1
+            if self.current_mino.fall_counter > 0:
+                self.current_mino.fall_counter -= 1
             elif not self.mino_touching_bottom(self.current_mino) and not (
                 pressed_keys & {"down", "space"}
             ):
-                self.current_mino.move_down(is_position_valid=self.is_position_valid)
-                self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                    self.level
+                self.current_mino.natural_drop(
+                    mino_touching_bottom_func=self.mino_touching_bottom,
+                    is_position_valid=self.is_position_valid,
                 )
 
         self.board.draw_minos_on_board(

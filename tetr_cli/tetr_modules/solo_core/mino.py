@@ -10,6 +10,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     MINO_DRAW_LOCATION,
     MINO_ORIENTATIONS,
 )
+
 from tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 
 
@@ -27,12 +28,19 @@ class Mino:
         self.__soft_drop_counter: int = 0
 
         self.__fps_limit: int = fps_limit
-        self.__fall_delay: int = self.reset_fall_delay(level)
+
+        # Drops per frame variables
+        self.__drop_per_frame: int = 1
+        self.__fall_delay: int = 0
+        self.__fall_counter: int = 0
+        self.calculate_blocks_per_frame(level)
         self.__lock_info: Dict[str, int] = {
-            "lock_delay": int(0.5 * self.__fps_limit),
-            "lock_count": 15,
+            "lock_delay": 0,
+            "lock_count": 0,
             "lock_height": 21,
         }
+        self.reset_lock_delay(level=level)
+        self.reset_lock_count(level=level)
 
         self.__auto_repeat_delay: int = self.calculate_das()
         self.__last_sideways_direction: str = ""
@@ -237,8 +245,7 @@ class Mino:
                     self.__kick_number = 0
 
     def move_down(
-        self,
-        is_position_valid: Callable[[List[Tuple[int, int]]], bool]
+        self, is_position_valid: Callable[[List[Tuple[int, int]]], bool]
     ) -> None:
         """This will move the current mino down."""
         new_position = (self.position[0] - 1, self.position[1])
@@ -247,32 +254,90 @@ class Mino:
             self.__kick_number = 0
 
     @lru_cache(maxsize=4)
-    def get_fall_seconds(self, level: int) -> float:
-        """This will return the fall seconds for the given level."""
-        return pow((0.8 - ((level - 1) * 0.007)), (level - 1))
-
-    @lru_cache(maxsize=4)
-    def reset_fall_delay(self, level: int) -> int:
-        """This will return the fall delay for the given level."""
-        seconds: float = self.get_fall_seconds(level)
-        return max(0, int(seconds * self.__fps_limit))
+    def calculate_blocks_per_frame(self, level: int) -> None:
+        """This will calculate the blocks dropped per frame."""
+        seconds_per_drop: float = self.get_fall_delay(level)
+        frames_per_drop: float = seconds_per_drop * self.__fps_limit
+        if seconds_per_drop > 0 and frames_per_drop < 1:
+            self.__drop_per_frame = int(1 / frames_per_drop)
+        self.__fall_delay = max(1, int(frames_per_drop))
+        self.__fall_counter = self.__fall_delay
 
     @property
-    def fall_delay(self) -> int:
-        """This will return the fall delay."""
-        return self.__fall_delay
+    def fall_counter(self) -> int:
+        """This will return the fall counter."""
+        return self.__fall_counter
 
-    @fall_delay.setter
-    def fall_delay(self, value: int) -> None:
-        """This will set the fall delay."""
-        self.__fall_delay = max(0, value)
+    @fall_counter.setter
+    def fall_counter(self, value: int) -> None:
+        """This will set the fall counter."""
+        self.__fall_counter = max(0, value)
+
+    @property
+    def drop_per_frame(self) -> int:
+        """This will return the drops per frame."""
+        return self.__drop_per_frame
+
+    def natural_drop(
+        self,
+        mino_touching_bottom_func: Callable[["Mino"], bool],
+        is_position_valid: Callable[[List[Tuple[int, int]]], bool],
+    ) -> None:
+        """This will handle the natural drop."""
+        self.__fall_counter -= 1
+        if self.__fall_counter <= 0:
+            self.__fall_counter = self.__fall_delay  # Reset the fall counter
+            for _ in range(self.__drop_per_frame):
+                if mino_touching_bottom_func(self):
+                    break
+                new_position = (self.position[0] - 1, self.position[1])
+                if is_position_valid(
+                    self.get_block_positions(new_position, self.orientation)
+                ):
+                    self.position = new_position
+                    self.__kick_number = 0
 
     @lru_cache(maxsize=4)
-    def get_soft_drop_delay(self, level: int) -> int:
-        """This will return the soft drop delay for the given level."""
-        seconds: float = self.get_fall_seconds(level)
-        soft_drop_seconds: float = seconds / 20  # Soft drop is 20 times faster
-        return max(0, int(soft_drop_seconds * self.__fps_limit))
+    def get_fall_delay(self, level: int) -> float:
+        """This will return the fall delay (in seconds) for the given level."""
+        base_delay: float = 0.8 - ((min(level, 20) - 1) * 0.007)
+        fall_delay_in_seconds: float = pow(base_delay, (min(level, 20) - 1))
+        return fall_delay_in_seconds
+
+    def reset_fall_delay(self) -> None:
+        """This will reset the fall delay for the given level."""
+        self.__fall_counter = self.__fall_delay
+
+    def reset_lock_delay(self, level: int) -> None:
+        """This will reset the lock delay."""
+        lock_delay_frames: int = int(0.5 * self.__fps_limit)
+        if level <= 20:
+            self.__lock_info["lock_delay"] = lock_delay_frames
+            return
+        # every level after level 20, reduce lock delay by 1 frame, minimum 1 frame
+        frames_to_reduce: int = level - 20
+        self.__lock_info["lock_delay"] = max(lock_delay_frames - frames_to_reduce, 1)
+
+    def reset_lock_count(self, level: int) -> None:
+        """This will reset the lock count."""
+        lock_count: int = 15
+        if level <= 20:
+            self.__lock_info["lock_count"] = lock_count
+            return
+        # every level after level 20, reduce lock count by 1, minimum 1
+        counts_to_reduce: int = level - 20
+        self.__lock_info["lock_count"] = max(lock_count - counts_to_reduce, 1)
+
+    @property
+    def soft_drop_counter(self) -> int:
+        """This will return the soft drop counter."""
+        return self.__soft_drop_counter
+
+    @lru_cache(maxsize=4)
+    def get_soft_drop_delay(self, level: int) -> float:
+        """This will return the soft drop delay (in seconds) for the given level."""
+        # Soft drop is 20 times faster than normal drop
+        return self.get_fall_delay(level) / 20
 
     def soft_drop(
         self,
@@ -281,13 +346,24 @@ class Mino:
     ) -> None:
         """This will handle the soft drop."""
         self.__soft_drop_counter += 1
-        delay: int = self.get_soft_drop_delay(level)
-        if self.__soft_drop_counter >= delay:
+        delay_seconds: float = self.get_soft_drop_delay(level)
+        delay_per_frame: float = delay_seconds * self.__fps_limit
+        block_movement_repeats: int = 1
+        if delay_per_frame < 1:
+            block_movement_repeats = int(1 / delay_per_frame)
+            delay_per_frame = 1
+        if self.__soft_drop_counter < delay_per_frame:
+            return
+        for _ in range(block_movement_repeats):
             new_position = (self.position[0] - 1, self.position[1])
-            if is_position_valid(self.get_block_positions(new_position, self.orientation)):
+            if is_position_valid(
+                self.get_block_positions(new_position, self.orientation)
+            ):
                 self.position = new_position
                 self.__soft_drop_counter = 0
                 self.__kick_number = 0
+            else:
+                break
 
     def hard_drop(
         self,
