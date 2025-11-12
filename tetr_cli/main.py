@@ -52,7 +52,7 @@ TRANSITION_LIST: Dict[str, str] = {
     "Solo_Menu": "solo.solo_menu",
 
     # Option Modes Not sure if I am going to implement these
-    # "Option_Menu": "options.option",
+    "Option_Menu": "options.option",
     # "Audio_Options": "options.audio_options",
     # "Gameplay_Options": "options.gameplay_options",
 

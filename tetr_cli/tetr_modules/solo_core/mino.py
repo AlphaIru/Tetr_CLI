@@ -321,11 +321,11 @@ class Mino:
     def reset_lock_count(self, level: int) -> None:
         """This will reset the lock count."""
         lock_count: int = 15
-        if level <= 20:
+        if level <= 40:
             self.__lock_info["lock_count"] = lock_count
             return
-        # every level after level 20, reduce lock count by 1, minimum 1
-        counts_to_reduce: int = level - 20
+        # every level after level 40, reduce lock count by 1, minimum 1
+        counts_to_reduce: int = level - 40
         self.__lock_info["lock_count"] = max(lock_count - counts_to_reduce, 1)
 
     @property
