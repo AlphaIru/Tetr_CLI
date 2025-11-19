@@ -13,7 +13,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_HEIGHT,
     DRAW_BOARD_WIDTH,
 )
-from tetr_cli.tetr_modules.modules.database import set_temp
+from tetr_cli.tetr_modules.modules.database import set_temp, get_setting
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
@@ -28,6 +28,8 @@ class ModeClass(SoloBaseMode):
         self.mino_list_generator(initial=True)
         self.counter: int = self.fps_limit * 3  # Formally countdown
         self.mode: str = "countdown"
+        self.__das: int = int((int(get_setting("das", "10")) * self.fps_limit) / 60)
+        self.__arr: int = int((int(get_setting("arr", "2")) * self.fps_limit) / 60)
 
     def show_stats(self, stdscr: window) -> None:
         """This will show the stats on bottom right."""
@@ -152,7 +154,11 @@ class ModeClass(SoloBaseMode):
         if not self.current_mino:
             new_mino_type: str = self.mino_list.pop(0)
             self.current_mino = Mino(
-                mino_type=new_mino_type, level=self.level, fps_limit=self.fps_limit
+                mino_type=new_mino_type,
+                level=self.level,
+                fps_limit=self.fps_limit,
+                das=self.__das,
+                arr=self.__arr,
             )
             if self.check_game_over():
                 self.mode = "game_over"

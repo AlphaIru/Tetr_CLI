@@ -30,9 +30,13 @@ DEFAULT_KEYBINDS: List[Tuple[str, bool, str, Optional[str]]] = [
 
 
 DEFAULT_SETTINGS: List[Tuple[str, str]] = [
-    ("music_volume", "70"),
-    ("sfx_volume", "80"),
-    ("FPS_limit", "30"),
+    ("music_volume", "20"),
+    ("sfx_volume", "70"),
+    ("fps_limit", "30"),
+    ("mino_style", "[]"),
+    ("ghost_piece", "true"),
+    ("das", "10"),
+    ("arr", "2"),
 ]
 
 
@@ -370,7 +374,7 @@ def set_scores(
         conn.commit()
 
 
-def get_setting(setting_name: str) -> str:
+def get_setting(setting_name: str, default_value: str) -> str:
     """Get a setting value from the settings table."""
     with connect(DB_FILE) as conn:
         cursor: Cursor = conn.cursor()
@@ -383,7 +387,7 @@ def get_setting(setting_name: str) -> str:
         )
         result = cursor.fetchone()
 
-    return result[0] if result else "0"
+    return result[0] if result else default_value
 
 
 def set_setting(setting_name: str, setting_value: str) -> None:

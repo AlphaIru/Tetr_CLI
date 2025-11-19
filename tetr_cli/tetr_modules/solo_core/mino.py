@@ -17,7 +17,7 @@ from tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 class Mino:
     """This will handle the mino."""
 
-    def __init__(self, mino_type: str, level: int, fps_limit: int) -> None:
+    def __init__(self, mino_type: str, level: int, fps_limit: int, das: int, arr: int) -> None:
         """This will initialize this class."""
         self.__type: str = mino_type
         self.__orientation: str = "N"
@@ -42,7 +42,9 @@ class Mino:
         self.reset_lock_delay(level=level)
         self.reset_lock_count(level=level)
 
-        self.__auto_repeat_delay: int = self.calculate_das()
+        self.__das: int = das
+        self.__arr: int = arr
+        self.__auto_repeat_delay: int = self.__das  # self.calculate_das()
         self.__last_sideways_direction: str = ""
 
     @property
@@ -81,15 +83,15 @@ class Mino:
         """This will set the kick number."""
         self.__kick_number = max(0, value)
 
-    @lru_cache(maxsize=4)
-    def calculate_das(self) -> int:
-        """This will return the delayed auto shift."""
-        return int(0.05 * self.__fps_limit)
+    # @lru_cache(maxsize=4)
+    # def calculate_das(self) -> int:
+    #     """This will return the delayed auto shift."""
+    #     return int(0.05 * self.__fps_limit)
 
-    @lru_cache(maxsize=4)
-    def calculate_arr(self) -> int:
-        """This will return the auto repeat rate."""
-        return int(0.01 * self.__fps_limit)
+    # @lru_cache(maxsize=4)
+    # def calculate_arr(self) -> int:
+    #     """This will return the auto repeat rate."""
+    #     return int(0.01 * self.__fps_limit)
 
     @property
     def lock_info(self) -> Dict[str, int]:
@@ -101,15 +103,15 @@ class Mino:
         """This will set the lock info."""
         self.__lock_info = value
 
-    @property
-    def auto_repeat_delay(self) -> int:
-        """This will return the auto repeat delay."""
-        return self.__auto_repeat_delay
+    # @property
+    # def auto_repeat_delay(self) -> int:
+    #     """This will return the auto repeat delay."""
+    #     return self.__auto_repeat_delay
 
-    @auto_repeat_delay.setter
-    def auto_repeat_delay(self, value: int) -> None:
-        """This will set the auto repeat delay."""
-        self.__auto_repeat_delay = max(0, value)
+    # @auto_repeat_delay.setter
+    # def auto_repeat_delay(self, value: int) -> None:
+    #     """This will set the auto repeat delay."""
+    #     self.__auto_repeat_delay = max(0, value)
 
     @property
     def last_sideways_direction(self) -> str:
@@ -210,17 +212,17 @@ class Mino:
 
         if direction == "":
             self.last_sideways_direction = ""
-            self.auto_repeat_delay = self.calculate_das()
+            self.auto_repeat_delay = self.__das  # self.calculate_das()
             return
 
         if self.last_sideways_direction != direction:
-            self.auto_repeat_delay = self.calculate_das()
+            self.auto_repeat_delay = self.__das  # self.calculate_das()
             self.last_sideways_direction = direction
             if not mino_touching_side_func(direction, self):
                 self.move_sideways(direction)
                 self.__kick_number = 0
             else:
-                self.auto_repeat_delay = self.calculate_das()
+                self.auto_repeat_delay = self.__das  # self.calculate_das()
         else:
             if self.auto_repeat_delay > 0:
                 self.auto_repeat_delay -= 1
@@ -228,9 +230,9 @@ class Mino:
                 if not mino_touching_side_func(direction, self):
                     self.move_sideways(direction)
                     self.__kick_number = 0
-                    self.auto_repeat_delay = self.calculate_arr()
+                    self.auto_repeat_delay = self.__arr  # self.calculate_arr()
                 else:
-                    self.auto_repeat_delay = self.calculate_das()
+                    self.auto_repeat_delay = self.__das  # self.calculate_das()
 
     def handle_sideways_curses_input(
         self,

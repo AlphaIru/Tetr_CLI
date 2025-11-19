@@ -110,6 +110,9 @@ MINO_DRAW_LOCATION: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
     },
 }
 
+MINO_TO_GHOST: Dict[str, str] = {"[]": "||", "00": "()", "●●": "--", "██": "▒▒"}
+
+
 SCORE_TABLE: Dict[str, Dict[int, int]] = {
     "regular": {
         1: 100,

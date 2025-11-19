@@ -30,7 +30,7 @@ from curses import (
     window,
     KEY_RESIZE,
 )
-from pygame import mixer
+
 from pygame.mixer import Sound
 
 from tetr_cli.tetr_modules.keyboard_handlers.curses_handler import curses_key_name
@@ -42,7 +42,12 @@ from tetr_cli.tetr_modules.modules.checker import (
 )
 from tetr_cli.tetr_modules.modules.debug import DebugClass
 from tetr_cli.tetr_modules.modules.database import get_setting
-from tetr_cli.tetr_modules.modules.sound import load_sfx, play_sounds
+from tetr_cli.tetr_modules.modules.sound import (
+    load_sfx,
+    play_sounds,
+    stop_all_sounds,
+    update_volume,
+)
 
 # O, I, T, L, J, S, Z
 
@@ -50,15 +55,18 @@ from tetr_cli.tetr_modules.modules.sound import load_sfx, play_sounds
 TRANSITION_LIST: Dict[str, str] = {
     "Main_Menu": "main_menu",
     "Solo_Menu": "solo.solo_menu",
-
     # Option Modes Not sure if I am going to implement these
     "Option_Menu": "options.option",
-    # "Audio_Options": "options.audio_options",
-    # "Gameplay_Options": "options.gameplay_options",
-
+    "Audio_Options": "options.audio_options.audio_options",
+    "BGM_Option": "options.audio_options.bgm_option",
+    "SFX_Option": "options.audio_options.sfx_option",
+    # Game Options
+    "Gameplay_Options": "options.gameplay_options.gameplay_options",
+    "DAS_Option": "options.gameplay_options.das_option",
+    "ARR_Option": "options.gameplay_options.arr_option",
+    "Ghost_Piece_Option": "options.gameplay_options.ghost_piece_option",
     # TBD
     "Score_Screen": "score_screen",
-
     # Solo Modes
     "Marathon": "solo.marathon",
 }
@@ -83,8 +91,6 @@ async def main(
 
     audio_check: bool = not no_music_mode
     try:
-        mixer.init()
-        mixer.music.set_volume(0.25)
         sound_effect_dict: Dict[str, Sound] = await load_sfx()
     except Exception:
         audio_check = False
@@ -126,7 +132,7 @@ async def main(
     start_time: float = 0.0
     elapsed_time: float = 0.0
 
-    frame_limit: int = int(get_setting("FPS_limit"))
+    frame_limit: int = int(get_setting("FPS_limit", "30"))
     frame_duration: float = 1 / frame_limit
 
     try:
@@ -195,15 +201,18 @@ async def main(
                 stdscr.refresh()
 
             if "update_fps" in actions:
-                frame_limit = int(get_setting("FPS_limit"))
+                frame_limit = int(get_setting("fps_limit", "30"))
                 frame_duration = 1 / frame_limit
+
+            if "update_volume" in actions and audio_check:
+                await update_volume(sound_effect_dict=sound_effect_dict)
+
             elapsed_time = perf_counter() - start_time
     except KeyboardInterrupt:
         pass
 
-    if mixer and audio_check:
-        mixer.music.stop()
-        mixer.quit()
+    if audio_check:
+        await stop_all_sounds()
     nocbreak()
     noecho()
     curs_set(True)
