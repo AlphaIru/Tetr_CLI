@@ -39,6 +39,7 @@ class Board:
             True if self.__ghost_piece_setting_str.lower() == "true" else False
         )
         self.__mino_style: str = get_setting("mino_style", "[]")
+        self.__ghost_mino_style: str = MINO_TO_GHOST.get(self.__mino_style, "??")
 
     def clear(self) -> None:
         """This will clear the board."""
@@ -247,7 +248,7 @@ class Board:
                     # Debug for marking pivot
                     # char = "██" if visible_rows[y_counter][x_counter] < 10 else "●●"
                 elif visible_rows[y_counter][x_counter] < 0:
-                    char = MINO_TO_GHOST.get(self.__mino_style, "??")
+                    char = self.__ghost_mino_style
                 elif y_counter == 20:
                     char = "- "
                 # The extra -1 is to adjust for zero indexing
@@ -405,14 +406,15 @@ class Board:
         mino_type: str = hold_mino.type
         if mino_type not in MINO_DRAW_LOCATION:
             return
-        mino_char: str = "██"
-        if hold_used:
-            mino_char = "▒▒"
+        mino_char: str = self.__mino_style
 
         mino_height: int = 2
         mino_width: int = 4
         mino_offset: Tuple[int, int] = (hold_offset[0] + 3, hold_offset[1] + 5)
         orientation: str = "N"
+
+        # if hold_used:
+        #     mino_char = self.__ghost_mino_style
 
         for y in range(mino_height):
             for x in range(-2, mino_width * 2):
@@ -421,6 +423,7 @@ class Board:
                 if 0 <= clear_y < max_yx[0] and 0 <= clear_x < max_yx[1] - 1:
                     safe_addstr(stdscr, clear_y, clear_x, " ", A_BOLD)
 
+        #
         # Draw the hold mino using block positions
         mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][orientation]
         for y_offset, x_offset in mino_shape:
@@ -434,7 +437,11 @@ class Board:
                     pos[0],
                     pos[1],
                     mino_char,
-                    color_pair(MINO_COLOR.get(mino_type, 0)),
+                    color_pair(
+                        MINO_COLOR.get(mino_type, 0)
+                        if not hold_used
+                        else 8
+                    ),
                 )
 
 
