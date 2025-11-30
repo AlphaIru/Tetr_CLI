@@ -69,6 +69,7 @@ TRANSITION_LIST: Dict[str, str] = {
     "Graphic_Options": "options.graphic_options.graphic_options",
     "Color_Option": "options.graphic_options.color_option",
     "Mino_Style_Option": "options.graphic_options.mino_design",
+    "FPS_Option": "options.graphic_options.fps_option",
     # Control Options
     "Control_Options": "options.control_options.control_options",
     "Change_Keybind": "options.control_options.change_keybind",
@@ -138,7 +139,7 @@ async def main(
     start_time: float = 0.0
     elapsed_time: float = 0.0
 
-    frame_limit: int = int(get_setting("FPS_limit", "30"))
+    frame_limit: int = int(get_setting("fps_limit", "30"))
     frame_duration: float = 1 / frame_limit
 
     try:

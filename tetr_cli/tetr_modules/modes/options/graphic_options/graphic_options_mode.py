@@ -12,6 +12,7 @@ from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 GAMEPLAY_OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
     "Color Option": {"action": "Color_Option", "sound": "select_confirm"},
     "Mino Design": {"action": "Mino_Style_Option", "sound": "select_confirm"},
+    "Frame Rate": {"action": "FPS_Option", "sound": "select_confirm"},
     "Go_Back": {"action": "Main_Menu", "sound": "select_back"},
 }
 
@@ -19,6 +20,7 @@ GAMEPLAY_OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
 GAMEPLAY_OPTION_LIST: List[str] = [
     "Color Option",
     "Mino Design",
+    "Frame Rate",
     "Go_Back",
 ]
 

@@ -12,7 +12,7 @@ class BaseModeClass:
 
     def __init__(self) -> None:
         """Initialize the base mode class."""
-        self.__fps: int = int(get_setting("FPS_limit", "30"))
+        self.__fps: int = int(get_setting("fps_limit", "30"))
         self.__action: Dict[str, List[str]] = {}
         self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
         self.__user_keybinds: Dict[str, Dict[str, Set[str]]] = load_keybinds()
