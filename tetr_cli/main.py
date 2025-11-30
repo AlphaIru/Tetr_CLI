@@ -76,6 +76,7 @@ TRANSITION_LIST: Dict[str, str] = {
     "Score_Screen": "score_screen",
     # Solo Modes
     "Marathon": "solo.marathon",
+    "Sprint": "solo.sprint",
 }
 
 

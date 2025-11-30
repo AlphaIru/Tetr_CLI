@@ -23,12 +23,12 @@ from tetr_cli.tetr_modules.modules.score import (
 class SoloBaseMode(BaseModeClass):
     """This is the base class for all modes."""
 
-    def __init__(self) -> None:
+    def __init__(self, given_level: int = 1) -> None:
         """This will initialize this class."""
         super().__init__()
 
         # Game stats
-        self.level: int = 1
+        self.level: int = given_level
         self.back_to_back: bool = False
         self.combo_count: int = 0
         self.lines_cleared: int = 0
@@ -257,9 +257,6 @@ class SoloBaseMode(BaseModeClass):
                 self.sound_action["SFX"].append("double")
             elif lines_clear_detected == 4:
                 self.sound_action["SFX"].append("quad")
-
-        # Level up for every 10 lines cleared
-        self.level = max(self.level, (self.lines_cleared // 10) + 1)
 
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""

@@ -22,7 +22,7 @@ class ModeClass(SoloBaseMode):
 
     def __init__(self) -> None:
         """This will initialize this class."""
-        super().__init__()
+        super().__init__(given_level=5)
         # For countdown: 3 seconds countdown
         # For animation: 0.5 second animation
         self.mino_list_generator(initial=True)
@@ -30,6 +30,15 @@ class ModeClass(SoloBaseMode):
         self.mode: str = "countdown"
         self.__das: int = int((int(get_setting("das", "10")) * self.fps_limit) / 60)
         self.__arr: int = int((int(get_setting("arr", "2")) * self.fps_limit) / 60)
+        self.__time: int = 0
+
+    def frames_to_time(self, frames: int) -> str:
+        """Convert frames to a time string (MM:SS.mmm) given the FPS."""
+        total_seconds = frames / 60  # Base is set at 60 FPS
+        minutes = int(total_seconds // 60)
+        seconds = int(total_seconds % 60)
+        milliseconds = int((total_seconds % 1) * 1000)
+        return f"{minutes:02}:{seconds:02}.{milliseconds:03}"
 
     def show_stats(self, stdscr: window) -> None:
         """This will show the stats on bottom right."""
@@ -39,19 +48,13 @@ class ModeClass(SoloBaseMode):
             stdscr,
             self.offset[0] + DRAW_BOARD_HEIGHT - 2,
             self.offset[1] + DRAW_BOARD_WIDTH + 2,
-            f"Level: {self.level}",
+            f"Lines: {self.lines_cleared}",
         )
         safe_addstr(
             stdscr,
             self.offset[0] + DRAW_BOARD_HEIGHT - 1,
             self.offset[1] + DRAW_BOARD_WIDTH + 2,
-            f"Lines: {self.lines_cleared}",
-        )
-        safe_addstr(
-            stdscr,
-            self.offset[0] + DRAW_BOARD_HEIGHT,
-            self.offset[1] + DRAW_BOARD_WIDTH + 2,
-            f"Score: {self.score}",
+            f"Time: {self.frames_to_time(self.__time)}",
         )
         # Debug info
         # safe_addstr(
@@ -112,6 +115,12 @@ class ModeClass(SoloBaseMode):
             return True
         return False
 
+    def check_clear(self) -> bool:
+        """This will check if the game is cleared."""
+        if self.lines_cleared >= 40:
+            return True
+        return False
+
     def display_game_over(self, stdscr: window) -> None:
         """This will display game over text."""
         center_y: int = self.max_yx[0] // 2
@@ -128,8 +137,43 @@ class ModeClass(SoloBaseMode):
         safe_addstr(
             stdscr,
             center_y - 1,
-            center_x - 5,
+            center_x - len("GAME OVER!") // 2,
             "GAME OVER!",
+            A_BOLD,
+        )
+        confirm_keys: Set[str] = self.get_user_keybind("menu_confirm", menu_mode=True)
+        confirm_string: str = (
+            "/".join(sorted(confirm_keys))
+            if len(confirm_keys) > 1
+            else next(iter(confirm_keys))
+        )
+        string_len: int = len(f"Press {confirm_string} to Continue")
+        safe_addstr(
+            stdscr,
+            center_y + 1,
+            center_x - (string_len // 2),
+            f"Press {confirm_string} to Continue",
+            A_BOLD,
+        )
+
+    def display_game_cleared(self, stdscr: window) -> None:
+        """This will display game cleared text."""
+        center_y: int = self.max_yx[0] // 2
+        center_x: int = self.max_yx[1] // 2
+        self.board.draw_minos_on_board(
+            stdscr=stdscr,
+            offset=self.offset,
+            max_yx=self.max_yx,
+            current_mino=self.current_mino,
+            ghost_position=(
+                self.current_mino.position if self.current_mino else (-1, -1)
+            ),
+        )
+        safe_addstr(
+            stdscr,
+            center_y - 1,
+            center_x - len("CLEAR!") // 2,
+            "CLEAR!",
             A_BOLD,
         )
         confirm_keys: Set[str] = self.get_user_keybind("menu_confirm", menu_mode=True)
@@ -165,9 +209,11 @@ class ModeClass(SoloBaseMode):
                 self.display_game_over(stdscr)
                 self.sound_action["BGM"] = ["stop"]
                 return
-
-        # Level up for every 10 lines cleared
-        self.level = max(self.level, (self.lines_cleared // 10) + 1)
+            if self.check_clear():
+                self.mode = "cleared"
+                self.display_game_cleared(stdscr)
+                self.sound_action["BGM"] = ["stop"]
+                return
 
         self.check_keyinput_pressed(pressed_keys=pressed_keys)
         if not self.current_mino:
@@ -266,11 +312,20 @@ class ModeClass(SoloBaseMode):
         if self.mode == "game_over":
             if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
                 self.action["transition"] = ["Score_Screen"]
-                set_temp("score", str(self.score))
-                set_temp("score_type", "Marathon")
+                set_temp("score", "-1")
+                set_temp("score_type", "Sprint")
                 self.sound_action["SFX"].append("select_confirm")
                 return
             self.display_game_over(stdscr)
+            return
+        if self.mode == "cleared":
+            if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+                self.action["transition"] = ["Score_Screen"]
+                set_temp("score", str(self.__time))
+                set_temp("score_type", "Sprint")
+                self.sound_action["SFX"].append("select_confirm")
+                return
+            self.display_game_cleared(stdscr)
             return
 
         queue_to_draw: List[str] = self.mino_list[0:5]
@@ -280,7 +335,7 @@ class ModeClass(SoloBaseMode):
 
         self.board.draw_blank_board(stdscr, self.offset)
         self.show_stats(stdscr)
-        self.board.add_title(stdscr, self.offset, "Marathon")
+        self.board.add_title(stdscr, self.offset, "Sprint")
 
         if queue_to_draw != self._last_drawn_queue:
             self.board.draw_queue(
@@ -302,7 +357,7 @@ class ModeClass(SoloBaseMode):
             self._last_drawn_hold = hold_to_draw
 
         if self.get_user_keybind("restart") & pressed_keys:
-            self.action["transition"] = ["Marathon"]
+            self.action["transition"] = ["Sprint"]
             self.sound_action["SFX"].append("select_confirm")
             return
         if self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
@@ -316,11 +371,13 @@ class ModeClass(SoloBaseMode):
 
         self.play_mode(stdscr, pressed_keys)
 
+        self.__time += 60 // self.fps_limit
+
         if self.mode == "play_music_wait":
             self.counter -= 1
             if self.counter <= 0:
                 self.mode = "play"
-                self.sound_action["BGM"] = ["Korobeiniki"]
+                self.sound_action["BGM"] = ["Kalinka"]
                 return
             safe_addstr(
                 stdscr,

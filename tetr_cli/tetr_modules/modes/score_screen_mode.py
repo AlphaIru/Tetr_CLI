@@ -45,16 +45,33 @@ class ModeClass(BaseModeClass):
         high_score_list: List[Tuple[str, int, str, str]] = get_scores(self.score_type)
         if self.score_type != "Sprint":
             high_score_list.sort(key=lambda x: x[1], reverse=True)
+        else:
+            high_score_list.sort(key=lambda x: x[1])
         self.score_list = [
             (player, score, date) for player, score, _, date in high_score_list[:5]
         ]
+
+    def frames_to_time(self, frames: int) -> str:
+        """Convert frames to a time string (MM:SS.mmm) given the FPS."""
+        total_seconds = frames / 60  # Base is set at 60 FPS
+        minutes = int(total_seconds // 60)
+        seconds = int(total_seconds % 60)
+        milliseconds = int((total_seconds % 1) * 1000)
+        return f"{minutes:02}:{seconds:02}.{milliseconds:03}"
 
     def initialize_score_list(self) -> bool:
         """This will initialize the mode."""
         self.get_high_score()
         inserted = False
+        if self.score == -1:
+            return inserted
         for list_index, (_, score, _) in enumerate(self.score_list):
-            if self.score >= score:
+            if (
+                self.score >= score
+                and self.score_type != "Sprint"
+                or self.score <= score
+                and self.score_type == "Sprint"
+            ):
                 self.score_list.insert(
                     list_index,
                     (self.user_name, self.score, datetime.now().strftime("%Y-%m-%d")),
@@ -119,9 +136,15 @@ class ModeClass(BaseModeClass):
 
         display_score_list: List[str] = []
         for list_index, (player, score, date) in enumerate(self.score_list):
-            display_score_list.append(
-                f"{list_index + 1:>2}. {player:<12} : {score:>10} at {date}"
-            )
+            if self.score_type == "Sprint":
+                display_score_list.append(
+                    f"{list_index + 1:>2}. {player:<12} : "
+                    + f"{self.frames_to_time(score):>10} at {date}"
+                )
+            else:
+                display_score_list.append(
+                    f"{list_index + 1:>2}. {player:<12} : {score:>10} at {date}"
+                )
         start_y, start_x, width = calculate_centered_menu(stdscr, display_score_list)
 
         # Display score screen
