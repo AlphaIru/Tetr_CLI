@@ -287,7 +287,7 @@ class SoloBaseMode(BaseModeClass):
             self.current_mino.rotate("right", self.is_position_valid)
             self.keyinput_cooldown.add("cw")
         self.current_mino.handle_sideways_auto_repeat(
-            pressed_keys, self.mino_touching_side
+            pressed_keys, self.mino_touching_side, self.get_user_keybind
         )
         if pressed_keys & self.get_user_keybind("soft_drop"):
             if not self.mino_touching_bottom(self.current_mino):

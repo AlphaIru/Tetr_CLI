@@ -171,12 +171,17 @@ class Mino:
         self,
         pressed_keys: Set[str],
         mino_touching_side_func: Callable[[str, "Mino"], bool],
+        get_user_keybinds: Callable[[str, bool], Set[str]],
     ) -> None:
         """Handles auto-repeat for left/right movement."""
         direction: str = ""
-        if "left" in pressed_keys and "right" not in pressed_keys:
+        if get_user_keybinds("move_left", False) & pressed_keys and not (
+            get_user_keybinds("move_right", False) & pressed_keys
+        ):
             direction = "left"
-        elif "right" in pressed_keys and "left" not in pressed_keys:
+        elif get_user_keybinds("move_right", False) & pressed_keys and not (
+            get_user_keybinds("move_left", False) & pressed_keys
+        ):
             direction = "right"
 
         if mino_touching_side_func(direction, self):

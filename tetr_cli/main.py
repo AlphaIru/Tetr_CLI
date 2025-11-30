@@ -69,7 +69,9 @@ TRANSITION_LIST: Dict[str, str] = {
     "Graphic_Options": "options.graphic_options.graphic_options",
     "Color_Option": "options.graphic_options.color_option",
     "Mino_Style_Option": "options.graphic_options.mino_design",
-    # TBD
+    # Control Options
+    "Control_Options": "options.control_options.control_options",
+    "Change_Keybind": "options.control_options.change_keybind",
     "Score_Screen": "score_screen",
     # Solo Modes
     "Marathon": "solo.marathon",

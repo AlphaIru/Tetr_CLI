@@ -113,6 +113,24 @@ MINO_DRAW_LOCATION: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
 MINO_TO_GHOST: Dict[str, str] = {"[]": "||", "00": "()", "●●": "--", "██": "▒▒"}
 
 
+CONTROLS_LIST: List[str] = [
+    "move_left",
+    "move_right",
+    "rotate_cw",
+    "rotate_ccw",
+    "soft_drop",
+    "hard_drop",
+    "hold_piece",
+    "restart",
+    "menu_confirm",
+    "menu_back",
+    "menu_up",
+    "menu_down",
+    "menu_left",
+    "menu_right",
+]
+
+
 SCORE_TABLE: Dict[str, Dict[int, int]] = {
     "regular": {
         1: 100,
