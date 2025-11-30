@@ -7,6 +7,7 @@ from typing import Dict, List
 from pygame import mixer
 from pygame.mixer import Sound
 
+from tetr_cli.tetr_modules.modules.database import get_setting
 
 current_path: Path = Path(__file__).parent.parent.resolve()
 sound_path: Path = current_path / "sounds"
@@ -16,6 +17,7 @@ async def load_sfx() -> Dict[str, Sound]:
     """Load all sound effects."""
 
     mixer.init()
+    mixer.music.set_volume(float(get_setting("music_volume", "25")) / 100)
 
     sound_effects = {
         "select_move": mixer.Sound(str(sound_path / "sfx/select_move.wav")),
@@ -30,6 +32,12 @@ async def load_sfx() -> Dict[str, Sound]:
         "countdown": mixer.Sound(str(sound_path / "sfx/countdown.wav")),
         "go": mixer.Sound(str(sound_path / "sfx/go.wav")),
     }
+
+    sfx_volume = float(get_setting("sfx_volume", "50")) / 100
+
+    for sfx in sound_effects.values():
+        sfx.set_volume(sfx_volume)
+
     return sound_effects
 
 
@@ -59,6 +67,24 @@ async def play_sounds(
             except Exception as err:
                 print(f"Failed to play SFX: {err}")
     return current_bgm
+
+
+async def update_volume(sound_effect_dict: Dict[str, Sound]) -> None:
+    """Update the volume of the music."""
+    if mixer:
+        bgm_volume: float = float(get_setting("music_volume", "25")) / 100
+        mixer.music.set_volume(bgm_volume)
+
+        sfx_volume: float = float(get_setting("sfx_volume", "50")) / 100
+        for sfx in sound_effect_dict.values():
+            sfx.set_volume(sfx_volume)
+
+
+async def stop_all_sounds() -> None:
+    """Stop all sounds."""
+    if mixer:
+        mixer.music.stop()
+        mixer.quit()
 
 
 if __name__ == "__main__":

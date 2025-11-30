@@ -32,6 +32,7 @@ help_dict: Dict[str, str] = {
     "--curses, --ncurses, --c": "Enable ncurses mode for terminal-based UI.",
     "--no-music, --nm": "Disable music playback during the game.",
     "--reset-db, --reset-database, --r": "Reset the game database to default settings.",
+    "--input-test, --it": "Run the input test mode to check key inputs.",
 }
 
 
@@ -62,7 +63,6 @@ def starter() -> None:
     no_music_mode: bool = parse_flag(["--no-music", "-nm"])
     reset_database: bool = parse_flag(["--reset-db", "--reset-database", "-r"])
     print_help_call: bool = parse_flag(["--help", "-h"])
-
     input_test: bool = parse_flag(["--input-test", "-it"])
 
     if print_help_call:

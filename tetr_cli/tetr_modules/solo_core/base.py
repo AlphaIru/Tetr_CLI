@@ -23,12 +23,12 @@ from tetr_cli.tetr_modules.modules.score import (
 class SoloBaseMode(BaseModeClass):
     """This is the base class for all modes."""
 
-    def __init__(self) -> None:
+    def __init__(self, given_level: int = 1) -> None:
         """This will initialize this class."""
         super().__init__()
 
         # Game stats
-        self.level: int = 1
+        self.level: int = given_level
         self.back_to_back: bool = False
         self.combo_count: int = 0
         self.lines_cleared: int = 0
@@ -258,9 +258,6 @@ class SoloBaseMode(BaseModeClass):
             elif lines_clear_detected == 4:
                 self.sound_action["SFX"].append("quad")
 
-        # Level up for every 10 lines cleared
-        self.level = max(self.level, (self.lines_cleared // 10) + 1)
-
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""
 
@@ -286,14 +283,9 @@ class SoloBaseMode(BaseModeClass):
         ):
             self.current_mino.rotate("right", self.is_position_valid)
             self.keyinput_cooldown.add("cw")
-        if pressed_keys & (
-            (self.get_user_keybind("move_left")).union(
-                self.get_user_keybind("move_right")
-            )
-        ):
-            self.current_mino.handle_sideways_auto_repeat(
-                pressed_keys, self.mino_touching_side
-            )
+        self.current_mino.handle_sideways_auto_repeat(
+            pressed_keys, self.mino_touching_side, self.get_user_keybind
+        )
         if pressed_keys & self.get_user_keybind("soft_drop"):
             if not self.mino_touching_bottom(self.current_mino):
                 self.current_mino.soft_drop(
@@ -333,9 +325,7 @@ class SoloBaseMode(BaseModeClass):
                 self.current_mino = temp
                 self.current_mino.position = (21, BOARD_WIDTH // 2 - 1)
                 self.current_mino.orientation = "N"
-                self.current_mino.fall_delay = self.current_mino.reset_fall_delay(
-                    level=self.level
-                )
+                self.current_mino.reset_fall_delay()
                 self.current_mino.lock_info = {
                     "lock_delay": int(0.5 * self.fps_limit),
                     "lock_count": 15,

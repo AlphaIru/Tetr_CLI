@@ -30,9 +30,14 @@ DEFAULT_KEYBINDS: List[Tuple[str, bool, str, Optional[str]]] = [
 
 
 DEFAULT_SETTINGS: List[Tuple[str, str]] = [
-    ("music_volume", "70"),
-    ("sfx_volume", "80"),
-    ("FPS_limit", "30"),
+    ("music_volume", "20"),
+    ("sfx_volume", "70"),
+    ("fps_limit", "30"),
+    ("mino_style", "[]"),
+    ("color_mode", "true"),
+    ("ghost_piece", "true"),
+    ("das", "10"),
+    ("arr", "2"),
 ]
 
 
@@ -187,25 +192,6 @@ def reset_all(cursor: Cursor) -> None:
     create_temp_table(cursor)
 
 
-# def check_table_exists(cursor: Cursor, table_type: str) -> None:
-#     """Check if the scores table exists. If not create it."""
-#     cursor.execute(
-#         """
-#         SELECT name FROM sqlite_master WHERE type='table' AND name=?;
-#         """,
-#         (table_type,),
-#     )
-#     if not cursor.fetchone():
-#         if table_type == "scores":
-#             create_scores_table(cursor)
-#         elif table_type == "keybinds":
-#             create_keybinds_table(cursor)
-#         elif table_type == "settings":
-#             create_settings_table(cursor)
-#         elif table_type == "temps":
-#             create_temp_table(cursor)
-
-
 def initialize_database(reset: bool = False) -> None:
     """This will connect to the database and create the tables if they do not exist."""
 
@@ -300,27 +286,80 @@ def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
 
 def update_keybind(
     key_name: str, key_value1: str, key_value2: Optional[str] = None
-) -> None:
+) -> bool:
     """Update keybind in the database."""
+
+    default_key_value1: str = ""
+    default_key_value2: Optional[str] = None
+
+    success: bool = True
+
     with connect(DB_FILE) as conn:
         cursor: Cursor = conn.cursor()
 
+        # Get current keybinds for rollback.
+        cursor.execute(
+            """
+            SELECT key_name1, key_name2 FROM keybinds WHERE input_name = ?
+            """,
+            (key_name,),
+        )
+        result = cursor.fetchone()
+        if result:
+            default_key_value1, default_key_value2 = result
+
+        # Update keybinds
         if key_value2 is not None:
             cursor.execute(
                 """
-            UPDATE keybind SET key_value1 = ?, key_value2 = ? WHERE key_name = ?
+            UPDATE keybinds SET key_name1 = ?, key_name2 = ? WHERE input_name = ?
             """,
                 (key_value1, key_value2, key_name),
             )
         else:
             cursor.execute(
                 """
-            UPDATE keybind SET key_value1 = ? WHERE key_name = ?
+            UPDATE keybinds SET key_name1 = ?, key_name2 = ? WHERE input_name = ?
             """,
-                (key_value1, key_name),
+                (key_value1, None, key_name),
             )
 
+        # Validate keybinds
+        rows: List[Tuple[str, bool, str, Optional[str]]] = []
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT input_name, is_menu_keybind, key_name1, key_name2 FROM keybinds"
+        )
+        rows = cursor.fetchall()
+        menu_keybinds: Dict[str, Set[str]] = {}
+        game_keybinds: Dict[str, Set[str]] = {}
+
+        for input_name, is_menu_keybind, key_name1, key_name2 in rows:
+            if is_menu_keybind:
+                if input_name not in menu_keybinds:
+                    menu_keybinds[input_name] = set()
+                menu_keybinds[input_name].add(key_name1)
+                if key_name2 is not None:
+                    menu_keybinds[input_name].add(key_name2)
+            else:
+                if input_name not in game_keybinds:
+                    game_keybinds[input_name] = set()
+                game_keybinds[input_name].add(key_name1)
+                if key_name2 is not None:
+                    game_keybinds[input_name].add(key_name2)
+
+        if not validate_keybinds(menu_keybinds) or not validate_keybinds(game_keybinds):
+            # Rollback keybinds
+            cursor.execute(
+                """
+            UPDATE keybinds SET key_name1 = ?, key_name2 = ? WHERE input_name = ?
+            """,
+                (default_key_value1, default_key_value2, key_name),
+            )
+            success = False
+
         conn.commit()
+    return success
 
 
 def get_scores(score_type: str) -> List[Tuple[str, int, str, str]]:
@@ -370,7 +409,7 @@ def set_scores(
         conn.commit()
 
 
-def get_setting(setting_name: str) -> str:
+def get_setting(setting_name: str, default_value: str) -> str:
     """Get a setting value from the settings table."""
     with connect(DB_FILE) as conn:
         cursor: Cursor = conn.cursor()
@@ -383,7 +422,7 @@ def get_setting(setting_name: str) -> str:
         )
         result = cursor.fetchone()
 
-    return result[0] if result else "0"
+    return result[0] if result else default_value
 
 
 def set_setting(setting_name: str, setting_value: str) -> None:

@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="tetr_cli",
-    version="0.8.0",
+    version="1.0.0",
     packages=find_packages(),
     entry_points={"console_scripts": ["tetr_cli = tetr_cli.starter:starter"]},
     python_requires=">=3.7",

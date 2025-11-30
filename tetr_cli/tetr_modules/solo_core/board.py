@@ -17,10 +17,12 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_WIDTH,
     MINO_COLOR,
     MINO_DRAW_LOCATION,
+    MINO_TO_GHOST,
     T_SPIN_CORNER_CHECKS,
 )
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 from tetr_cli.tetr_modules.solo_core.mino import Mino
+from tetr_cli.tetr_modules.modules.database import get_setting
 
 
 class Board:
@@ -32,6 +34,13 @@ class Board:
         self.__board: List[List[int]] = [
             ([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)
         ]
+        self.__ghost_piece_setting_str: str = get_setting("ghost_piece", "true")
+        self.__ghost_piece_setting: bool = (
+            True if self.__ghost_piece_setting_str.lower() == "true" else False
+        )
+        self.__mino_style: str = get_setting("mino_style", "[]")
+        self.__ghost_mino_style: str = MINO_TO_GHOST.get(self.__mino_style, "??")
+        self.__mino_color_setting: bool = get_setting("color_mode", "true").lower() == "true"
 
     def clear(self) -> None:
         """This will clear the board."""
@@ -174,6 +183,24 @@ class Board:
             A_BOLD,
         )
 
+    def add_ghost_mino(
+        self,
+        current_mino: "Mino",  # type: ignore
+        draw_board: List[List[int]],
+        ghost_position: Tuple[int, int],
+    ) -> List[List[int]]:
+        """This will add the ghost mino to the board."""
+        ghost_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[current_mino.type][
+            current_mino.orientation
+        ]
+        for y_offset, x_offset in ghost_shape:
+            y_pos = ghost_position[0] + y_offset
+            x_pos = ghost_position[1] + x_offset
+            if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
+                if draw_board[y_pos][x_pos] == 0:
+                    draw_board[y_pos][x_pos] = -MINO_COLOR[current_mino.type]
+        return draw_board
+
     def draw_minos_on_board(
         self,
         stdscr: window,
@@ -191,14 +218,10 @@ class Board:
             mino_shape = MINO_DRAW_LOCATION[current_mino.type][current_mino.orientation]
 
             # Draw ghost Mino
-            for y_offset, x_offset in mino_shape:
-                y_pos = ghost_position[0] + y_offset
-                x_pos = ghost_position[1] + x_offset
-                if 0 <= y_pos < BOARD_HEIGHT and 0 <= x_pos < BOARD_WIDTH:
-                    if draw_board[y_pos][x_pos] == 0:
-                        draw_board[y_pos][x_pos] = -MINO_COLOR[
-                            current_mino.type
-                        ]  # Ghost block
+            if self.__ghost_piece_setting:
+                draw_board = self.add_ghost_mino(
+                    current_mino, draw_board, ghost_position
+                )
 
             # Draw current Mino
             mino_position: Tuple[int, int] = current_mino.position
@@ -222,24 +245,27 @@ class Board:
             for x_counter, cell in enumerate(row):
                 char: str = "  "
                 if visible_rows[y_counter][x_counter] > 0:
-                    char = "██"
+                    char = self.__mino_style
                     # Debug for marking pivot
                     # char = "██" if visible_rows[y_counter][x_counter] < 10 else "●●"
                 elif visible_rows[y_counter][x_counter] < 0:
-                    char = "▒▒"
+                    char = self.__ghost_mino_style
                 elif y_counter == 20:
                     char = "- "
                 # The extra -1 is to adjust for zero indexing
                 y: int = offset[0] + ((max_rows - 1) - y_counter) - adjusted_height
                 x: int = offset[1] + x_counter * 2
-                color: int = abs(cell)
+                color: int = 0
+                if self.__mino_color_setting and cell:
+                    color = abs(cell)
+                mino_color: int = color_pair(color) if cell else A_BOLD
                 if 0 <= y < max_yx[0] and 0 <= x < max_yx[1] - 1:
                     safe_addstr(
                         stdscr,
                         y,
                         x,
                         char,
-                        color_pair(color) if cell else A_BOLD,
+                        mino_color
                     )
 
     def draw_queue(
@@ -309,6 +335,10 @@ class Board:
                 mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino][
                     orientation
                 ]
+                color: int = 0
+                if self.__mino_color_setting:
+                    color = MINO_COLOR.get(mino, 0)
+                mino_color: int = color_pair(color)
                 for y_offset, x_offset in mino_shape:
                     pos = (
                         mino_offset[0] + (mino_height - 1 - y_offset),
@@ -319,8 +349,8 @@ class Board:
                             stdscr,
                             pos[0],
                             pos[1],
-                            "██",
-                            color_pair(MINO_COLOR.get(mino, 0)),
+                            self.__mino_style,
+                            mino_color,
                         )
 
     def draw_hold(
@@ -384,14 +414,15 @@ class Board:
         mino_type: str = hold_mino.type
         if mino_type not in MINO_DRAW_LOCATION:
             return
-        mino_char: str = "██"
-        if hold_used:
-            mino_char = "▒▒"
+        mino_char: str = self.__mino_style
 
         mino_height: int = 2
         mino_width: int = 4
         mino_offset: Tuple[int, int] = (hold_offset[0] + 3, hold_offset[1] + 5)
         orientation: str = "N"
+
+        # if hold_used:
+        #     mino_char = self.__ghost_mino_style
 
         for y in range(mino_height):
             for x in range(-2, mino_width * 2):
@@ -400,8 +431,15 @@ class Board:
                 if 0 <= clear_y < max_yx[0] and 0 <= clear_x < max_yx[1] - 1:
                     safe_addstr(stdscr, clear_y, clear_x, " ", A_BOLD)
 
+        #
         # Draw the hold mino using block positions
         mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][orientation]
+        color: int = 0
+        if self.__mino_color_setting:
+            color = MINO_COLOR.get(mino_type, 0)
+        mino_color: int = color_pair(
+            color if not hold_used else 8
+        )
         for y_offset, x_offset in mino_shape:
             pos = (
                 mino_offset[0] + (mino_height - 1 - y_offset),
@@ -413,7 +451,7 @@ class Board:
                     pos[0],
                     pos[1],
                     mino_char,
-                    color_pair(MINO_COLOR.get(mino_type, 0)),
+                    mino_color
                 )
 
 
