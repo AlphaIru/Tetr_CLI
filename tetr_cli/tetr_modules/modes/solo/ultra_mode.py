@@ -1,4 +1,4 @@
-"""This will handle the solo sprint game mode."""
+"""This will handle the solo ultra game mode."""
 
 # coding: utf-8
 
@@ -30,11 +30,13 @@ class ModeClass(SoloBaseMode):
         self.mode: str = "countdown"
         self.__das: int = int((int(get_setting("das", "10")) * self.fps_limit) / 60)
         self.__arr: int = int((int(get_setting("arr", "2")) * self.fps_limit) / 60)
-        self.__time: int = 0
+        self.__time: int = 180 * self.fps_limit  # 3 minutes in frames
 
     def frames_to_time(self, frames: int) -> str:
         """Convert frames to a time string (MM:SS.mmm) given the FPS."""
-        total_seconds = frames / 60  # Base is set at 60 FPS
+        total_seconds = frames / self.fps_limit
+        if total_seconds < 0:
+            total_seconds = 0
         minutes = int(total_seconds // 60)
         seconds = int(total_seconds % 60)
         milliseconds = int((total_seconds % 1) * 1000)
@@ -53,6 +55,12 @@ class ModeClass(SoloBaseMode):
         safe_addstr(
             stdscr,
             self.offset[0] + DRAW_BOARD_HEIGHT - 1,
+            self.offset[1] + DRAW_BOARD_WIDTH + 2,
+            f"Score: {self.score}",
+        )
+        safe_addstr(
+            stdscr,
+            self.offset[0] + DRAW_BOARD_HEIGHT,
             self.offset[1] + DRAW_BOARD_WIDTH + 2,
             f"Time: {self.frames_to_time(self.__time)}",
         )
@@ -117,7 +125,7 @@ class ModeClass(SoloBaseMode):
 
     def check_clear(self) -> bool:
         """This will check if the game is cleared."""
-        if self.lines_cleared >= 40:
+        if self.__time <= 0:
             return True
         return False
 
@@ -314,7 +322,7 @@ class ModeClass(SoloBaseMode):
             if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
                 self.action["transition"] = ["Score_Screen"]
                 set_temp("score", "-1")
-                set_temp("score_type", "Sprint")
+                set_temp("score_type", "Ultra")
                 self.sound_action["SFX"].append("select_confirm")
                 return
             self.display_game_over(stdscr)
@@ -322,8 +330,8 @@ class ModeClass(SoloBaseMode):
         if self.mode == "cleared":
             if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
                 self.action["transition"] = ["Score_Screen"]
-                set_temp("score", str(self.__time))
-                set_temp("score_type", "Sprint")
+                set_temp("score", str(self.score))
+                set_temp("score_type", "Ultra")
                 self.sound_action["SFX"].append("select_confirm")
                 return
             self.display_game_cleared(stdscr)
@@ -336,7 +344,7 @@ class ModeClass(SoloBaseMode):
 
         self.board.draw_blank_board(stdscr, self.offset)
         self.show_stats(stdscr)
-        self.board.add_title(stdscr, self.offset, "Sprint")
+        self.board.add_title(stdscr, self.offset, "Ultra")
 
         if queue_to_draw != self._last_drawn_queue:
             self.board.draw_queue(
@@ -358,7 +366,7 @@ class ModeClass(SoloBaseMode):
             self._last_drawn_hold = hold_to_draw
 
         if self.get_user_keybind("restart") & pressed_keys:
-            self.action["transition"] = ["Sprint"]
+            self.action["transition"] = ["Ultra"]
             self.sound_action["SFX"].append("select_confirm")
             return
         if self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
@@ -372,13 +380,13 @@ class ModeClass(SoloBaseMode):
 
         self.play_mode(stdscr, pressed_keys)
 
-        self.__time += 60 // self.fps_limit
+        self.__time -= 1
 
         if self.mode == "play_music_wait":
             self.counter -= 1
             if self.counter <= 0:
                 self.mode = "play"
-                self.sound_action["BGM"] = ["Kalinka"]
+                self.sound_action["BGM"] = ["Ivean_Polkka"]
                 return
             safe_addstr(
                 stdscr,

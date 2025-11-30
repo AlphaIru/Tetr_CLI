@@ -1,4 +1,4 @@
-"""This will handle the solo game mode."""
+"""This will handle the solo marathon game mode."""
 
 # coding: utf-8
 

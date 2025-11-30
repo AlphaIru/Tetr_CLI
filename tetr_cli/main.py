@@ -77,6 +77,7 @@ TRANSITION_LIST: Dict[str, str] = {
     # Solo Modes
     "Marathon": "solo.marathon",
     "Sprint": "solo.sprint",
+    "Ultra": "solo.ultra",
 }
 
 

@@ -1,4 +1,5 @@
 """ "This will handle the solo mode menu."""
+
 # coding: utf-8
 
 from typing import Dict, List, Set
