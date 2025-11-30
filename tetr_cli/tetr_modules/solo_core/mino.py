@@ -17,7 +17,9 @@ from tetr_cli.tetr_modules.solo_core.srs import SRS_WALL_KICK_DATA
 class Mino:
     """This will handle the mino."""
 
-    def __init__(self, mino_type: str, level: int, fps_limit: int, das: int, arr: int) -> None:
+    def __init__(
+        self, mino_type: str, level: int, fps_limit: int, das: int, arr: int
+    ) -> None:
         """This will initialize this class."""
         self.__type: str = mino_type
         self.__orientation: str = "N"
@@ -44,7 +46,7 @@ class Mino:
 
         self.__das: int = das
         self.__arr: int = arr
-        self.__auto_repeat_delay: int = self.__das  # self.calculate_das()
+        self.__auto_repeat_delay: int = self.__das
         self.__last_sideways_direction: str = ""
 
     @property
@@ -83,16 +85,6 @@ class Mino:
         """This will set the kick number."""
         self.__kick_number = max(0, value)
 
-    # @lru_cache(maxsize=4)
-    # def calculate_das(self) -> int:
-    #     """This will return the delayed auto shift."""
-    #     return int(0.05 * self.__fps_limit)
-
-    # @lru_cache(maxsize=4)
-    # def calculate_arr(self) -> int:
-    #     """This will return the auto repeat rate."""
-    #     return int(0.01 * self.__fps_limit)
-
     @property
     def lock_info(self) -> Dict[str, int]:
         """This will return the lock info."""
@@ -102,27 +94,6 @@ class Mino:
     def lock_info(self, value: Dict[str, int]) -> None:
         """This will set the lock info."""
         self.__lock_info = value
-
-    # @property
-    # def auto_repeat_delay(self) -> int:
-    #     """This will return the auto repeat delay."""
-    #     return self.__auto_repeat_delay
-
-    # @auto_repeat_delay.setter
-    # def auto_repeat_delay(self, value: int) -> None:
-    #     """This will set the auto repeat delay."""
-    #     self.__auto_repeat_delay = max(0, value)
-
-    @property
-    def last_sideways_direction(self) -> str:
-        """This will return the last sideways direction."""
-        return self.__last_sideways_direction
-
-    @last_sideways_direction.setter
-    def last_sideways_direction(self, value: str) -> None:
-        """This will set the last sideways direction."""
-        if value in ["left", "right", ""]:
-            self.__last_sideways_direction = value
 
     def get_block_positions(
         self,
@@ -207,32 +178,32 @@ class Mino:
             direction = "left"
         elif "right" in pressed_keys and "left" not in pressed_keys:
             direction = "right"
-        if mino_touching_side_func(direction, self):
-            direction = ""
 
-        if direction == "":
-            self.last_sideways_direction = ""
-            self.auto_repeat_delay = self.__das  # self.calculate_das()
+        if mino_touching_side_func(direction, self):
+            self.__auto_repeat_delay = self.__das
             return
 
-        if self.last_sideways_direction != direction:
-            self.auto_repeat_delay = self.__das  # self.calculate_das()
-            self.last_sideways_direction = direction
+        if direction == "":
+            self.__last_sideways_direction = ""
+            self.__auto_repeat_delay = self.__das
+            return
+
+        if self.__last_sideways_direction != direction:
+            self.__auto_repeat_delay = self.__das
             if not mino_touching_side_func(direction, self):
                 self.move_sideways(direction)
                 self.__kick_number = 0
-            else:
-                self.auto_repeat_delay = self.__das  # self.calculate_das()
-        else:
-            if self.auto_repeat_delay > 0:
-                self.auto_repeat_delay -= 1
-            else:
-                if not mino_touching_side_func(direction, self):
-                    self.move_sideways(direction)
-                    self.__kick_number = 0
-                    self.auto_repeat_delay = self.__arr  # self.calculate_arr()
-                else:
-                    self.auto_repeat_delay = self.__das  # self.calculate_das()
+            self.__last_sideways_direction = direction
+            return
+
+        if self.__auto_repeat_delay > 0:
+            self.__auto_repeat_delay -= 1
+            return
+
+        if not mino_touching_side_func(direction, self):
+            self.move_sideways(direction)
+            self.__kick_number = 0
+            self.__auto_repeat_delay = self.__arr
 
     def handle_sideways_curses_input(
         self,

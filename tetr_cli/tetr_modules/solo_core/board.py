@@ -40,6 +40,7 @@ class Board:
         )
         self.__mino_style: str = get_setting("mino_style", "[]")
         self.__ghost_mino_style: str = MINO_TO_GHOST.get(self.__mino_style, "??")
+        self.__mino_color_setting: bool = get_setting("color_mode", "true").lower() == "true"
 
     def clear(self) -> None:
         """This will clear the board."""
@@ -254,14 +255,17 @@ class Board:
                 # The extra -1 is to adjust for zero indexing
                 y: int = offset[0] + ((max_rows - 1) - y_counter) - adjusted_height
                 x: int = offset[1] + x_counter * 2
-                color: int = abs(cell)
+                color: int = 0
+                if self.__mino_color_setting and cell:
+                    color = abs(cell)
+                mino_color: int = color_pair(color) if cell else A_BOLD
                 if 0 <= y < max_yx[0] and 0 <= x < max_yx[1] - 1:
                     safe_addstr(
                         stdscr,
                         y,
                         x,
                         char,
-                        color_pair(color) if cell else A_BOLD,
+                        mino_color
                     )
 
     def draw_queue(
@@ -331,6 +335,10 @@ class Board:
                 mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino][
                     orientation
                 ]
+                color: int = 0
+                if self.__mino_color_setting:
+                    color = MINO_COLOR.get(mino, 0)
+                mino_color: int = color_pair(color)
                 for y_offset, x_offset in mino_shape:
                     pos = (
                         mino_offset[0] + (mino_height - 1 - y_offset),
@@ -342,7 +350,7 @@ class Board:
                             pos[0],
                             pos[1],
                             self.__mino_style,
-                            color_pair(MINO_COLOR.get(mino, 0)),
+                            mino_color,
                         )
 
     def draw_hold(
@@ -426,6 +434,12 @@ class Board:
         #
         # Draw the hold mino using block positions
         mino_shape: List[Tuple[int, int]] = MINO_DRAW_LOCATION[mino_type][orientation]
+        color: int = 0
+        if self.__mino_color_setting:
+            color = MINO_COLOR.get(mino_type, 0)
+        mino_color: int = color_pair(
+            color if not hold_used else 8
+        )
         for y_offset, x_offset in mino_shape:
             pos = (
                 mino_offset[0] + (mino_height - 1 - y_offset),
@@ -437,11 +451,7 @@ class Board:
                     pos[0],
                     pos[1],
                     mino_char,
-                    color_pair(
-                        MINO_COLOR.get(mino_type, 0)
-                        if not hold_used
-                        else 8
-                    ),
+                    mino_color
                 )
 
 

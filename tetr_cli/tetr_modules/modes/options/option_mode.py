@@ -8,7 +8,7 @@ from curses import window
 from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 
 OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
-    "Graphics": {"action": "Graphics_Options", "sound": "select_confirm"},
+    "Graphics": {"action": "Graphic_Options", "sound": "select_confirm"},
     "Audio": {"action": "Audio_Options", "sound": "select_confirm"},
     "Controls": {"action": "Control_Options", "sound": "select_confirm"},
     "Gameplay": {"action": "Gameplay_Options", "sound": "select_confirm"},

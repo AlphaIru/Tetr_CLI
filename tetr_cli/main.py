@@ -55,7 +55,7 @@ from tetr_cli.tetr_modules.modules.sound import (
 TRANSITION_LIST: Dict[str, str] = {
     "Main_Menu": "main_menu",
     "Solo_Menu": "solo.solo_menu",
-    # Option Modes Not sure if I am going to implement these
+    # Audio Options
     "Option_Menu": "options.option",
     "Audio_Options": "options.audio_options.audio_options",
     "BGM_Option": "options.audio_options.bgm_option",
@@ -65,6 +65,10 @@ TRANSITION_LIST: Dict[str, str] = {
     "DAS_Option": "options.gameplay_options.das_option",
     "ARR_Option": "options.gameplay_options.arr_option",
     "Ghost_Piece_Option": "options.gameplay_options.ghost_piece_option",
+    # Graphic Options
+    "Graphic_Options": "options.graphic_options.graphic_options",
+    "Color_Option": "options.graphic_options.color_option",
+    "Mino_Style_Option": "options.graphic_options.mino_design",
     # TBD
     "Score_Screen": "score_screen",
     # Solo Modes

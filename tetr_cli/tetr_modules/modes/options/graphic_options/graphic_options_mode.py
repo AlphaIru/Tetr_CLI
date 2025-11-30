@@ -10,17 +10,15 @@ from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 
 
 GAMEPLAY_OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
-    "Delayed Auto Shift (DAS)": {"action": "DAS_Option", "sound": "select_confirm"},
-    "Auto Repeat Rate (ARR)": {"action": "ARR_Option", "sound": "select_confirm"},
-    "Ghost Piece": {"action": "Ghost_Piece_Option", "sound": "select_confirm"},
+    "Color Option": {"action": "Color_Option", "sound": "select_confirm"},
+    "Mino Design": {"action": "Mino_Style_Option", "sound": "select_confirm"},
     "Go_Back": {"action": "Main_Menu", "sound": "select_back"},
 }
 
 
 GAMEPLAY_OPTION_LIST: List[str] = [
-    "Delayed Auto Shift (DAS)",
-    "Auto Repeat Rate (ARR)",
-    "Ghost Piece",
+    "Color Option",
+    "Mino Design",
     "Go_Back",
 ]
 

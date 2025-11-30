@@ -34,6 +34,7 @@ DEFAULT_SETTINGS: List[Tuple[str, str]] = [
     ("sfx_volume", "70"),
     ("fps_limit", "30"),
     ("mino_style", "[]"),
+    ("color_mode", "true"),
     ("ghost_piece", "true"),
     ("das", "10"),
     ("arr", "2"),
