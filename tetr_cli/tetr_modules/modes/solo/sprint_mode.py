@@ -304,12 +304,6 @@ class ModeClass(SoloBaseMode):
         if check_max_yx[0] < MIN_Y or check_max_yx[1] < MIN_X:
             return
 
-        if self.check_clear():
-            self.mode = "cleared"
-            self.display_game_cleared(stdscr)
-            self.sound_action["BGM"] = ["stop"]
-            return
-
         if self.mode == "game_over":
             if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
                 self.action["transition"] = ["Score_Screen"]
@@ -327,6 +321,12 @@ class ModeClass(SoloBaseMode):
                 self.sound_action["SFX"].append("select_confirm")
                 return
             self.display_game_cleared(stdscr)
+            return
+
+        if self.check_clear():
+            self.mode = "cleared"
+            self.display_game_cleared(stdscr)
+            self.sound_action["BGM"] = ["stop"]
             return
 
         queue_to_draw: List[str] = self.mino_list[0:5]
