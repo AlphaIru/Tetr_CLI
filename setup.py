@@ -5,10 +5,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="tetr_cli",
-    version="1.0.0",
+    version="1.0.1",
     packages=find_packages(),
     entry_points={"console_scripts": ["tetr_cli = tetr_cli.starter:starter"]},
-    python_requires=">=3.7",
+    python_requires=">=3.8, <3.14",
     install_requires=[
         "ansicon>=1.83.0",
         "jinxed>=1.1.0",

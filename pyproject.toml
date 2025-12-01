@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tetr_cli"
-version = "1.0.0"
+version = "1.0.1"
 description = "Setup script for the tetr_cli package."
 authors = [
     { name = "Airun_Iru", email = "hugo_s_tanaka@yahoo.com" }
@@ -18,7 +18,7 @@ dependencies = [
     "wcwidth>=0.1.7",
     'windows-curses>=2.2.0; platform_system == "Windows"'
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.8, <3.14"
 readme = "README.md"
 
 [tool.setuptools.packages.find]
