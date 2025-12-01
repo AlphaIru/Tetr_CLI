@@ -9,12 +9,12 @@ from tetr_cli.tetr_modules.modules.constants import MINO_TO_GHOST
 from tetr_cli.tetr_modules.modules.database import set_setting
 
 OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
-    "Go_Back": {"action": "Gameplay_Options", "sound": "select_back"},
+    "Go_Back": {"action": "Graphic_Options", "sound": "select_back"},
 }
 
 for mino_style in MINO_TO_GHOST.keys():
     OPTION_TO_ACTION[mino_style] = {
-        "action": "Gameplay_Options",
+        "action": "Graphic_Options",
         "sound": "select_confirm",
     }
 

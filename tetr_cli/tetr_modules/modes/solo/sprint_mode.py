@@ -204,11 +204,6 @@ class ModeClass(SoloBaseMode):
                 das=self.__das,
                 arr=self.__arr,
             )
-            if self.check_game_over():
-                self.mode = "game_over"
-                self.display_game_over(stdscr)
-                self.sound_action["BGM"] = ["stop"]
-                return
 
         self.check_keyinput_pressed(pressed_keys=pressed_keys)
         if not self.current_mino:
@@ -323,12 +318,6 @@ class ModeClass(SoloBaseMode):
             self.display_game_cleared(stdscr)
             return
 
-        if self.check_clear():
-            self.mode = "cleared"
-            self.display_game_cleared(stdscr)
-            self.sound_action["BGM"] = ["stop"]
-            return
-
         queue_to_draw: List[str] = self.mino_list[0:5]
         hold_to_draw: Optional[str] = (
             self.current_hold.type if self.current_hold else None
@@ -368,6 +357,17 @@ class ModeClass(SoloBaseMode):
 
         if self.mode == "countdown":
             self.countdown_mode(stdscr)
+            return
+
+        if self.check_game_over():
+            self.mode = "game_over"
+            self.display_game_over(stdscr)
+            self.sound_action["BGM"] = ["stop"]
+            return
+        if self.check_clear():
+            self.mode = "cleared"
+            self.display_game_cleared(stdscr)
+            self.sound_action["BGM"] = ["stop"]
             return
 
         self.play_mode(stdscr, pressed_keys)
