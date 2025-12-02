@@ -40,32 +40,32 @@ class ModeClass(BaseModeClass):
         """This will handle the menu controls."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1
-        elif self.get_user_keybind("menu_up", menu_mode=True) & pressed_keys:
+        elif "up" in pressed_keys:
             if self.__selected_option > 4:
                 self.__selected_option = 4
             else:
                 self.__selected_option = 0
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_down", menu_mode=True) & pressed_keys:
+        elif "down" in pressed_keys:
             if self.__selected_option < 4:
                 self.__selected_option = 4
             else:
                 self.__selected_option = 5
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_left", menu_mode=True) & pressed_keys:
+        elif "left" in pressed_keys:
             self.__selected_option = max(0, self.__selected_option - 1)
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_right", menu_mode=True) & pressed_keys:
+        elif "right" in pressed_keys:
             self.__selected_option = min(4, self.__selected_option + 1)
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        elif "enter" in pressed_keys:
             self.action["transition"] = ["Join_Room"]  # Placeholder
             self.sound_action["SFX"].append("select_confirm")
-        elif self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+        elif "esc" in pressed_keys:
             self.action["transition"] = ["Multi_Menu"]
             self.sound_action["SFX"].append("select_back")
 

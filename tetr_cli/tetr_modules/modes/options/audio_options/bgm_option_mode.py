@@ -31,13 +31,10 @@ class ModeClass(SideMenuToggleClass):
         self.menu_control(pressed_keys)
         self.display_toggle(stdscr, "BGM Volume")
         if (
-            self.get_user_keybind("menu_left", menu_mode=True) & pressed_keys
-            or self.get_user_keybind("menu_right", menu_mode=True) & pressed_keys
-            or self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys
-            or self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys
+            {"left", "right", "enter", "esc"} & pressed_keys
         ):
             self.action["update_volume"] = []
-            if self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+            if "esc" in pressed_keys:
                 set_setting("music_volume", str(self.old_value))
                 return
             set_setting("music_volume", str(self.current_value))

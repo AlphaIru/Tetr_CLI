@@ -18,12 +18,6 @@ CONTROLS_LIST: List[str] = [
     "hard_drop",
     "hold_piece",
     "restart",
-    "menu_confirm",
-    "menu_back",
-    "menu_up",
-    "menu_down",
-    "menu_left",
-    "menu_right",
 ]
 
 

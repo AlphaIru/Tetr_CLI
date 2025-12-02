@@ -35,15 +35,15 @@ class ModeClass(BaseModeClass):
         """This will handle the menu controls."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1
-        elif self.get_user_keybind("menu_up", menu_mode=True) & pressed_keys:
+        elif "up" in pressed_keys:
             self.__selected_option = max(0, self.__selected_option - 1)
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_down", menu_mode=True) & pressed_keys:
+        elif "down" in pressed_keys:
             self.__selected_option = min(2, self.__selected_option + 1)
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        elif "enter" in pressed_keys:
             self.action["transition"] = ["Join_Room"]  # Placeholder
             self.sound_action["SFX"].append("select_confirm")
             if self.__username == "":
@@ -52,7 +52,7 @@ class ModeClass(BaseModeClass):
                 self.__roomname = "Your_Room"
             if self.__port == "0":
                 self.__port = "5000"
-        elif self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+        elif "esc" in pressed_keys:
             self.action["transition"] = ["Multi_Menu"]
             self.sound_action["SFX"].append("select_back")
 
