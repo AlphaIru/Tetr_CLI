@@ -29,10 +29,10 @@ except ImportError:
 help_dict: Dict[str, str] = {
     "--help, -h": "Display this help information.",
     "--debug, -d": "Enable debug mode with additional logging.",
-    "--curses, --ncurses, --c": "Enable ncurses mode for terminal-based UI.",
-    "--no-music, --nm": "Disable music playback during the game.",
-    "--reset-db, --reset-database, --r": "Reset the game database to default settings.",
-    "--input-test, --it": "Run the input test mode to check key inputs.",
+    "--curses, --ncurses, -c": "Enable ncurses mode for terminal-based UI.",
+    "--no-music, -nm": "Disable music playback during the game.",
+    "--reset-db, --reset-database, -r": "Reset the game database to default settings.",
+    "--input-test, -it": "Run the input test mode to check key inputs.",
 }
 
 

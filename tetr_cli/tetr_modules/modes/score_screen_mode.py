@@ -115,10 +115,6 @@ class ModeClass(BaseModeClass):
             return
 
         if len(self.user_name) < 10:
-            if input_key == "space":
-                self.user_name += " "
-                self.key_cooldown = 2
-                return
             if input_key in VALID_CHARS:
                 self.user_name += input_key
                 self.key_cooldown = 2

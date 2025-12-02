@@ -5,20 +5,27 @@
 from typing import Set, Dict, List, Tuple
 
 
-MIN_X: int = 80
-MIN_Y: int = 24
-
 BOARD_WIDTH: int = 10
 BOARD_HEIGHT: int = 40
 
 
-# (y, x), A B C D
-T_SPIN_CORNER_CHECKS: Dict[str, List[Tuple[int, int]]] = {
-    "N": [(1, -1), (1, 1), (-1, -1), (-1, 1)],
-    "E": [(1, 1), (-1, 1), (1, -1), (-1, -1)],
-    "S": [(-1, 1), (-1, -1), (1, 1), (1, -1)],
-    "W": [(-1, -1), (1, -1), (-1, 1), (1, 1)],
-}
+CONTROLS_LIST: List[str] = [
+    "move_left",
+    "move_right",
+    "rotate_cw",
+    "rotate_ccw",
+    "soft_drop",
+    "hard_drop",
+    "hold_piece",
+    "restart",
+    "menu_confirm",
+    "menu_back",
+    "menu_up",
+    "menu_down",
+    "menu_left",
+    "menu_right",
+]
+
 
 DRAW_BOARD_WIDTH: int = BOARD_WIDTH * 2  # Each cell is 2 chars wide
 DRAW_BOARD_HEIGHT: int = 20  # Show only 22 rows 20 + 2 for extra
@@ -112,23 +119,13 @@ MINO_DRAW_LOCATION: Dict[str, Dict[str, List[Tuple[int, int]]]] = {
 
 MINO_TO_GHOST: Dict[str, str] = {"[]": "||", "00": "()", "●●": "--", "██": "▒▒"}
 
+MAX_NAME_LENGTH: int = 15
 
-CONTROLS_LIST: List[str] = [
-    "move_left",
-    "move_right",
-    "rotate_cw",
-    "rotate_ccw",
-    "soft_drop",
-    "hard_drop",
-    "hold_piece",
-    "restart",
-    "menu_confirm",
-    "menu_back",
-    "menu_up",
-    "menu_down",
-    "menu_left",
-    "menu_right",
-]
+MIN_X: int = 80
+MIN_Y: int = 24
+
+
+NUMBER_SET: frozenset[str] = frozenset("0123456789")
 
 
 SCORE_TABLE: Dict[str, Dict[int, int]] = {
@@ -174,6 +171,14 @@ SCORE_NAME: Dict[str, Dict[int, str]] = {
         0: "Mini Tspin",
         1: "Mini Tspin Single",
     },
+}
+
+# (y, x), A B C D
+T_SPIN_CORNER_CHECKS: Dict[str, List[Tuple[int, int]]] = {
+    "N": [(1, -1), (1, 1), (-1, -1), (-1, 1)],
+    "E": [(1, 1), (-1, 1), (1, -1), (-1, -1)],
+    "S": [(-1, 1), (-1, -1), (1, 1), (1, -1)],
+    "W": [(-1, -1), (1, -1), (-1, 1), (1, 1)],
 }
 
 VALID_CHARS: frozenset[str] = frozenset(

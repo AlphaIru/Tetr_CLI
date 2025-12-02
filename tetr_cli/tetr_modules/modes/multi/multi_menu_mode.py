@@ -10,13 +10,12 @@ from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 
 
 OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
-    "Marathon": {"action": "Marathon", "sound": "select_confirm"},
-    "Sprint": {"action": "Sprint", "sound": "select_confirm"},
-    "Ultra": {"action": "Ultra", "sound": "select_confirm"},
+    "Host": {"action": "Host_Room", "sound": "select_confirm"},
+    "Join": {"action": "Join_Room", "sound": "select_confirm"},
     "Go_Back": {"action": "Main_Menu", "sound": "select_back"},
 }
 
-OPTION_LIST: List[str] = ["Marathon", "Sprint", "Ultra", "Go_Back"]
+OPTION_LIST: List[str] = ["Host", "Join", "Go_Back"]
 
 
 class ModeClass(VerticalMenuModeClass):
@@ -29,7 +28,7 @@ class ModeClass(VerticalMenuModeClass):
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will progress the menu based on the inputs."""
         self.menu_control(pressed_keys)
-        self.display_menu(stdscr, "Solo Mode Menu")
+        self.display_menu(stdscr, "Multiplayer Mode Menu")
 
 
 if __name__ == "__main__":

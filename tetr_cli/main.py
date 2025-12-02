@@ -54,7 +54,6 @@ from tetr_cli.tetr_modules.modules.sound import (
 
 TRANSITION_LIST: Dict[str, str] = {
     "Main_Menu": "main_menu",
-    "Solo_Menu": "solo.solo_menu",
     # Audio Options
     "Option_Menu": "options.option",
     "Audio_Options": "options.audio_options.audio_options",
@@ -75,9 +74,14 @@ TRANSITION_LIST: Dict[str, str] = {
     "Change_Keybind": "options.control_options.change_keybind",
     "Score_Screen": "score_screen",
     # Solo Modes
+    "Solo_Menu": "solo.solo_menu",
     "Marathon": "solo.marathon",
     "Sprint": "solo.sprint",
     "Ultra": "solo.ultra",
+    # Multiplayer Modes
+    "Multi_Menu": "multi.multi_menu",
+    "Host_Room": "multi.host_room",
+    "Join_Room": "multi.join_room",
 }
 
 
