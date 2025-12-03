@@ -198,6 +198,12 @@ async def main(
                 )
 
             actions: Dict[str, List[str]] = current_mode.get_mode_action()
+            if "ip" in actions:
+                ip_address: str = actions["ip"][0]
+                port_number: str = actions["port"][0]
+                stdscr.addstr(f"IP Address: {ip_address}\n")
+                stdscr.addstr(f"Port Number: {port_number}\n")
+
             if "transition" in actions:
                 if "Quit" in actions["transition"]:
                     break
@@ -208,15 +214,12 @@ async def main(
                 stdscr.clear()
                 if pressed_keys is not None:
                     pressed_keys.clear()
-
             if "clear" in actions:
                 stdscr.clear()
                 stdscr.refresh()
-
             if "update_fps" in actions:
                 frame_limit = int(get_setting("fps_limit", "30"))
                 frame_duration = 1 / frame_limit
-
             if "update_volume" in actions and audio_check:
                 await update_volume(sound_effect_dict=sound_effect_dict)
 

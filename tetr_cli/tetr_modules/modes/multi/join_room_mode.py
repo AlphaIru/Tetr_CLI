@@ -10,6 +10,7 @@ from curses import window, A_BOLD, A_REVERSE
 from tetr_cli.tetr_modules.menu_core.base_mode import BaseModeClass
 
 from tetr_cli.tetr_modules.modules.constants import MAX_NAME_LENGTH, NUMBER_SET, VALID_CHARS
+from tetr_cli.tetr_modules.modules.database import set_temp
 from tetr_cli.tetr_modules.modules.safe_curses import (
     calculate_centered_menu,
     safe_addstr,
@@ -64,6 +65,9 @@ class ModeClass(BaseModeClass):
             self.sound_action["SFX"].append("select_move")
         elif "enter" in pressed_keys:
             self.action["transition"] = ["Join_Room"]  # Placeholder
+            self.action["ip"] = [".".join(self.__ip)]
+            self.action["port"] = [self.__port]
+            set_temp("username", self.__username)
             self.sound_action["SFX"].append("select_confirm")
         elif "esc" in pressed_keys:
             self.action["transition"] = ["Multi_Menu"]
