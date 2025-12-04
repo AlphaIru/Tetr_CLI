@@ -15,10 +15,6 @@ try:
 except ImportError:
     NO_PYNPUT = True
 
-from tetr_cli.main import main
-from tetr_cli.tetr_modules.modules.database import initialize_database
-from tetr_cli.tetr_modules.input_test import run_input_test_mode
-
 try:
     from tetr_cli.tetr_modules.keyboard_handlers.pynput_handler import (
         setup_pynput_listener,
@@ -29,11 +25,20 @@ except ImportError:
 help_dict: Dict[str, str] = {
     "--help, -h": "Display this help information.",
     "--debug, -d": "Enable debug mode with additional logging.",
-    "--curses, --ncurses, --c": "Enable ncurses mode for terminal-based UI.",
-    "--no-music, --nm": "Disable music playback during the game.",
-    "--reset-db, --reset-database, --r": "Reset the game database to default settings.",
-    "--input-test, --it": "Run the input test mode to check key inputs.",
+    "--curses, --ncurses, -c": "Enable ncurses mode for terminal-based UI.",
+    "--no-music, -nm": "Disable music playback during the game.",
+    "--reset-db, --reset-database, -r": "Reset the game database to default settings.",
+    "--input-test, -it": "Run the input test mode to check key inputs.",
 }
+
+ASCII_ART: List[str] = [
+    r"████████╗    ███████╗    ████████╗    ██████╗                ██████╗    ██╗         ██╗",
+    r"╚══██╔══╝    ██╔════╝    ╚══██╔══╝    ██╔══██╗              ██╔════╝    ██║         ██║",
+    r"   ██║       █████╗         ██║       ██████╔╝    █████╗    ██║         ██║         ██║",
+    r"   ██║       ██╔══╝         ██║       ██╔══██╗    ╚════╝    ██║         ██║         ██║",
+    r"   ██║       ███████╗       ██║       ██║  ██║              ╚██████╗    ███████╗    ██║",
+    r"   ╚═╝       ╚══════╝       ╚═╝       ╚═╝  ╚═╝               ╚═════╝    ╚══════╝    ╚═╝",
+]
 
 
 def parse_flag(flag_aliases: List[str]) -> bool:
@@ -43,7 +48,6 @@ def parse_flag(flag_aliases: List[str]) -> bool:
 
 def print_help() -> None:
     """Print help information for command-line flags."""
-    print("\n\n")
     print("Tetr_CLI Help Information:")
     print("-------------------------\n")
     for flag, description in help_dict.items():
@@ -53,6 +57,21 @@ def print_help() -> None:
         print(f"{flag}:")
         print(f"    {description}")
         print()
+
+    print("Controls:")
+    print("    Menu:")
+    print("        Arrow keys: to navigate menus.")
+    print("        Enter:      to select an option.")
+    print("        Esc:        to go back or exit.")
+    print("    In-Game (Default):")
+    print("        Left Arrow:  to move left.")
+    print("        Right Arrow: to move right.")
+    print("        Up Arrow:    to rotate right (CW). (X Key for alternative)")
+    print("        Z Key:       to rotate left (CCW). (Ctrl Key for alternative)")
+    print("        Down Arrow:  to soft drop.")
+    print("        Spacebar:    to hard drop.")
+    print("        C Key:       to hold.")
+    print("        R Key:       to restart.")
 
 
 def starter() -> None:
@@ -69,8 +88,9 @@ def starter() -> None:
         print_help()
         return
 
+    from tetr_cli.tetr_modules.modules.database import initialize_database
+
     if reset_database:
-        print("\n\n")
         input_key: str = ""
         while input_key.lower() not in ("y", "n", "yes", "no"):
             input_key = input(
@@ -85,6 +105,13 @@ def starter() -> None:
         return
 
     initialize_database()
+
+    from tetr_cli.main import main
+    from tetr_cli.tetr_modules.input_test import run_input_test_mode
+
+    print("\n\n")
+    for line in ASCII_ART:
+        print(line)
 
     if NO_PYNPUT:
         ncurses_mode = True

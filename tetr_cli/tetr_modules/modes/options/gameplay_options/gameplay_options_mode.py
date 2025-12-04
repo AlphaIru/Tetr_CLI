@@ -13,7 +13,7 @@ GAMEPLAY_OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
     "Delayed Auto Shift (DAS)": {"action": "DAS_Option", "sound": "select_confirm"},
     "Auto Repeat Rate (ARR)": {"action": "ARR_Option", "sound": "select_confirm"},
     "Ghost Piece": {"action": "Ghost_Piece_Option", "sound": "select_confirm"},
-    "Go_Back": {"action": "Main_Menu", "sound": "select_back"},
+    "Go_Back": {"action": "Option_Menu", "sound": "select_back"},
 }
 
 

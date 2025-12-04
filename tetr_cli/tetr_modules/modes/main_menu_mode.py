@@ -6,17 +6,26 @@ from typing import Dict, List, Set
 from curses import window
 
 from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
+from tetr_cli.tetr_modules.modules.safe_curses import calculate_centered_menu, safe_addstr
 
 
 OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
     "Solo": {"action": "Solo_Menu", "sound": "select_confirm"},
-    "Multiplayer": {"action": "Multi_Menu", "sound": "select_confirm"},
+    # "Multiplayer": {"action": "Multi_Menu", "sound": "select_confirm"},
     "Options": {"action": "Option_Menu", "sound": "select_confirm"},
     "Quit": {"action": "Quit", "sound": "select_back"},
     "Go_Back": {"action": "Quit", "sound": "select_back"},
 }
 
-OPTION_LIST: List[str] = ["Solo", "Multiplayer", "Options", "Quit"]
+# OPTION_LIST: List[str] = ["Solo", "Multiplayer", "Options", "Quit"]
+OPTION_LIST: List[str] = ["Solo", "Options", "Quit"]
+
+
+TITLE_ART: List[str] = [
+    r"██████   ██████   ██████   █████▄          ▄█████   ██       ██",
+    r"  ██     ██▄▄       ██     ██▄▄██▄   ▄▄▄   ██       ██       ██",
+    r"  ██     ██▄▄▄▄     ██     ██   ██         ▀█████   ██████   ██",
+]
 
 
 class ModeClass(VerticalMenuModeClass):
@@ -30,6 +39,14 @@ class ModeClass(VerticalMenuModeClass):
         """This will progress the menu based on the inputs."""
         self.menu_control(pressed_keys)
         self.display_menu(stdscr, "Main Menu")
+        start_y, start_x, _ = calculate_centered_menu(stdscr, [""])
+        for line_num, line in enumerate(TITLE_ART):
+            safe_addstr(
+                stdscr,
+                start_y - 7 + line_num,
+                start_x - len(line) // 2,
+                line,
+            )
 
 
 if __name__ == "__main__":

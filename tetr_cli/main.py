@@ -54,7 +54,6 @@ from tetr_cli.tetr_modules.modules.sound import (
 
 TRANSITION_LIST: Dict[str, str] = {
     "Main_Menu": "main_menu",
-    "Solo_Menu": "solo.solo_menu",
     # Audio Options
     "Option_Menu": "options.option",
     "Audio_Options": "options.audio_options.audio_options",
@@ -75,9 +74,14 @@ TRANSITION_LIST: Dict[str, str] = {
     "Change_Keybind": "options.control_options.change_keybind",
     "Score_Screen": "score_screen",
     # Solo Modes
+    "Solo_Menu": "solo.solo_menu",
     "Marathon": "solo.marathon",
     "Sprint": "solo.sprint",
     "Ultra": "solo.ultra",
+    # Multiplayer Modes
+    "Multi_Menu": "multi.multi_menu",
+    "Host_Room": "multi.host_room",
+    "Join_Room": "multi.join_room",
 }
 
 
@@ -194,6 +198,12 @@ async def main(
                 )
 
             actions: Dict[str, List[str]] = current_mode.get_mode_action()
+            if "ip" in actions:
+                ip_address: str = actions["ip"][0]
+                port_number: str = actions["port"][0]
+                stdscr.addstr(f"IP Address: {ip_address}\n")
+                stdscr.addstr(f"Port Number: {port_number}\n")
+
             if "transition" in actions:
                 if "Quit" in actions["transition"]:
                     break
@@ -204,15 +214,12 @@ async def main(
                 stdscr.clear()
                 if pressed_keys is not None:
                     pressed_keys.clear()
-
             if "clear" in actions:
                 stdscr.clear()
                 stdscr.refresh()
-
             if "update_fps" in actions:
                 frame_limit = int(get_setting("fps_limit", "30"))
                 frame_duration = 1 / frame_limit
-
             if "update_volume" in actions and audio_check:
                 await update_volume(sound_effect_dict=sound_effect_dict)
 

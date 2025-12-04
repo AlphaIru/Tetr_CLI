@@ -30,7 +30,7 @@ class ModeClass(VerticalMenuModeClass):
         """This will progress the menu based on the inputs."""
         self.menu_control(pressed_keys)
         self.display_menu(stdscr, "Mino Style Options")
-        if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        if "enter" in pressed_keys:
             selected_option: str = list(MINO_TO_GHOST.keys())[self.selected_option]
             set_setting("mino_style", selected_option)
 

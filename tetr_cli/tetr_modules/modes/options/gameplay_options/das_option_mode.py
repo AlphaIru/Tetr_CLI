@@ -30,7 +30,7 @@ class ModeClass(SideMenuToggleClass):
         """This will progress the menu based on the inputs."""
         self.menu_control(pressed_keys)
         self.display_toggle(stdscr, "DAS Options (Frames)")
-        if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        if "enter" in pressed_keys:
             set_setting("das", str(self.current_value))
 
 

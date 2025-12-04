@@ -11,21 +11,15 @@ DATABASE_PATH: Path = Path(__file__).parent.parent.resolve()
 DB_FILE: str = str(DATABASE_PATH / "data.db")
 
 
-DEFAULT_KEYBINDS: List[Tuple[str, bool, str, Optional[str]]] = [
-    ("move_left", False, "left", None),
-    ("move_right", False, "right", None),
-    ("rotate_cw", False, "up", "x"),
-    ("rotate_ccw", False, "z", "ctrl"),
-    ("soft_drop", False, "down", None),
-    ("hard_drop", False, "space", None),
-    ("hold_piece", False, "c", None),
-    ("restart", False, "r", None),
-    ("menu_confirm", True, "enter", None),
-    ("menu_back", True, "q", None),
-    ("menu_up", True, "up", None),
-    ("menu_down", True, "down", None),
-    ("menu_left", True, "left", None),
-    ("menu_right", True, "right", None),
+DEFAULT_KEYBINDS: List[Tuple[str, str, Optional[str]]] = [
+    ("move_left", "left", None),
+    ("move_right", "right", None),
+    ("rotate_cw", "up", "x"),
+    ("rotate_ccw", "z", "ctrl"),
+    ("soft_drop", "down", None),
+    ("hard_drop", "space", None),
+    ("hold_piece", "c", None),
+    ("restart", "r", None)
 ]
 
 
@@ -133,7 +127,6 @@ def create_keybinds_table(cursor: Cursor) -> None:
     CREATE TABLE IF NOT EXISTS keybinds (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         input_name TEXT NOT NULL,
-        is_menu_keybind BOOLEAN DEFAULT 0,
         key_name1 TEXT NOT NULL,
         key_name2 TEXT DEFAULT NULL
     )
@@ -146,7 +139,7 @@ def insert_default_keybinds(cursor: Cursor) -> None:
 
     cursor.executemany(
         """
-    INSERT INTO keybinds (input_name, is_menu_keybind, key_name1, key_name2) VALUES (?, ?, ?, ?)
+    INSERT INTO keybinds (input_name, key_name1, key_name2) VALUES (?, ?, ?)
     """,
         DEFAULT_KEYBINDS,
     )
@@ -241,36 +234,27 @@ def validate_keybinds(
     return True
 
 
-def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
+def load_keybinds() -> Dict[str, Set[str]]:
     """Load user keybind from the database."""
 
-    rows: List[Tuple[str, bool, str, Optional[str]]] = []
+    rows: List[Tuple[str, str, Optional[str]]] = []
     with connect(DB_FILE) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT input_name, is_menu_keybind, key_name1, key_name2 FROM keybinds"
+            "SELECT input_name, key_name1, key_name2 FROM keybinds"
         )
         rows = cursor.fetchall()
 
-    user_keybinds: Dict[str, Dict[str, Set[str]]] = {}
-    menu_keybinds: Dict[str, Set[str]] = {}
     game_keybinds: Dict[str, Set[str]] = {}
 
-    for input_name, is_menu_keybind, key_name1, key_name2 in rows:
-        if is_menu_keybind:
-            if input_name not in menu_keybinds:
-                menu_keybinds[input_name] = set()
-            menu_keybinds[input_name].add(key_name1)
-            if key_name2 is not None:
-                menu_keybinds[input_name].add(key_name2)
-        else:
-            if input_name not in game_keybinds:
-                game_keybinds[input_name] = set()
-            game_keybinds[input_name].add(key_name1)
-            if key_name2 is not None:
-                game_keybinds[input_name].add(key_name2)
+    for input_name, key_name1, key_name2 in rows:
+        if input_name not in game_keybinds:
+            game_keybinds[input_name] = set()
+        game_keybinds[input_name].add(key_name1)
+        if key_name2 is not None:
+            game_keybinds[input_name].add(key_name2)
 
-    if not validate_keybinds(menu_keybinds) or not validate_keybinds(game_keybinds):
+    if not validate_keybinds(game_keybinds):
         with connect(DB_FILE) as conn:
             cursor = conn.cursor()
             drop_keybinds(cursor)
@@ -278,10 +262,7 @@ def load_keybinds() -> Dict[str, Dict[str, Set[str]]]:
             insert_default_keybinds(cursor)
         return load_keybinds()
 
-    user_keybinds["menu_keys"] = menu_keybinds
-    user_keybinds["game_keys"] = game_keybinds
-
-    return user_keybinds
+    return game_keybinds
 
 
 def update_keybind(
@@ -325,30 +306,22 @@ def update_keybind(
             )
 
         # Validate keybinds
-        rows: List[Tuple[str, bool, str, Optional[str]]] = []
+        rows: List[Tuple[str, str, Optional[str]]] = []
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT input_name, is_menu_keybind, key_name1, key_name2 FROM keybinds"
+            "SELECT input_name, key_name1, key_name2 FROM keybinds"
         )
         rows = cursor.fetchall()
-        menu_keybinds: Dict[str, Set[str]] = {}
         game_keybinds: Dict[str, Set[str]] = {}
 
-        for input_name, is_menu_keybind, key_name1, key_name2 in rows:
-            if is_menu_keybind:
-                if input_name not in menu_keybinds:
-                    menu_keybinds[input_name] = set()
-                menu_keybinds[input_name].add(key_name1)
-                if key_name2 is not None:
-                    menu_keybinds[input_name].add(key_name2)
-            else:
-                if input_name not in game_keybinds:
-                    game_keybinds[input_name] = set()
-                game_keybinds[input_name].add(key_name1)
-                if key_name2 is not None:
-                    game_keybinds[input_name].add(key_name2)
+        for input_name, key_name1, key_name2 in rows:
+            if input_name not in game_keybinds:
+                game_keybinds[input_name] = set()
+            game_keybinds[input_name].add(key_name1)
+            if key_name2 is not None:
+                game_keybinds[input_name].add(key_name2)
 
-        if not validate_keybinds(menu_keybinds) or not validate_keybinds(game_keybinds):
+        if not validate_keybinds(game_keybinds):
             # Rollback keybinds
             cursor.execute(
                 """

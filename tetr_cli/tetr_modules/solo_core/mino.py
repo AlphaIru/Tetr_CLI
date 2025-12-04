@@ -171,16 +171,16 @@ class Mino:
         self,
         pressed_keys: Set[str],
         mino_touching_side_func: Callable[[str, "Mino"], bool],
-        get_user_keybinds: Callable[[str, bool], Set[str]],
+        get_user_keybind: Callable[[str], Set[str]],
     ) -> None:
         """Handles auto-repeat for left/right movement."""
         direction: str = ""
-        if get_user_keybinds("move_left", False) & pressed_keys and not (
-            get_user_keybinds("move_right", False) & pressed_keys
+        if get_user_keybind("move_left") & pressed_keys and not (
+            get_user_keybind("move_right") & pressed_keys
         ):
             direction = "left"
-        elif get_user_keybinds("move_right", False) & pressed_keys and not (
-            get_user_keybinds("move_left", False) & pressed_keys
+        elif get_user_keybind("move_right") & pressed_keys and not (
+            get_user_keybind("move_left") & pressed_keys
         ):
             direction = "right"
 
@@ -209,18 +209,6 @@ class Mino:
             self.move_sideways(direction)
             self.__kick_number = 0
             self.__auto_repeat_delay = self.__arr
-
-    def handle_sideways_curses_input(
-        self,
-        pressed_keys: Set[str],
-        mino_touching_side_func: Callable[[str, "Mino"], bool],
-    ) -> None:
-        """Handles continuous movement for left/right in curses mode."""
-        for direction in ["left", "right"]:
-            if direction in pressed_keys:
-                if not mino_touching_side_func(direction, self):
-                    self.move_sideways(direction)
-                    self.__kick_number = 0
 
     def move_down(
         self, is_position_valid: Callable[[List[Tuple[int, int]]], bool]

@@ -149,18 +149,12 @@ class ModeClass(SoloBaseMode):
             "GAME OVER!",
             A_BOLD,
         )
-        confirm_keys: Set[str] = self.get_user_keybind("menu_confirm", menu_mode=True)
-        confirm_string: str = (
-            "/".join(sorted(confirm_keys))
-            if len(confirm_keys) > 1
-            else next(iter(confirm_keys))
-        )
-        string_len: int = len(f"Press {confirm_string} to Continue")
+        statement: str = "Press enter to Continue"
         safe_addstr(
             stdscr,
             center_y + 1,
-            center_x - (string_len // 2),
-            f"Press {confirm_string} to Continue",
+            center_x - (len(statement) // 2),
+            statement,
             A_BOLD,
         )
 
@@ -184,18 +178,12 @@ class ModeClass(SoloBaseMode):
             "CLEAR!",
             A_BOLD,
         )
-        confirm_keys: Set[str] = self.get_user_keybind("menu_confirm", menu_mode=True)
-        confirm_string: str = (
-            "/".join(sorted(confirm_keys))
-            if len(confirm_keys) > 1
-            else next(iter(confirm_keys))
-        )
-        string_len: int = len(f"Press {confirm_string} to Continue")
+        statement: str = "Press enter to Continue"
         safe_addstr(
             stdscr,
             center_y + 1,
-            center_x - (string_len // 2),
-            f"Press {confirm_string} to Continue",
+            center_x - (len(statement) // 2),
+            statement,
             A_BOLD,
         )
 
@@ -308,7 +296,7 @@ class ModeClass(SoloBaseMode):
             return
 
         if self.mode == "game_over":
-            if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+            if "enter" in pressed_keys:
                 self.action["transition"] = ["Score_Screen"]
                 set_temp("score", "-1")
                 set_temp("score_type", "Ultra")
@@ -317,7 +305,7 @@ class ModeClass(SoloBaseMode):
             self.display_game_over(stdscr)
             return
         if self.mode == "cleared":
-            if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+            if "enter" in pressed_keys:
                 self.action["transition"] = ["Score_Screen"]
                 set_temp("score", str(self.score))
                 set_temp("score_type", "Ultra")
@@ -358,7 +346,7 @@ class ModeClass(SoloBaseMode):
             self.action["transition"] = ["Ultra"]
             self.sound_action["SFX"].append("select_confirm")
             return
-        if self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+        if "esc" in pressed_keys:
             self.action["transition"] = ["Solo_Menu"]
             self.sound_action["SFX"].append("select_back")
             return

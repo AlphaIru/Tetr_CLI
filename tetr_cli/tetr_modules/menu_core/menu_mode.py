@@ -36,17 +36,17 @@ class VerticalMenuModeClass(BaseModeClass):
         """This will handle the menu controls."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1
-        elif self.get_user_keybind("menu_up", menu_mode=True) & pressed_keys:
+        elif "up" in pressed_keys:
             self.__selected_option = max(0, self.__selected_option - 1)
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_down", menu_mode=True) & pressed_keys:
+        elif "down" in pressed_keys:
             self.__selected_option = min(
                 len(self.__options) - 1, self.__selected_option + 1
             )
             self.__key_cooldown = 3
             self.sound_action["SFX"].append("select_move")
-        elif self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        elif "enter" in pressed_keys:
             transition_name: str = self.__options[self.__selected_option]
             self.action["transition"] = [
                 self.__option_to_action[transition_name]["action"]
@@ -54,7 +54,7 @@ class VerticalMenuModeClass(BaseModeClass):
             self.sound_action["SFX"].append(
                 self.__option_to_action[transition_name]["sound"]
             )
-        elif self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+        elif "esc" in pressed_keys:
             self.action["transition"] = [self.__option_to_action["Go_Back"]["action"]]
             self.sound_action["SFX"].append(self.__option_to_action["Go_Back"]["sound"])
 
@@ -117,20 +117,20 @@ class SideMenuToggleClass(BaseModeClass):
         """This will handle the menu controls."""
         if self.__key_cooldown > 0:
             self.__key_cooldown -= 1
-        elif self.get_user_keybind("menu_left", menu_mode=True) & pressed_keys:
+        elif "left" in pressed_keys:
             self.sound_action["SFX"].append("select_move")
             self.__current_value = max(self.__lower, self.__current_value - self.__step)
             self.__key_cooldown = 3
-        elif self.get_user_keybind("menu_right", menu_mode=True) & pressed_keys:
+        elif "right" in pressed_keys:
             self.sound_action["SFX"].append("select_move")
             self.__current_value = min(self.__upper, self.__current_value + self.__step)
             self.__key_cooldown = 3
-        elif self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        elif "enter" in pressed_keys:
             self.sound_action["SFX"].append("select_confirm")
             set_setting(self.__toggle_name, str(self.__current_value))
             self.action["transition"] = [self.__toggle_to_action["Confirm"]["action"]]
             self.sound_action["SFX"].append(self.__toggle_to_action["Confirm"]["sound"])
-        elif self.get_user_keybind("menu_back", menu_mode=True) & pressed_keys:
+        elif "esc" in pressed_keys:
             self.action["transition"] = [self.__toggle_to_action["Go_Back"]["action"]]
             self.sound_action["SFX"].append(self.__toggle_to_action["Go_Back"]["sound"])
 

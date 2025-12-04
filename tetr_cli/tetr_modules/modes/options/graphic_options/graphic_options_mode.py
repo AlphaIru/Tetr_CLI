@@ -13,7 +13,7 @@ GAMEPLAY_OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
     "Color Option": {"action": "Color_Option", "sound": "select_confirm"},
     "Mino Design": {"action": "Mino_Style_Option", "sound": "select_confirm"},
     "Frame Rate": {"action": "FPS_Option", "sound": "select_confirm"},
-    "Go_Back": {"action": "Main_Menu", "sound": "select_back"},
+    "Go_Back": {"action": "Option_Menu", "sound": "select_back"},
 }
 
 

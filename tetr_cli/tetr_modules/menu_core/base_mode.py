@@ -15,7 +15,7 @@ class BaseModeClass:
         self.__fps: int = int(get_setting("fps_limit", "30"))
         self.__action: Dict[str, List[str]] = {}
         self.__sound_action: Dict[str, List[str]] = {"BGM": ["stop"], "SFX": []}
-        self.__user_keybinds: Dict[str, Dict[str, Set[str]]] = load_keybinds()
+        self.__user_keybinds: Dict[str, Set[str]] = load_keybinds()
         # print(f"Loaded keybinds: {self.__user_keybinds}")
 
     @property
@@ -50,13 +50,10 @@ class BaseModeClass:
 
     def get_user_keybind(
         self,
-        input_name: str,
-        menu_mode: bool = False,
+        input_name: str
     ) -> Set[str]:
         """This will return the user keybinds dictionary."""
-        if menu_mode:
-            return self.__user_keybinds["menu_keys"][input_name]
-        return self.__user_keybinds["game_keys"][input_name]
+        return self.__user_keybinds[input_name]
 
     def pop_action(self) -> Dict[str, List[str]]:
         """This will return the action and reset it."""

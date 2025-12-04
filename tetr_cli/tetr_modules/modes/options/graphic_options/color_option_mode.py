@@ -31,7 +31,7 @@ class ModeClass(VerticalMenuModeClass):
         """This will progress the menu based on the inputs."""
         self.menu_control(pressed_keys)
         self.display_menu(stdscr, "Color Options")
-        if self.get_user_keybind("menu_confirm", menu_mode=True) & pressed_keys:
+        if "enter" in pressed_keys:
             selected_option: str = OPTION_LIST[self.selected_option]
             color_value: str = "true" if selected_option == "True" else "false"
             set_setting("color_mode", color_value)
