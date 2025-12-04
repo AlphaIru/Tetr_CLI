@@ -31,6 +31,15 @@ help_dict: Dict[str, str] = {
     "--input-test, -it": "Run the input test mode to check key inputs.",
 }
 
+ASCII_ART: List[str] = [
+    r"████████╗    ███████╗    ████████╗    ██████╗                ██████╗    ██╗         ██╗",
+    r"╚══██╔══╝    ██╔════╝    ╚══██╔══╝    ██╔══██╗              ██╔════╝    ██║         ██║",
+    r"   ██║       █████╗         ██║       ██████╔╝    █████╗    ██║         ██║         ██║",
+    r"   ██║       ██╔══╝         ██║       ██╔══██╗    ╚════╝    ██║         ██║         ██║",
+    r"   ██║       ███████╗       ██║       ██║  ██║              ╚██████╗    ███████╗    ██║",
+    r"   ╚═╝       ╚══════╝       ╚═╝       ╚═╝  ╚═╝               ╚═════╝    ╚══════╝    ╚═╝",
+]
+
 
 def parse_flag(flag_aliases: List[str]) -> bool:
     """Check if any of the given flag aliases are present in the command-line arguments."""
@@ -79,12 +88,9 @@ def starter() -> None:
         print_help()
         return
 
-    from tetr_cli.main import main
     from tetr_cli.tetr_modules.modules.database import initialize_database
-    from tetr_cli.tetr_modules.input_test import run_input_test_mode
 
     if reset_database:
-        print("\n\n")
         input_key: str = ""
         while input_key.lower() not in ("y", "n", "yes", "no"):
             input_key = input(
@@ -99,6 +105,13 @@ def starter() -> None:
         return
 
     initialize_database()
+
+    from tetr_cli.main import main
+    from tetr_cli.tetr_modules.input_test import run_input_test_mode
+
+    print("\n\n")
+    for line in ASCII_ART:
+        print(line)
 
     if NO_PYNPUT:
         ncurses_mode = True

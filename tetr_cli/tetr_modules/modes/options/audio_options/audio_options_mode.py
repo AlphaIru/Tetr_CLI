@@ -10,7 +10,7 @@ from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 AUDIO_OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
     "BGM": {"action": "BGM_Option", "sound": "select_confirm"},
     "SFX": {"action": "SFX_Option", "sound": "select_confirm"},
-    "Go_Back": {"action": "Main_Menu", "sound": "select_back"},
+    "Go_Back": {"action": "Option_Menu", "sound": "select_back"},
 }
 
 AUDIO_OPTION_LIST: List[str] = [

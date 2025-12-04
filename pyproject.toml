@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tetr_cli"
-version = "1.0.1-2"
+version = "1.0.2"
 description = "Setup script for the tetr_cli package."
 authors = [
     { name = "Airun_Iru", email = "hugo_s_tanaka@yahoo.com" }
@@ -27,6 +27,7 @@ include = ["tetr_cli", "tetr_cli.*"]
 
 [project.scripts]
 tetr_cli = "tetr_cli.starter:starter"
+tetr-cli = "tetr_cli.starter:starter"
 
 [tool.setuptools.package-data]
 "tetr_cli" = [
