@@ -24,12 +24,11 @@ class ModeClass(BaseModeClass):
         self.__selected_option: int = 0
         self.__key_cooldown: int = 0
         # note selected_option:
-        # 0: roomname
+        # 0: ticket
         # 1: username
 
-        self.__roomname: str = "Your_Room"
+        self.__ticket: str = ""
         self.__username: str = "Noob_Player1"
-        self.__port: str = "5000"
 
     def menu_control(self, pressed_keys: Set) -> None:
         """This will handle the menu controls."""
@@ -48,10 +47,6 @@ class ModeClass(BaseModeClass):
             self.sound_action["SFX"].append("select_confirm")
             if self.__username == "":
                 self.__username = "Noob_Player1"
-            if self.__roomname == "":
-                self.__roomname = "Your_Room"
-            if self.__port == "0":
-                self.__port = "5000"
         elif "esc" in pressed_keys:
             self.action["transition"] = ["Multi_Menu"]
             self.sound_action["SFX"].append("select_back")
