@@ -1,9 +1,10 @@
 """This will display the wait room menu."""
+
 # coding: utf-8
 
-from typing import Dict
+# from typing import Dict
 
-from curses import window
+# from curses import window
 
 from tetr_cli.tetr_modules.menu_core.base_mode import BaseModeClass
 
