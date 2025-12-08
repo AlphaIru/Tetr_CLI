@@ -17,6 +17,7 @@ async def load_sfx() -> Dict[str, Sound]:
     """Load all sound effects."""
 
     mixer.init()
+    mixer.set_num_channels(32)
     mixer.music.set_volume(float(get_setting("music_volume", "25")) / 100)
 
     sound_effects = {
@@ -25,10 +26,14 @@ async def load_sfx() -> Dict[str, Sound]:
         "select_back": mixer.Sound(str(sound_path / "sfx/select_back.wav")),
         "single": mixer.Sound(str(sound_path / "sfx/single.wav")),
         "double": mixer.Sound(str(sound_path / "sfx/double.wav")),
+        "triple": mixer.Sound(str(sound_path / "sfx/triple.wav")),
         "quad": mixer.Sound(str(sound_path / "sfx/quad.wav")),
-        "t_spin_single": mixer.Sound(str(sound_path / "sfx/t_spin_single.wav")),
-        "t_spin_double": mixer.Sound(str(sound_path / "sfx/t_spin_double.wav")),
-        "t_spin_triple": mixer.Sound(str(sound_path / "sfx/t_spin_triple.wav")),
+        "t_spin": mixer.Sound(str(sound_path / "sfx/t_spin.wav")),
+        "all_clear": mixer.Sound(str(sound_path / "sfx/all_clear.wav")),
+        "hold": mixer.Sound(str(sound_path / "sfx/hold.wav")),
+        "place_mino": mixer.Sound(str(sound_path / "sfx/place_mino.wav")),
+        "rotate": mixer.Sound(str(sound_path / "sfx/rotate.wav")),
+        "move": mixer.Sound(str(sound_path / "sfx/move.wav")),
         "countdown": mixer.Sound(str(sound_path / "sfx/countdown.wav")),
         "go": mixer.Sound(str(sound_path / "sfx/go.wav")),
     }
@@ -63,6 +68,7 @@ async def play_sounds(
     if sound_action and "SFX" in sound_action:
         for sfx in sound_action["SFX"]:
             try:
+                sound_effect_dict[sfx].stop()
                 sound_effect_dict[sfx].play()
             except Exception as err:
                 print(f"Failed to play SFX: {err}")

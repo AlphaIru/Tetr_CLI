@@ -117,10 +117,10 @@ class Mino:
         self,
         direction: str,
         is_position_valid: Callable[[List[Tuple[int, int]]], bool],
-    ) -> None:
+    ) -> bool:
         """This will rotate the current mino."""
         if direction not in ["left", "right"]:
-            return
+            return False
 
         current_index: int = MINO_ORIENTATIONS.index(self.orientation)
         new_index: int = 0
@@ -155,8 +155,9 @@ class Mino:
                 self.__kick_number = kick_num
                 self.__orientation = temp_orientation
                 self.__position = temp_position
-                return
+                return True
         self.__kick_number = 0  # No kick applied if rotation fails
+        return False
 
     def move_sideways(self, direction: str) -> None:
         """This will move the current mino sideways."""
@@ -172,7 +173,7 @@ class Mino:
         pressed_keys: Set[str],
         mino_touching_side_func: Callable[[str, "Mino"], bool],
         get_user_keybind: Callable[[str], Set[str]],
-    ) -> None:
+    ) -> bool:
         """Handles auto-repeat for left/right movement."""
         direction: str = ""
         if get_user_keybind("move_left") & pressed_keys and not (
@@ -186,12 +187,12 @@ class Mino:
 
         if mino_touching_side_func(direction, self):
             self.__auto_repeat_delay = self.__das
-            return
+            return False
 
         if direction == "":
             self.__last_sideways_direction = ""
             self.__auto_repeat_delay = self.__das
-            return
+            return False
 
         if self.__last_sideways_direction != direction:
             self.__auto_repeat_delay = self.__das
@@ -199,16 +200,18 @@ class Mino:
                 self.move_sideways(direction)
                 self.__kick_number = 0
             self.__last_sideways_direction = direction
-            return
+            return True
 
         if self.__auto_repeat_delay > 0:
             self.__auto_repeat_delay -= 1
-            return
+            return False
 
         if not mino_touching_side_func(direction, self):
             self.move_sideways(direction)
             self.__kick_number = 0
             self.__auto_repeat_delay = self.__arr
+            return True
+        return False
 
     def move_down(
         self, is_position_valid: Callable[[List[Tuple[int, int]]], bool]

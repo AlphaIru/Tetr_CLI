@@ -193,6 +193,18 @@ class ModeClass(SoloBaseMode):
                 arr=self.__arr,
             )
 
+        if self.board.animation_mode:
+            self.board.animate_clear_lines(self.level)
+            self.board.draw_minos_on_board(
+                stdscr=stdscr,
+                offset=self.offset,
+                max_yx=self.max_yx,
+                current_mino=self.current_mino,
+                ghost_position=self.ghost_mino_position(self.current_mino),
+            )
+            self.display_action_text(stdscr)
+            return
+
         self.check_keyinput_pressed(pressed_keys=pressed_keys)
         if not self.current_mino:
             self.board.draw_minos_on_board(
@@ -228,6 +240,7 @@ class ModeClass(SoloBaseMode):
                     self.current_mino.orientation,
                     self.current_mino.position,
                 )
+                self.sound_action["SFX"].append("place_mino")
                 self.calculate_score()
                 self.reset_mino()
 
