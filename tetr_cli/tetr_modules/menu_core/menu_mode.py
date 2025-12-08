@@ -108,6 +108,11 @@ class SideMenuToggleClass(BaseModeClass):
         """This will return the current value."""
         return self.__current_value
 
+    @current_value.setter
+    def current_value(self, value: int) -> None:
+        """This will set the current value."""
+        self.__current_value = value
+
     @property
     def old_value(self) -> int:
         """This will return the old value."""

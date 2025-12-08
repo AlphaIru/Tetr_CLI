@@ -10,7 +10,7 @@ from tetr_cli.tetr_modules.menu_core.menu_mode import VerticalMenuModeClass
 
 
 OPTION_TO_ACTION: Dict[str, Dict[str, str]] = {
-    "Marathon": {"action": "Marathon", "sound": "select_confirm"},
+    "Marathon": {"action": "Level_Select", "sound": "select_confirm"},
     "Sprint": {"action": "Sprint", "sound": "select_confirm"},
     "Ultra": {"action": "Ultra", "sound": "select_confirm"},
     "Go_Back": {"action": "Main_Menu", "sound": "select_back"},

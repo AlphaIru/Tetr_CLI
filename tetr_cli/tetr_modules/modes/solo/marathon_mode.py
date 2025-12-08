@@ -13,7 +13,7 @@ from tetr_cli.tetr_modules.modules.constants import (
     DRAW_BOARD_HEIGHT,
     DRAW_BOARD_WIDTH,
 )
-from tetr_cli.tetr_modules.modules.database import set_temp, get_setting
+from tetr_cli.tetr_modules.modules.database import set_temp, get_temp, get_setting
 from tetr_cli.tetr_modules.modules.safe_curses import safe_addstr
 
 
@@ -30,6 +30,7 @@ class ModeClass(SoloBaseMode):
         self.mode: str = "countdown"
         self.__das: int = int((int(get_setting("das", "10")) * self.fps_limit) / 60)
         self.__arr: int = int((int(get_setting("arr", "2")) * self.fps_limit) / 60)
+        self.level: int = int(get_temp("level"))
 
     def show_stats(self, stdscr: window) -> None:
         """This will show the stats on bottom right."""
@@ -160,6 +161,18 @@ class ModeClass(SoloBaseMode):
                 self.sound_action["BGM"] = ["stop"]
                 return
 
+        if self.board.animation_mode:
+            self.board.animate_clear_lines(self.level)
+            self.board.draw_minos_on_board(
+                stdscr=stdscr,
+                offset=self.offset,
+                max_yx=self.max_yx,
+                current_mino=self.current_mino,
+                ghost_position=self.ghost_mino_position(self.current_mino),
+            )
+            self.display_action_text(stdscr)
+            return
+
         # Level up for every 10 lines cleared
         self.level = max(self.level, (self.lines_cleared // 10) + 1)
 
@@ -198,6 +211,7 @@ class ModeClass(SoloBaseMode):
                     self.current_mino.orientation,
                     self.current_mino.position,
                 )
+                self.sound_action["SFX"].append("place_mino")
                 self.calculate_score()
                 self.reset_mino()
 
@@ -241,7 +255,7 @@ class ModeClass(SoloBaseMode):
             self.mode = "play_music_wait"
             self.sound_action["SFX"].append("go")
             safe_addstr(stdscr, self.max_yx[0] // 2, self.max_yx[1] // 2, "Go", A_BOLD)
-            self.counter = self.fps_limit // 2
+            self.counter = (3 * self.fps_limit) // 2
 
     def increment_frame(self, stdscr: window, pressed_keys: Set[str]) -> None:
         """This will increment the frame."""

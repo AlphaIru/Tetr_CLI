@@ -35,7 +35,7 @@ class SoloBaseMode(BaseModeClass):
         self.score: int = 0
 
         # Board
-        self.board: Board = Board()
+        self.board: Board = Board(self.fps_limit)
 
         # Mino
         self.current_mino: Optional[Mino] = None
@@ -227,7 +227,6 @@ class SoloBaseMode(BaseModeClass):
         else:
             self.combo_count = 0
 
-        self.board.clear_lines()
         action_text: List[str] = []
         current_score, back_to_back, action_text = calculate_line_score(
             lines_cleared=lines_clear_detected,
@@ -243,20 +242,18 @@ class SoloBaseMode(BaseModeClass):
         if action_text:
             self.action["action_text"] = action_text
 
+        if all_clear_detected:
+            self.sound_action["SFX"].append("all_clear")
         if t_spin_detected:
-            if lines_clear_detected <= 1:
-                self.sound_action["SFX"].append("t_spin_single")
-            elif lines_clear_detected == 2:
-                self.sound_action["SFX"].append("t_spin_double")
-            elif lines_clear_detected == 3:
-                self.sound_action["SFX"].append("t_spin_triple")
-        else:
-            if lines_clear_detected == 1:
-                self.sound_action["SFX"].append("single")
-            elif lines_clear_detected in (2, 3):
-                self.sound_action["SFX"].append("double")
-            elif lines_clear_detected == 4:
-                self.sound_action["SFX"].append("quad")
+            self.sound_action["SFX"].append("t_spin")
+        if lines_clear_detected == 1:
+            self.sound_action["SFX"].append("single")
+        elif lines_clear_detected == 2:
+            self.sound_action["SFX"].append("double")
+        elif lines_clear_detected == 3:
+            self.sound_action["SFX"].append("triple")
+        elif lines_clear_detected == 4:
+            self.sound_action["SFX"].append("quad")
 
     def check_keyinput_pressed(self, pressed_keys: Set[str]) -> None:
         """This will check the keyinput pressed."""
@@ -271,21 +268,27 @@ class SoloBaseMode(BaseModeClass):
         if not self.current_mino:
             return
 
+        rotated: bool = False
         if (
             pressed_keys & self.get_user_keybind("rotate_ccw")
             and "ccw" not in self.keyinput_cooldown
         ):
-            self.current_mino.rotate("left", self.is_position_valid)
+            rotated = self.current_mino.rotate("left", self.is_position_valid)
             self.keyinput_cooldown.add("ccw")
+
         if (
             pressed_keys & self.get_user_keybind("rotate_cw")
             and "cw" not in self.keyinput_cooldown
         ):
-            self.current_mino.rotate("right", self.is_position_valid)
+            rotated = self.current_mino.rotate("right", self.is_position_valid)
             self.keyinput_cooldown.add("cw")
-        self.current_mino.handle_sideways_auto_repeat(
+        moved_sideways: bool = self.current_mino.handle_sideways_auto_repeat(
             pressed_keys, self.mino_touching_side, self.get_user_keybind
         )
+        if moved_sideways:
+            self.sound_action["SFX"].append("move")
+        if rotated:
+            self.sound_action["SFX"].append("rotate")
         if pressed_keys & self.get_user_keybind("soft_drop"):
             if not self.mino_touching_bottom(self.current_mino):
                 self.current_mino.soft_drop(
@@ -296,6 +299,7 @@ class SoloBaseMode(BaseModeClass):
                     soft_drop_distance=1,
                     hard_drop_distance=0,
                 )
+                self.sound_action["SFX"].append("move")
         if (
             pressed_keys & self.get_user_keybind("hard_drop")
             and "hard_drop" not in self.keyinput_cooldown
@@ -314,6 +318,7 @@ class SoloBaseMode(BaseModeClass):
 
             self.reset_mino()
             self.keyinput_cooldown.add("hard_drop")
+            self.sound_action["SFX"].append("place_mino")
         if (
             pressed_keys & self.get_user_keybind("hold_piece")
             and not pressed_keys & self.get_user_keybind("hard_drop")
@@ -331,6 +336,7 @@ class SoloBaseMode(BaseModeClass):
                     "lock_count": 15,
                     "lock_height": 21,
                 }
+                self.sound_action["SFX"].append("hold")
                 self.reset_mino(current_mino_check=True, hold_used_check=True)
             else:
                 self.current_hold = copy(self.current_mino)

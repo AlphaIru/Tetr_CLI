@@ -75,13 +75,14 @@ TRANSITION_LIST: Dict[str, str] = {
     "Score_Screen": "score_screen",
     # Solo Modes
     "Solo_Menu": "solo.solo_menu",
+    "Level_Select": "solo.level_select",
     "Marathon": "solo.marathon",
     "Sprint": "solo.sprint",
     "Ultra": "solo.ultra",
     # Multiplayer Modes
-    "Multi_Menu": "multi.multi_menu",
-    "Host_Room": "multi.host_room",
-    "Join_Room": "multi.join_room",
+    # "Multi_Menu": "multi.multi_menu",
+    # "Host_Room": "multi.host_room",
+    # "Join_Room": "multi.join_room",
 }
 
 
@@ -132,15 +133,17 @@ async def main(
         init_pair(6, 46, -1)  # S
         init_pair(7, 196, -1)  # Z
         init_pair(8, 244, -1)  # Garbage
+        init_pair(9, 15, -1)  # White
     else:
-        init_pair(1, COLOR_YELLOW, -1)  # O
-        init_pair(2, COLOR_CYAN, -1)  # I
-        init_pair(3, COLOR_MAGENTA, -1)  # T
+        init_pair(1, COLOR_YELLOW, COLOR_BLACK)  # O
+        init_pair(2, COLOR_CYAN, COLOR_BLACK)  # I
+        init_pair(3, COLOR_MAGENTA, COLOR_BLACK)  # T
         init_pair(4, COLOR_YELLOW, COLOR_BLACK)  # L
-        init_pair(5, COLOR_BLUE, -1)  # J
-        init_pair(6, COLOR_GREEN, -1)  # S
-        init_pair(7, COLOR_RED, -1)  # Z
+        init_pair(5, COLOR_BLUE, COLOR_BLACK)  # J
+        init_pair(6, COLOR_GREEN, COLOR_BLACK)  # S
+        init_pair(7, COLOR_RED, COLOR_BLACK)  # Z
         init_pair(8, COLOR_WHITE, COLOR_BLACK)  # Light gray on black
+        init_pair(9, COLOR_WHITE, COLOR_BLACK)  # White
 
     start_time: float = 0.0
     elapsed_time: float = 0.0

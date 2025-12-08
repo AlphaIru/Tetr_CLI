@@ -28,9 +28,18 @@ from tetr_cli.tetr_modules.modules.database import get_setting
 class Board:
     """This will handle the game board."""
 
-    def __init__(self) -> None:
+    def __init__(self, fps_limit: int) -> None:
         """This will initialize this class."""
+        self.__fps_limit = fps_limit
+        self.__clear_time = 6 * fps_limit // 15
+        # 60FPS 24
+        # 45FPS 18
+        # 30FPS 12
+        # 15FPS 6
+
         self.__line_clear_queue: List[int] = []
+        self.__animation_mode: bool = False
+        self.__clear_counter: int = 0
         self.__board: List[List[int]] = [
             ([0] * BOARD_WIDTH) for _ in range(BOARD_HEIGHT)
         ]
@@ -40,7 +49,14 @@ class Board:
         )
         self.__mino_style: str = get_setting("mino_style", "[]")
         self.__ghost_mino_style: str = MINO_TO_GHOST.get(self.__mino_style, "??")
-        self.__mino_color_setting: bool = get_setting("color_mode", "true").lower() == "true"
+        self.__mino_color_setting: bool = (
+            get_setting("color_mode", "true").lower() == "true"
+        )
+
+    @property
+    def animation_mode(self) -> bool:
+        """This will return if the board is in animation mode."""
+        return self.__animation_mode
 
     def clear(self) -> None:
         """This will clear the board."""
@@ -129,11 +145,30 @@ class Board:
             if all(cell != 0 for cell in self.__board[row]):
                 self.__line_clear_queue.append(row)
                 line_cleared += 1
+        if line_cleared > 0:
+            self.__animation_mode = True
         return line_cleared
 
-    def clear_lines(self) -> None:
-        """This will clear the lines and return the number of lines cleared."""
+    def animate_clear_lines(self, level: int) -> None:
+        """This will animate the line clear."""
         # Reverse sort to do it in ascending order
+        if level >= 30:
+            self.__clear_time -= 1 * self.__fps_limit // 15
+            if self.__clear_time < 3:
+                self.__clear_time = 3
+        if self.__clear_counter < self.__clear_time:
+            # every 10% of the clear time, toggle the blocks
+            col: int = (self.__clear_counter * 10 // self.__clear_time)
+            left_limit: int = max(0, col - 2)
+            for row in self.__line_clear_queue:
+                self.__board[row][left_limit:col] = [0] * (col - left_limit)
+                if col < BOARD_WIDTH:
+                    self.__board[row][col] = 9
+            self.__clear_counter += 1
+            return
+
+        self.__animation_mode = False
+        self.__clear_counter = 0
         for row in sorted(self.__line_clear_queue, reverse=True):
             del self.__board[row]
             self.__board.append([0] * BOARD_WIDTH)
@@ -218,7 +253,7 @@ class Board:
             mino_shape = MINO_DRAW_LOCATION[current_mino.type][current_mino.orientation]
 
             # Draw ghost Mino
-            if self.__ghost_piece_setting:
+            if self.__ghost_piece_setting and not self.__animation_mode:
                 draw_board = self.add_ghost_mino(
                     current_mino, draw_board, ghost_position
                 )
@@ -260,13 +295,7 @@ class Board:
                     color = abs(cell)
                 mino_color: int = color_pair(color) if cell else A_BOLD
                 if 0 <= y < max_yx[0] and 0 <= x < max_yx[1] - 1:
-                    safe_addstr(
-                        stdscr,
-                        y,
-                        x,
-                        char,
-                        mino_color
-                    )
+                    safe_addstr(stdscr, y, x, char, mino_color)
 
     def draw_queue(
         self,
@@ -437,22 +466,14 @@ class Board:
         color: int = 0
         if self.__mino_color_setting:
             color = MINO_COLOR.get(mino_type, 0)
-        mino_color: int = color_pair(
-            color if not hold_used else 8
-        )
+        mino_color: int = color_pair(color if not hold_used else 8)
         for y_offset, x_offset in mino_shape:
             pos = (
                 mino_offset[0] + (mino_height - 1 - y_offset),
                 mino_offset[1] + x_offset * 2,
             )
             if 0 <= pos[0] < max_yx[0] and 0 <= pos[1] < max_yx[1] - 1:
-                safe_addstr(
-                    stdscr,
-                    pos[0],
-                    pos[1],
-                    mino_char,
-                    mino_color
-                )
+                safe_addstr(stdscr, pos[0], pos[1], mino_char, mino_color)
 
 
 if __name__ == "__main__":
